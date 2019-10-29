@@ -11,11 +11,14 @@ from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
 from wwpdb.utils.dp.ValidationWrapper import ValidationWrapper
 from wwpdb.io.locator.PathInfo import PathInfo
 
-# from wwpdb.utils.wf.dbapi.WfDbApi import WfDbApi
 from mmcif.io.IoAdapterCore import IoAdapterCore as IoAdapterCore
 from mmcif.api.DataCategory import DataCategory
 
 from wwpdb.apps.validation.src.utils.minimal_map_cif import GenerateMinimalCif
+
+from wwpdb.apps.val_rel.outputFiles import outputFiles
+from wwpdb.apps.val_rel.getFilesRelease import getFilesRelease
+from wwpdb.apps.val_rel.mmCIFInfo import mmCIFInfo
 
 logger = logging.getLogger()
 FORMAT = "%(funcName)s (%(levelname)s) - %(message)s"
