@@ -60,6 +60,11 @@ class OutputFilesTests(unittest.TestCase):
         ret = of.set_accession()
         self.assertTrue(ret == self.emdb_accession)
 
+    def test_set_accession_pdbid_and_not_set_emdbid(self):
+        of = outputFiles(pdbID=self.pdbid, emdbID=self.emdbid)
+        ret = of.set_accession()
+        self.assertTrue(ret == self.pdbid)
+
     def test_set_accession_pdbid_and_emdbid(self):
         of = outputFiles(pdbID=self.pdbid, emdbID=self.emdbid)
         of.set_accession_variables(with_emdb=True)
