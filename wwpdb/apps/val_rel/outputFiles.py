@@ -92,7 +92,7 @@ class outputFiles:
             "path: {}".format(os.path.join(self.get_entry_output_folder(), self.get_entry_id()))
         )
 
-        self.get_accession()
+        self.set_accession()
         logging.debug('accession set to {}'.format(self.accession))
 
         ret = {}

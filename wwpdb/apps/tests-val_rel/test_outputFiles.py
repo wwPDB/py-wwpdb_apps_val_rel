@@ -72,6 +72,24 @@ class OutputFilesTests(unittest.TestCase):
         accession = '{}_{}'.format(self.emdb_accession, self.pdbid)
         self.assertTrue(ret == accession)
 
+    def test_set_accession_pdbid_get_core_files(self):
+        output_ret = {'xml': '/nfs/test/cb/1cbs/1cbs_validation.xml', 
+                    'pdf': '/nfs/test/cb/1cbs/1cbs_validation.pdf', 
+                    'full_pdf': '/nfs/test/cb/1cbs/1cbs_full_validation.pdf', 
+                    'png': '/nfs/test/cb/1cbs/1cbs_multipercentile_validation.png', 
+                     'svg': '/nfs/test/cb/1cbs/1cbs_multipercentile_validation.svg'}
+        of = outputFiles(pdbID=self.pdbid, outputRoot=self.output_folder)
+        of.set_accession()
+        ret = of.get_core_validation_files()
+        self.assertTrue(ret == output_ret)
+
+    def test_set_accession_pdbid_get_map_files(self):
+        output_ret = {'fofc': '/nfs/test/cb/1cbs/1cbs_validation_fo-fc_map_coef.cif', 
+                     '2fofc': '/nfs/test/cb/1cbs/1cbs_validation_2fo-fc_map_coef.cif'}
+        of = outputFiles(pdbID=self.pdbid, outputRoot=self.output_folder)
+        of.set_accession()
+        ret = of.get_extra_validation_files()
+        self.assertTrue(ret == output_ret)
 
 if __name__ == '__main__':
     unittest.main()

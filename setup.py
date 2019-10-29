@@ -44,7 +44,7 @@ setup(
     #
     install_requires=['wwpdb.utils.config', 'wwpdb.utils.detach',
                       'wwpdb.utils.dp', 'wwpdb.utils.message_queue',
-                      #'wwpdb.apps.validation'
+                      'wwpdb.apps.validation'
                       ],
     packages=find_packages(exclude=['wwpdb.apps.tests-val_rel',
                                     'mock-data']),
