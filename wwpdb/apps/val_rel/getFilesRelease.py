@@ -1,3 +1,7 @@
+import os
+import logging
+
+
 class getFilesRelease:
     def __init__(self, siteID=getSiteId()):
         self.release = False
