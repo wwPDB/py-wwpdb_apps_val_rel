@@ -11,6 +11,7 @@ class outputFiles:
         self.entry_output_folder = self.get_entry_output_folder()
         self.with_emdb = False
         self.copy_to_root_emdb = False
+        self.accession = ''
 
     def set_entry_id(self, entry_id):
         self._entryID = entry_id
@@ -61,6 +62,30 @@ class outputFiles:
         
         return self.accession
 
+    def get_validation_pdf(self):
+        return self.accession + "_validation.pdf"
+    
+    def get_validation_full_pdf(self):
+        return self.accession + "_full_validation.pdf"
+
+    def get_validation_xml(self):
+        return self.accession + "_validation.xml"
+
+    def get_validation_png(self):
+        return self.accession + "_multipercentile_validation.png"
+
+    def get_validation_svg(self):
+        return self.accession + "_multipercentile_validation.svg"
+
+    def get_2fofc(self):
+        return self.accession + "_validation_2fo-fc_map_coef.cif"
+
+    def get_fofc(self):
+        return self.accession + "_validation_fo-fc_map_coef.cif"
+
+    def add_output_folder_accession(self, filename):
+        return os.path.join(self.get_entry_output_folder(), filename)
+
     def get_core_validation_files(self):
         logging.debug("getting core files for: {}".format(self.get_entry_id()))
         logging.debug(
@@ -68,43 +93,22 @@ class outputFiles:
         )
 
         self.get_accession()
-
-        validationReportPath = os.path.join(
-            self.get_entry_output_folder(), self.accession + "_validation.pdf"
-        )
-        xmlReportPath = os.path.join(
-            self.get_entry_output_folder(), self.accession + "_validation.xml"
-        )
-        validationFullReportPath = os.path.join(
-            self.get_entry_output_folder(), self.accession + "_full_validation.pdf"
-        )
-        pngReportPath = os.path.join(
-            self.get_entry_output_folder(), self.accession + "_multipercentile_validation.png"
-        )
-        svgReportPath = os.path.join(
-            self.get_entry_output_folder(), self.accession + "_multipercentile_validation.svg"
-        )
+        logging.debug('accession set to {}'.format(self.accession))
 
         ret = {}
-        ret["pdf"] = validationReportPath
-        ret["full_pdf"] = validationFullReportPath
-        ret["xml"] = xmlReportPath
-        ret["png"] = pngReportPath
-        ret["svg"] = svgReportPath
+        ret["pdf"] = self.add_output_folder_accession(self.get_validation_pdf())
+        ret["full_pdf"] = self.add_output_folder_accession(self.get_validation_full_pdf())
+        ret["xml"] = self.add_output_folder_accession(self.get_validation_xml())
+        ret["png"] = self.add_output_folder_accession(self.get_validation_png())
+        ret["svg"] = self.add_output_folder_accession(self.get_validation_svg())
 
         return ret
 
     def get_extra_validation_files(self):
-        coef2foReportPath = os.path.join(
-            self.get_entry_output_folder(), self.get_entry_id() + "_validation_2fo-fc_map_coef.cif"
-        )
-        coeffoReportPath = os.path.join(
-            self.get_entry_output_folder(), self.get_entry_id() + "_validation_fo-fc_map_coef.cif"
-        )
-
+        
         ret = {}
-        ret["2fofc"] = coef2foReportPath
-        ret["fofc"] = coeffoReportPath
+        ret["2fofc"] = self.add_output_folder_accession(self.get_2fofc())
+        ret["fofc"] = self.add_output_folder_accession(self.get_fofc())
 
         return ret
 
