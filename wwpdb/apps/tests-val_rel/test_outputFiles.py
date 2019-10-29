@@ -12,6 +12,22 @@ class OutputFilesTests(unittest.TestCase):
         self.emdbid = 'EMD-1234'
         self.emdb_accession = 'emd_1234'
         self.output_folder = os.path.join(os.sep, 'nfs', 'test')
+        self.final_pdb_output_folder = os.path.join(self.output_folder, self.pdbid_hash, self.pdbid)
+        self.final_emdb_output_folder = os.path.join(self.output_folder, 'emd', self.emdbid, 'validation')
+        self.pdb_core_files = {'xml': os.path.join(self.final_pdb_output_folder, self.pdbid + '_validation.xml'), 
+                    'pdf': os.path.join(self.final_pdb_output_folder, self.pdbid + '_validation.pdf'), 
+                    'full_pdf': os.path.join(self.final_pdb_output_folder, self.pdbid + '_full_validation.pdf'), 
+                    'png': os.path.join(self.final_pdb_output_folder, self.pdbid + '_multipercentile_validation.png'), 
+                     'svg': os.path.join(self.final_pdb_output_folder, self.pdbid + '_multipercentile_validation.svg')
+                     }
+        self.pdb_aux_files = {'fofc': os.path.join(self.final_pdb_output_folder, self.pdbid + '_validation_fo-fc_map_coef.cif'), 
+                     '2fofc': os.path.join(self.final_pdb_output_folder, self.pdbid + '_validation_2fo-fc_map_coef.cif')}
+        self.emdb_core_files = {'xml': os.path.join(self.final_emdb_output_folder, self.emdb_accession + '_validation.xml'), 
+                    'pdf': os.path.join(self.final_emdb_output_folder, self.emdb_accession + '_validation.pdf'), 
+                    'full_pdf': os.path.join(self.final_emdb_output_folder, self.emdb_accession + '_full_validation.pdf'), 
+                    'png': os.path.join(self.final_emdb_output_folder, self.emdb_accession + '_multipercentile_validation.png'), 
+                     'svg': os.path.join(self.final_emdb_output_folder, self.emdb_accession + '_multipercentile_validation.svg')
+                     }
 
     def test_get_dir(self):
         final_output_folder = ''
@@ -20,10 +36,9 @@ class OutputFilesTests(unittest.TestCase):
         self.assertTrue(ret == final_output_folder)
 
     def test_get_pdbid_dir(self):
-        final_output_folder = os.path.join(self.output_folder, self.pdbid_hash, self.pdbid)
         of = outputFiles(pdbID=self.pdbid, outputRoot=self.output_folder)
         ret = of.get_entry_output_folder()
-        self.assertTrue(ret == final_output_folder)
+        self.assertTrue(ret == self.final_pdb_output_folder)
 
     def test_get_emdb_dir(self):
         final_output_folder = os.path.join(self.output_folder, 'emd', self.emdbid, 'validation')
@@ -32,10 +47,9 @@ class OutputFilesTests(unittest.TestCase):
         self.assertTrue(ret == final_output_folder)
 
     def test_get_pdbid_and_emdb_dir(self):
-        final_output_folder = os.path.join(self.output_folder, self.pdbid_hash, self.pdbid)
         of = outputFiles(pdbID=self.pdbid, outputRoot=self.output_folder)
         ret = of.get_entry_output_folder()
-        self.assertTrue(ret == final_output_folder)
+        self.assertTrue(ret == self.final_pdb_output_folder)
 
     def test_get_pdbid_dir_skip_hash(self):
         final_output_folder = os.path.join(self.output_folder, self.pdbid)
@@ -44,11 +58,10 @@ class OutputFilesTests(unittest.TestCase):
         self.assertTrue(ret == final_output_folder)
 
     def test_get_pdbid_dir_emdb_set_first(self):
-        final_output_folder = os.path.join(self.output_folder, self.pdbid_hash, self.pdbid)
         of = outputFiles(emdbID=self.emdbid, outputRoot=self.output_folder)
         of.set_pdb_id(entry_id=self.pdbid)
         ret = of.get_entry_output_folder()
-        self.assertTrue(ret == final_output_folder)
+        self.assertTrue(ret == self.final_pdb_output_folder)
 
     def test_set_accession_pdbid(self):
         of = outputFiles(pdbID=self.pdbid)
@@ -73,23 +86,22 @@ class OutputFilesTests(unittest.TestCase):
         self.assertTrue(ret == accession)
 
     def test_set_accession_pdbid_get_core_files(self):
-        output_ret = {'xml': '/nfs/test/cb/1cbs/1cbs_validation.xml', 
-                    'pdf': '/nfs/test/cb/1cbs/1cbs_validation.pdf', 
-                    'full_pdf': '/nfs/test/cb/1cbs/1cbs_full_validation.pdf', 
-                    'png': '/nfs/test/cb/1cbs/1cbs_multipercentile_validation.png', 
-                     'svg': '/nfs/test/cb/1cbs/1cbs_multipercentile_validation.svg'}
         of = outputFiles(pdbID=self.pdbid, outputRoot=self.output_folder)
         of.set_accession()
         ret = of.get_core_validation_files()
-        self.assertTrue(ret == output_ret)
+        self.assertTrue(ret == self.pdb_core_files)
 
     def test_set_accession_pdbid_get_map_files(self):
-        output_ret = {'fofc': '/nfs/test/cb/1cbs/1cbs_validation_fo-fc_map_coef.cif', 
-                     '2fofc': '/nfs/test/cb/1cbs/1cbs_validation_2fo-fc_map_coef.cif'}
         of = outputFiles(pdbID=self.pdbid, outputRoot=self.output_folder)
         of.set_accession()
         ret = of.get_extra_validation_files()
-        self.assertTrue(ret == output_ret)
+        self.assertTrue(ret == self.pdb_aux_files)
+
+    def test_set_accession_emdbid_get_core_files(self):
+        of = outputFiles(emdbID=self.emdbid, outputRoot=self.output_folder)
+        of.set_accession()
+        ret = of.get_core_validation_files()
+        self.assertTrue(ret == self.emdb_core_files)
 
 if __name__ == '__main__':
     unittest.main()
