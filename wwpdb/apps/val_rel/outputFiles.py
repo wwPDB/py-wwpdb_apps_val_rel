@@ -13,7 +13,7 @@ class outputFiles:
         self.with_emdb = False
         self.copy_to_root_emdb = False
         self.accession = ''
-        self.rf = None
+        self.rf = releaseFileNames(gzip=False)
 
     def set_entry_id(self, entry_id):
         self._entryID = entry_id
@@ -62,7 +62,7 @@ class outputFiles:
         if self.get_emdb_id() and self.copy_to_root_emdb:
             self.accession = "{}".format(self.get_emdb_lower_underscore())
         
-        self.rf = releaseFileNames(accession=self.accession, gzip=False)
+        
 
         return self.accession
 
@@ -79,19 +79,19 @@ class outputFiles:
         logging.debug('accession set to {}'.format(self.accession))
 
         ret = {}
-        ret["pdf"] = self.add_output_folder_accession(self.rf.get_validation_pdf())
-        ret["full_pdf"] = self.add_output_folder_accession(self.rf.get_validation_full_pdf())
-        ret["xml"] = self.add_output_folder_accession(self.rf.get_validation_xml())
-        ret["png"] = self.add_output_folder_accession(self.rf.get_validation_png())
-        ret["svg"] = self.add_output_folder_accession(self.rf.get_validation_svg())
+        ret["pdf"] = self.add_output_folder_accession(self.rf.get_validation_pdf(self.accession))
+        ret["full_pdf"] = self.add_output_folder_accession(self.rf.get_validation_full_pdf(self.accession))
+        ret["xml"] = self.add_output_folder_accession(self.rf.get_validation_xml(self.accession))
+        ret["png"] = self.add_output_folder_accession(self.rf.get_validation_png(self.accession))
+        ret["svg"] = self.add_output_folder_accession(self.rf.get_validation_svg(self.accession))
 
         return ret
 
     def get_extra_validation_files(self):
         
         ret = {}
-        ret["2fofc"] = self.add_output_folder_accession(self.rf.get_2fofc())
-        ret["fofc"] = self.add_output_folder_accession(self.rf.get_fofc())
+        ret["2fofc"] = self.add_output_folder_accession(self.rf.get_2fofc(self.accession))
+        ret["fofc"] = self.add_output_folder_accession(self.rf.get_fofc(self.accession))
 
         return ret
 
