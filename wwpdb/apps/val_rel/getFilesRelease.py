@@ -1,5 +1,6 @@
 import os
 import logging
+from wwpdb.apps.val_rel.release_file_names import releaseFileNames
 
 
 class getFilesRelease:
@@ -12,6 +13,7 @@ class getFilesRelease:
         self.ftp = False
         self.pdb_id = None
         self.emdb_id = None
+        self.rf = releaseFileNames()
         self.siteID = siteID
         self.cI = ConfigInfo(self.siteID)
         self.for_release_path = self.cI.get("FOR_RELEASE_DATA_PATH", "")
@@ -60,29 +62,29 @@ class getFilesRelease:
         return None
 
     def get_model(self, pdbid):
-        filename = "{}.cif.gz".format(pdbid)
+        filename = self.rf.get_model(pdbid)
         file_path = self.search_nfs_pdb(filename=filename, pdbid=pdbid, coordinates=True)
         if file_path:
             return file_path
         return None
 
     def get_sf(self, pdbid):
-        filename = "{}-sf.cif".format(pdbid)
+        filename = self.rf.get_structure_factor(pdbid, for_release=True) 
         file_path = self.search_nfs_pdb(filename=filename, pdbid=pdbid, sf=True)
         if file_path:
             return file_path
-        filename = "r{}sf.ent.gz".format(pdbid)
+        filename = self.rf.get_structure_factor(pdbid)
         file_path = self.search_nfs_pdb(filename=filename, pdbid=pdbid, sf=True)
         if file_path:
             return file_path
         return None
 
     def get_cs(self, pdbid):
-        filename = "{}_cs.str".format(pdbid)
+        filename =  self.rf.get_chemical_shifts(pdbid, for_release=True)
         file_path = self.search_nfs_pdb(filename=filename, pdbid=pdbid, cs=True)
         if file_path:
             return file_path
-        filename = "{}_cs.str.gz".format(pdbid)
+        filename = self.rf.get_chemical_shifts(pdbid)
         file_path = self.search_nfs_pdb(filename=filename, pdbid=pdbid, cs=True)
         if file_path:
             return file_path
@@ -114,15 +116,15 @@ class getFilesRelease:
         return "emd-{}".format(emdb_number)
 
     def get_emdb_xml(self, emdbid):
-        filename = "{}-v30.xml".format(self.get_emdb_id_file_format_xml(emdbid))
+        filename =  self.rf.get_emdb_xml(self.get_emdb_id_file_format_xml(emdbid))
         return self.return_emdb_path(
             filename=filename, subfolder="header", emdbid=emdbid
         )
 
     def get_emdb_volume(self, emdbid):
-        filename = "{}.map.gz".format(self.get_emdb_id_file_format(emdbid))
+        filename = self.rf.get_emdb_map(self.get_emdb_id_file_format(emdbid))
         return self.return_emdb_path(filename=filename, subfolder="map", emdbid=emdbid)
 
     def get_emdb_fsc(self, emdbid):
-        filename = "{}_fsc.xml".format(self.get_emdb_id_file_format(emdbid))
+        filename = self.rf.get_emdb_fsc(self.get_emdb_id_file_format(emdbid))
         return self.return_emdb_path(filename=filename, subfolder="fsc", emdbid=emdbid)
