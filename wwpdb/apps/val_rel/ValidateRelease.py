@@ -123,7 +123,7 @@ class runValidation:
         if self.always_recalculate:
             return True
         modified = False
-        if not already_run(self.emXmlPath, self.of.get_pdb_output_folder()):
+        if not already_run(self.emXmlPath, self.of.get_emdb_output_folder()):
             modified = True
         return modified
 
