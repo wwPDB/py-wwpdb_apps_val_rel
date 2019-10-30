@@ -284,9 +284,14 @@ class runValidation:
             self.logPath = os.path.join(self.entry_output_folder, "validation.log")
 
             # clearing existing reports before making new ones
-            self.output_file_list, self.output_file_dict = (
+            self.output_file_dict = (
                 self.of.get_all_validation_files()
             )
+            self.output_file_list = []
+            for key in ['pdf', 'xml', 'full_pdf', 'png', 'svg', '2fofc', 'fofc']:
+                if key in self.output_file_dict:
+                    self.output_file_list.append(self.output_file_dict[key])
+
             remove_files(self.output_file_list)
 
             if self.emdbid:
