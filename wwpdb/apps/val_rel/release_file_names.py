@@ -25,13 +25,13 @@ class releaseFileNames():
         return self.add_gzip(fname, set_gzip=True)
 
     def get_emdb_xml(self, accession):
-        self.add_gzip(accession + "-v30.xml")
+        return self.add_gzip(accession + "-v30.xml")
 
     def get_emdb_map(self, accession):
-        self.add_gzip(accession + ".map", set_gzip=True)
+        return self.add_gzip(accession + ".map", set_gzip=True)
 
     def get_emdb_fsc(self, accession):
-        self.add_gzip(accession + "_fsc.xml")
+        return self.add_gzip(accession + "_fsc.xml")
 
     def get_validation_pdf(self, accession):
         return self.add_gzip(accession + "_validation.pdf")

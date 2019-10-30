@@ -117,7 +117,8 @@ class getFilesRelease:
         return "emd-{}".format(emdb_number)
 
     def get_emdb_xml(self, emdbid):
-        filename =  self.rf.get_emdb_xml(self.get_emdb_id_file_format_xml(emdbid))
+        accession = self.get_emdb_id_file_format_xml(emdbid)
+        filename =  self.rf.get_emdb_xml(accession)
         return self.return_emdb_path(
             filename=filename, subfolder="header", emdbid=emdbid
         )
