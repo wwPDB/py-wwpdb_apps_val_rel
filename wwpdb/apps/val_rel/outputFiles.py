@@ -1,9 +1,10 @@
 import logging
 import os
 from wwpdb.apps.val_rel.release_file_names import releaseFileNames
+from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
 
 class outputFiles:
-    def __init__(self, pdbID=None, emdbID=None, outputRoot='', skip_pdb_hash=False):
+    def __init__(self, pdbID=None, emdbID=None, outputRoot='', siteID=getSiteId(), skip_pdb_hash=False):
         self._pdbID = pdbID
         self._emdbID = emdbID
         self.output_root = outputRoot
@@ -14,6 +15,7 @@ class outputFiles:
         self.copy_to_root_emdb = False
         self.accession = ''
         self.rf = releaseFileNames(gzip=False)
+        self.cI = ConfigInfo(siteID)
 
     def set_entry_id(self, entry_id):
         self._entryID = entry_id
@@ -108,12 +110,25 @@ class outputFiles:
             pdb_hash = ''
         else:
             pdb_hash = self.get_pdb_id_hash()
-        self.entry_output_folder = os.path.join(self.output_root, pdb_hash, self.get_pdb_id())
+        if self.output_root:
+            self.entry_output_folder = os.path.join(self.output_root, pdb_hash,  self.get_pdb_id())
+        else:
+            self.entry_output_folder = os.path.join(
+                self.cI.get("VALIDATION_EXCHANGE_DATA_PATH"), self.get_pdb_id()
+            )
         return self.entry_output_folder
 
     def get_emdb_output_folder(self):
         self.set_entry_id(self.get_emdb_id())
-        self.entry_output_folder = os.path.join(self.output_root, 'emd', self.get_emdb_id(), 'validation')
+        if self.output_root:
+            self.entry_output_folder = os.path.join(self.output_root, self.get_emdb_id())
+        else:
+            self.entry_output_folder = os.path.join(
+                cI.get("VALIDATION_EXCHANGE_DATA_PATH"),
+                "emd",
+                self.get_emdb_id(),
+                "validation",
+            )
         return self.entry_output_folder
 
     def get_entry_output_folder(self):
