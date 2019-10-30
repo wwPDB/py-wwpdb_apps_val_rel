@@ -119,16 +119,18 @@ class getFilesRelease:
     def get_emdb_xml(self, emdbid):
         accession = self.get_emdb_id_file_format(emdbid)
         filename =  self.rf.get_emdb_xml(accession, for_release=True)
-        if filename:
-            return self.return_emdb_path(
+        filepath = self.return_emdb_path(
                 filename=filename, subfolder="header", emdbid=emdbid
-            )
+                )
+        if filepath:
+            return filepath
         accession = self.get_emdb_id_file_format_xml(emdbid)
         filename =  self.rf.get_emdb_xml(accession)
-        if filename:
-            return self.return_emdb_path(
-                filename=filename, subfolder="header", emdbid=emdbid
-            )
+        filepath = self.return_emdb_path(
+                        filename=filename, subfolder="header", emdbid=emdbid
+                    )
+        if filepath:
+            return filepath
         return None
 
     def get_emdb_volume(self, emdbid):
