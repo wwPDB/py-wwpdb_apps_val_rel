@@ -124,7 +124,7 @@ class outputFiles:
             self.entry_output_folder = os.path.join(self.output_root, self.get_emdb_id())
         else:
             self.entry_output_folder = os.path.join(
-                cI.get("VALIDATION_EXCHANGE_DATA_PATH"),
+                self.cI.get("VALIDATION_EXCHANGE_DATA_PATH"),
                 "emd",
                 self.get_emdb_id(),
                 "validation",
