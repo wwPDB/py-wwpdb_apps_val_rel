@@ -232,9 +232,8 @@ class runValidation:
             if emdb_output_folder != self.entry_output_folder:
                 if os.path.exists(emdb_output_folder):
                     logging.info("EMDB output folder: {}".format(emdb_output_folder))
-                    emdb_output_file_list, emdb_output_file_dict = self.of.get_core_validation_files(
-                        with_emdb=True, copy_to_root_emdb=copy_to_root_emdb
-                    )
+                    self.of.set_accession_variables(with_emdb=True, copy_to_root_emdb=copy_to_root_emdb)
+                    emdb_output_file_dict = self.of.get_core_validation_files()                    
                     logging.info(
                         "EMDB output file dict: {}".format(emdb_output_file_dict)
                     )
@@ -245,7 +244,7 @@ class runValidation:
                                 shutil.copy(
                                     self.output_file_dict[k], emdb_output_file_dict[k]
                                 )
-                    for f in emdb_output_file_list:
+                    for f in emdb_output_file_dict.values():
                         gzip_file(f)
                 else:
                     logging.error(
@@ -306,16 +305,13 @@ class runValidation:
                 if emdb_output_folder != self.entry_output_folder:
                     if not os.path.exists(emdb_output_folder):
                         os.makedirs(emdb_output_folder)
-
-                emdb_output_file_list, emdb_output_file_dict = em_of.get_core_validation_files(
-                    with_emdb=True
-                )
-                remove_files(emdb_output_file_list)
+                em_of.set_accession_variables(with_emdb=True)
+                emdb_output_file_dict = em_of.get_core_validation_files()
+                remove_files(emdb_output_file_dict.values())
                 if self.copy_to_root_emdb:
-                    emdb_output_file_list, emdb_output_file_dict = em_of.get_core_validation_files(
-                        with_emdb=True, copy_to_root_emdb=self.copy_to_root_emdb
-                    )
-                    remove_files(emdb_output_file_list)
+                    em_of.set_accession_variables(with_emdb=True, copy_to_root_emdb=self.copy_to_root_emdb)
+                    emdb_output_file_dict = em_of.get_core_validation_files()
+                    remove_files(emdb_output_file_dict.values())
 
             self.runDir = tempfile.mkdtemp(
                 dir=self.session_path,

@@ -56,23 +56,23 @@ class outputFiles:
         self.copy_to_root_emdb = copy_to_root_emdb
 
     def set_accession(self):
-        self.accession = "{}".format(self.get_entry_id())
-        if self.get_emdb_id() and not self.get_pdb_id():
+        self.accession = "{}".format(self._entryID)
+        if self._emdbID and not self._pdbID:
             self.accession = self.get_emdb_lower_underscore()
-        if self.get_pdb_id() and self.get_emdb_id() and self.with_emdb:
-            self.accession = "{}_{}".format(self.get_emdb_lower_underscore(), self.get_pdb_id())
-        if self.get_emdb_id() and self.copy_to_root_emdb:
+        if self._pdbID and self._emdbID and self.with_emdb:
+            self.accession = "{}_{}".format(self.get_emdb_lower_underscore(), self._pdbID)
+        if self._emdbID and self.copy_to_root_emdb:
             self.accession = "{}".format(self.get_emdb_lower_underscore())
         
         return self.accession
 
     def add_output_folder_accession(self, filename):
-        return os.path.join(self.get_entry_output_folder(), filename)
+        return os.path.join(self.entry_output_folder, filename)
 
     def get_core_validation_files(self):
-        logging.debug("getting core files for: {}".format(self.get_entry_id()))
+        logging.debug("getting core files for: {}".format(self._entryID))
         logging.debug(
-            "path: {}".format(os.path.join(self.get_entry_output_folder(), self.get_entry_id()))
+            "path: {}".format(os.path.join(self.entry_output_folder, self._entryID))
         )
 
         self.set_accession()
