@@ -30,7 +30,7 @@ from wwpdb.utils.detach.DetachedProcessBase import DetachedProcessBase
 from wwpdb.utils.message_queue.MessageConsumerBase import MessageConsumerBase
 from wwpdb.utils.message_queue.MessageQueueConnection import MessageQueueConnection
 from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
-from wwpdb.apps.val_ws_server.validate.ValidateRelease import runValidation, queue_name, routing_key, exchange
+from wwpdb.apps.val_rel.ValidateRelease import runValidation, queue_name, routing_key, exchange
 
 
 
