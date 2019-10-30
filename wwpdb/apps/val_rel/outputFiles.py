@@ -7,6 +7,7 @@ class outputFiles:
     def __init__(self, pdbID=None, emdbID=None, outputRoot='', siteID=getSiteId(), skip_pdb_hash=False):
         self._pdbID = pdbID
         self._emdbID = emdbID
+        self.siteID = siteID
         self.output_root = outputRoot
         self._entryID = None
         self.skip_pdb_hash = skip_pdb_hash
@@ -15,7 +16,6 @@ class outputFiles:
         self.copy_to_root_emdb = False
         self.accession = ''
         self.rf = releaseFileNames(gzip=False)
-        self.cI = ConfigInfo(siteID)
 
     def set_entry_id(self, entry_id):
         self._entryID = entry_id
@@ -113,8 +113,9 @@ class outputFiles:
         if self.output_root:
             self.entry_output_folder = os.path.join(self.output_root, pdb_hash,  self.get_pdb_id())
         else:
+            cI = ConfigInfo(self.siteID)
             self.entry_output_folder = os.path.join(
-                self.cI.get("VALIDATION_EXCHANGE_DATA_PATH"), self.get_pdb_id()
+                cI.get("VALIDATION_EXCHANGE_DATA_PATH"), self.get_pdb_id()
             )
         return self.entry_output_folder
 
@@ -123,8 +124,9 @@ class outputFiles:
         if self.output_root:
             self.entry_output_folder = os.path.join(self.output_root, self.get_emdb_id())
         else:
+            cI = ConfigInfo(self.siteID)
             self.entry_output_folder = os.path.join(
-                self.cI.get("VALIDATION_EXCHANGE_DATA_PATH"),
+                cI.get("VALIDATION_EXCHANGE_DATA_PATH"),
                 "emd",
                 self.get_emdb_id(),
                 "validation",
