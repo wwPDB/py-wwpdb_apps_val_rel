@@ -24,7 +24,9 @@ class releaseFileNames():
             return fname
         return self.add_gzip(fname, set_gzip=True)
 
-    def get_emdb_xml(self, accession):
+    def get_emdb_xml(self, accession, for_release=False):
+        if for_release:
+            return self.add_gzip(accession + '_v3.xml')
         return self.add_gzip(accession + "-v30.xml")
 
     def get_emdb_map(self, accession):
