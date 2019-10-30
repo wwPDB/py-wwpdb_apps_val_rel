@@ -1,5 +1,6 @@
 import logging
 import os
+from wwpdb.apps.val_rel.release_file_names import releaseFileNames
 
 class outputFiles:
     def __init__(self, pdbID=None, emdbID=None, outputRoot='', skip_pdb_hash=False):
@@ -12,6 +13,7 @@ class outputFiles:
         self.with_emdb = False
         self.copy_to_root_emdb = False
         self.accession = ''
+        self.rf = None
 
     def set_entry_id(self, entry_id):
         self._entryID = entry_id
@@ -60,28 +62,9 @@ class outputFiles:
         if self.get_emdb_id() and self.copy_to_root_emdb:
             self.accession = "{}".format(self.get_emdb_lower_underscore())
         
+        self.rf = releaseFileNames(accession=self.accession, gzip=False)
+
         return self.accession
-
-    def get_validation_pdf(self):
-        return self.accession + "_validation.pdf"
-    
-    def get_validation_full_pdf(self):
-        return self.accession + "_full_validation.pdf"
-
-    def get_validation_xml(self):
-        return self.accession + "_validation.xml"
-
-    def get_validation_png(self):
-        return self.accession + "_multipercentile_validation.png"
-
-    def get_validation_svg(self):
-        return self.accession + "_multipercentile_validation.svg"
-
-    def get_2fofc(self):
-        return self.accession + "_validation_2fo-fc_map_coef.cif"
-
-    def get_fofc(self):
-        return self.accession + "_validation_fo-fc_map_coef.cif"
 
     def add_output_folder_accession(self, filename):
         return os.path.join(self.get_entry_output_folder(), filename)
@@ -96,19 +79,19 @@ class outputFiles:
         logging.debug('accession set to {}'.format(self.accession))
 
         ret = {}
-        ret["pdf"] = self.add_output_folder_accession(self.get_validation_pdf())
-        ret["full_pdf"] = self.add_output_folder_accession(self.get_validation_full_pdf())
-        ret["xml"] = self.add_output_folder_accession(self.get_validation_xml())
-        ret["png"] = self.add_output_folder_accession(self.get_validation_png())
-        ret["svg"] = self.add_output_folder_accession(self.get_validation_svg())
+        ret["pdf"] = self.add_output_folder_accession(self.rf.get_validation_pdf())
+        ret["full_pdf"] = self.add_output_folder_accession(self.rf.get_validation_full_pdf())
+        ret["xml"] = self.add_output_folder_accession(self.rf.get_validation_xml())
+        ret["png"] = self.add_output_folder_accession(self.rf.get_validation_png())
+        ret["svg"] = self.add_output_folder_accession(self.rf.get_validation_svg())
 
         return ret
 
     def get_extra_validation_files(self):
         
         ret = {}
-        ret["2fofc"] = self.add_output_folder_accession(self.get_2fofc())
-        ret["fofc"] = self.add_output_folder_accession(self.get_fofc())
+        ret["2fofc"] = self.add_output_folder_accession(self.rf.get_2fofc())
+        ret["fofc"] = self.add_output_folder_accession(self.rf.get_fofc())
 
         return ret
 
