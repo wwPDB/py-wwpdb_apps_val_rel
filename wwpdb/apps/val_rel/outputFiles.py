@@ -126,7 +126,7 @@ class outputFiles:
         else:
             cI = ConfigInfo(self.siteID)
             self.entry_output_folder = os.path.join(
-                cI.get("VALIDATION_EXCHANGE_DATA_PATH"),
+                cI.get("EM_VALIDATION_EXCHANGE_DATA_PATH"),
                 "emd",
                 self.get_emdb_id(),
                 "validation",
