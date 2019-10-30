@@ -1,3 +1,9 @@
+import logging
+import sys
+
+from mmcif.io.IoAdapterCore import IoAdapterCore as IoAdapterCore
+from mmcif.api.DataCategory import DataCategory
+
 class mmCIFInfo:
     def __init__(self, mmCIF_file, IoAdapter=IoAdapterCore(), log=sys.stderr):
         self.mmcif = mmCIF_file

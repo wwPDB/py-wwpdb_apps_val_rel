@@ -9,10 +9,6 @@ import xml.etree.ElementTree as ET
 import logging
 from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
 from wwpdb.utils.dp.ValidationWrapper import ValidationWrapper
-from wwpdb.io.locator.PathInfo import PathInfo
-
-from mmcif.io.IoAdapterCore import IoAdapterCore as IoAdapterCore
-from mmcif.api.DataCategory import DataCategory
 
 from wwpdb.apps.validation.src.utils.minimal_map_cif import GenerateMinimalCif
 
@@ -147,8 +143,11 @@ class runValidation:
         self.keepLog = message.get("keepLog", False)
         if self.pdbid:
             self.entry_id = self.pdbid
-        else:
+        elif self.emdbid:
             self.entry_id = self.emdbid
+        else:
+            logging.error('No PDB or EMDB provided')
+            return False
         if not self.siteID:
             self.siteID = getSiteId()
         self.pythonSiteID = message.get("python_site_id", self.siteID)
@@ -162,7 +161,6 @@ class runValidation:
         self.of = outputFiles(
             pdbID=self.pdbid,
             emdbID=self.emdbid,
-            siteID=self.siteID,
             outputRoot=self.outputRoot,
         )
 

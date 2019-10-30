@@ -62,8 +62,6 @@ class outputFiles:
         if self.get_emdb_id() and self.copy_to_root_emdb:
             self.accession = "{}".format(self.get_emdb_lower_underscore())
         
-        
-
         return self.accession
 
     def add_output_folder_accession(self, filename):

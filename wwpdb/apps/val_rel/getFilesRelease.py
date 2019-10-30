@@ -1,6 +1,7 @@
 import os
 import logging
 from wwpdb.apps.val_rel.release_file_names import releaseFileNames
+from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
 
 
 class getFilesRelease:
