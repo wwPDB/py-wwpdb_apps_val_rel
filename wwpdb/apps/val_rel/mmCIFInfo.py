@@ -11,11 +11,13 @@ class mmCIFInfo:
         self.io = IoAdapter
         self.mmcif_data = None
 
+        self.category_list = ['exptl', 'pdbx_database_related', 'em_map']
+
     def parse_mmcif(self):
         if self.mmcif:
             try:
                 logging.debug("parsing {}".format(self.mmcif))
-                cList = self.io.readFile(self.mmcif)
+                cList = self.io.readFile(self.mmcif, selectList=self.category_list)
                 self.mmcif_data = cList[0]
                 return self.mmcif_data
             except Exception as e:
