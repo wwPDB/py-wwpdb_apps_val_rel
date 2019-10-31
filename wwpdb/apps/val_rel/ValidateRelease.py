@@ -161,6 +161,7 @@ class runValidation:
         self.of = outputFiles(
             pdbID=self.pdbid,
             emdbID=self.emdbid,
+            siteID=self.siteID,
             outputRoot=self.outputRoot,
         )
 
