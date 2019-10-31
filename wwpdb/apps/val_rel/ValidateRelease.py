@@ -201,6 +201,7 @@ class runValidation:
 
             if self.pdbids:
                 for position, self.pdbid in enumerate(self.pdbids):
+                    self.pdbid = self.pdbid.lower()
                     if position == 0:
                         self.copy_to_root_emdb = True
                     else:
