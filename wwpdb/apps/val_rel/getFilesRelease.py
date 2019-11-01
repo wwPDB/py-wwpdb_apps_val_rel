@@ -2,6 +2,7 @@ import os
 import logging
 from wwpdb.apps.val_rel.release_file_names import releaseFileNames
 from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
+from wwpdb.apps.io.locator.ReleasePathInfo import ReleasePathInfo
 
 
 class getFilesRelease:
@@ -17,22 +18,8 @@ class getFilesRelease:
         self.rf = releaseFileNames()
         self.siteID = siteID
         self.cI = ConfigInfo(self.siteID)
-        self.for_release_path = self.cI.get("FOR_RELEASE_DATA_PATH", "")
-        self.release_path = os.path.join(self.for_release_path, "added")
-        self.modified_path = os.path.join(self.for_release_path, "modified")
-        self.emdb_release_path = os.path.join(self.for_release_path, "emd")
-        self.for_release_previous_path = self.cI.get(
-            "FOR_RELEASE_PREVIOUS_DATA_PATH", ""
-        )
-        self.release_previous_path = os.path.join(
-            self.for_release_previous_path, "added"
-        )
-        self.modified_previous_path = os.path.join(
-            self.for_release_previous_path, "modified"
-        )
-        self.emdb_previous_release_path = os.path.join(
-            self.for_release_previous_path, "emd"
-        )
+        self.rp = ReleasePathInfo(self.siteID)
+
         self.local_ftp_mmcif_path = self.cI.get("SITE_MMCIF_DIR", "")
         self.local_ftp_sf_path = self.cI.get("SITE_STRFACTORS_DIR", "")
         self.local_ftp_cs_path = self.cI.get("CHEMICAL_SHIFTS_FTP", "")
@@ -40,10 +27,10 @@ class getFilesRelease:
 
     def get_pdb_path_search_order(self, pdbid, coordinates=False, sf=False, cs=False):
         ret_list = [
-            os.path.join(self.release_path, pdbid),
-            os.path.join(self.modified_path, pdbid),
-            os.path.join(self.release_previous_path, pdbid),
-            os.path.join(self.modified_previous_path, pdbid),
+            os.path.join(self.rp.getForReleasePath('added'), pdbid),
+            os.path.join(self.rp.getForReleasePath('modified'), pdbid),
+            os.path.join(self.rp.getForReleasePath('added', version='previous'), pdbid),
+            os.path.join(self.rp.getForReleasePath('modified', version='previous'), pdbid),
         ]
         if coordinates:
             ret_list.append(self.local_ftp_mmcif_path)
@@ -93,8 +80,8 @@ class getFilesRelease:
 
     def get_emdb_path_search_order(self, emdbid):
         ret_list = [
-            os.path.join(self.emdb_release_path, emdbid),
-            os.path.join(self.emdb_previous_release_path, emdbid),
+            os.path.join(self.rp.getForReleasePath('emd'), emdbid),
+            os.path.join(self.rp.getForReleasePath('emd', version='previous'), emdbid),
             os.path.join(self.local_ftp_emdb_path, emdbid),
         ]
 

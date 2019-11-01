@@ -2,6 +2,7 @@ import logging
 import os
 from wwpdb.apps.val_rel.release_file_names import releaseFileNames
 from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
+from wwpdb.apps.io.locator.ReleasePathInfo import ReleasePathInfo
 
 class outputFiles:
     def __init__(self, pdbID=None, emdbID=None, outputRoot='', siteID=getSiteId(), skip_pdb_hash=False):
@@ -16,6 +17,7 @@ class outputFiles:
         self.copy_to_root_emdb = False
         self.accession = ''
         self.rf = releaseFileNames(gzip=False)
+        self.rp = ReleasePathInfo(self.siteID)
 
     def set_entry_id(self, entry_id):
         self._entryID = entry_id
@@ -113,9 +115,8 @@ class outputFiles:
         if self.output_root:
             self.entry_output_folder = os.path.join(self.output_root, pdb_hash,  self.get_pdb_id())
         else:
-            cI = ConfigInfo(self.siteID)
             self.entry_output_folder = os.path.join(
-                cI.get("VALIDATION_EXCHANGE_DATA_PATH"), self.get_pdb_id()
+                self.rp.getForReleasePath('val-reports'), self.get_pdb_id()
             )
         return self.entry_output_folder
 
