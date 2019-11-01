@@ -83,7 +83,7 @@ class mmCIFInfo:
                 db_id = row.get("db_id")
                 if content_type == "associated EM volume":
                     emdb_ids.append(db_id)
-        if emdb_ids and len(emdb_ids) == 1:
+        if emdb_ids:
             return emdb_ids[0]
         return None
 
