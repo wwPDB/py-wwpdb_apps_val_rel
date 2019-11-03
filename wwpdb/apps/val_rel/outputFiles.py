@@ -2,7 +2,7 @@ import logging
 import os
 from wwpdb.apps.val_rel.release_file_names import releaseFileNames
 from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
-from wwpdb.apps.io.locator.ReleasePathInfo import ReleasePathInfo
+from wwpdb.io.locator.ReleasePathInfo import ReleasePathInfo
 
 class outputFiles:
     def __init__(self, pdbID=None, emdbID=None, outputRoot='', siteID=getSiteId(), skip_pdb_hash=False):
