@@ -117,7 +117,7 @@ class outputFiles:
         else:
             rp = ReleasePathInfo(self.siteID)
             self.entry_output_folder = os.path.join(
-                rp.getForReleasePath('val-reports'), self.get_pdb_id()
+                rp.getForReleasePath('val_reports'), self.get_pdb_id()
             )
         return self.entry_output_folder
 
@@ -128,7 +128,7 @@ class outputFiles:
         else:
             rp = ReleasePathInfo(self.siteID)
             self.entry_output_folder = os.path.join(
-                rp.getForReleasePath('em-val-reports'),
+                rp.getForReleasePath('em_val_reports'),
                 "emd",
                 self.get_emdb_id(),
                 "validation",
