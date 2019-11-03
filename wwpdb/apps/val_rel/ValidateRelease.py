@@ -176,10 +176,7 @@ class runValidation:
             self.modelPath = self.rel_files.get_model(self.pdbid)
             self.sfPath = self.rel_files.get_sf(self.pdbid)
             self.csPath = self.rel_files.get_cs(self.pdbid)
-            pdb_to_run = self.check_pdb_already_run()
-            if not pdb_to_run:
-                logging.info("skipping {} as entry files have not changed".format(self.pdbid))
-                return True
+            
 
             cf = mmCIFInfo(self.modelPath)
             exp_methods = cf.get_exp_methods()
@@ -193,10 +190,7 @@ class runValidation:
 
         elif self.emdbid:
             self.emXmlPath = self.rel_files.get_emdb_xml(self.emdbid)
-            emdb_to_run = self.check_emdb_already_run()
-            if not emdb_to_run:
-                logging.info("skipping {} as XML file has not changed".format(self.emdbid))
-                return True
+            
             self.pdbids = get_pdbids_from_xml(self.emXmlPath)
 
             if self.pdbids:
@@ -266,7 +260,7 @@ class runValidation:
         try:
             self.of.set_pdb_id(self.pdbid)
             self.of.set_emdb_id(self.emdbid)
-            
+
             if self.emdbid:
                 if not self.emXmlPath:
                     self.emXmlPath = self.rel_files.get_emdb_xml(self.emdbid)
@@ -276,6 +270,13 @@ class runValidation:
                 self.sfPath = self.rel_files.get_sf(self.pdbid)
                 self.csPath = self.rel_files.get_cs(self.pdbid)
             
+            # check if any input files have changed
+            pdb_to_run = self.check_pdb_already_run()
+            emdb_to_run = self.check_emdb_already_run()
+            if not pdb_to_run and not emdb_to_run:
+                logging.info("skipping {}/{} as entry files have not changed".format(self.pdbid, self.emdbid))
+                return True
+
             # setup output folder
             self.entry_output_folder = self.of.get_entry_output_folder()
             if not os.path.exists(self.entry_output_folder):
