@@ -1,7 +1,7 @@
 import logging
 import os
 from wwpdb.apps.val_rel.release_file_names import releaseFileNames
-from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
+from wwpdb.utils.config.ConfigInfo import getSiteId
 from wwpdb.io.locator.ReleasePathInfo import ReleasePathInfo
 
 class outputFiles:
@@ -125,7 +125,6 @@ class outputFiles:
         if self.output_root:
             self.entry_output_folder = os.path.join(self.output_root, self.get_emdb_id())
         else:
-            cI = ConfigInfo(self.siteID)
             self.entry_output_folder = os.path.join(
                 self.rp.getForReleasePath('em-val-reports'),
                 "emd",
