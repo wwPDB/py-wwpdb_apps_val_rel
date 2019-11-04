@@ -22,3 +22,6 @@ class OuputFolderTests(unittest.TestCase):
         self.rv.outputRoot = self.output_folder
         self.rv.set_output_dir_and_files()
         print(self.rv.entry_output_folder)
+
+if __name__ == '__main__':
+    unittest.main()
