@@ -127,6 +127,23 @@ class runValidation:
             modified = True
         return modified
 
+    def check_modified(self):
+        pdb_modified = self.check_pdb_already_run()
+        emdb_modified = self.check_emdb_already_run()
+
+        if pdb_modified or emdb_modified:
+            return True
+        return False
+
+    def set_output_dir_and_files(self):
+        self.of = outputFiles(
+                pdbID=self.pdbid,
+                emdbID=self.emdbid,
+                siteID=self.siteID,
+                outputRoot=self.outputRoot,
+            )   
+        self.entry_output_folder = self.of.get_entry_output_folder()
+        self.output_file_dict = self.of.get_all_validation_files()
 
     def run_process(self, message):
         # depid = message.get('depID')
@@ -157,13 +174,6 @@ class runValidation:
         logging.info("running validation for {}, {}".format(self.pdbid, self.emdbid))
 
         self.rel_files = getFilesRelease(siteID=self.siteID)
-
-        self.of = outputFiles(
-            pdbID=self.pdbid,
-            emdbID=self.emdbid,
-            siteID=self.siteID,
-            outputRoot=self.outputRoot,
-        )
 
         worked = False
         self.session_path = self.cI.get("SITE_WEB_APPS_SESSIONS_PATH")
@@ -258,9 +268,6 @@ class runValidation:
 
     def run_validation(self):
         try:
-            self.of.set_pdb_id(self.pdbid)
-            self.of.set_emdb_id(self.emdbid)
-
             if self.emdbid:
                 if not self.emXmlPath:
                     self.emXmlPath = self.rel_files.get_emdb_xml(self.emdbid)
@@ -270,15 +277,16 @@ class runValidation:
                 self.sfPath = self.rel_files.get_sf(self.pdbid)
                 self.csPath = self.rel_files.get_cs(self.pdbid)
             
+            # setup output folder
+            self.set_output_dir_and_files()
+
             # check if any input files have changed
-            pdb_to_run = self.check_pdb_already_run()
-            emdb_to_run = self.check_emdb_already_run()
-            if not pdb_to_run and not emdb_to_run:
+            is_modified = self.check_modified()
+            if not is_modified:
                 logging.info("skipping {}/{} as entry files have not changed".format(self.pdbid, self.emdbid))
                 return True
 
-            # setup output folder
-            self.entry_output_folder = self.of.get_entry_output_folder()
+            # make output directory if it doesn't exist
             if not os.path.exists(self.entry_output_folder):
                 os.makedirs(self.entry_output_folder)
                 
@@ -286,9 +294,6 @@ class runValidation:
             self.logPath = os.path.join(self.entry_output_folder, "validation.log")
 
             # clearing existing reports before making new ones
-            self.output_file_dict = (
-                self.of.get_all_validation_files()
-            )
             self.output_file_list = []
             for key in ['pdf', 'xml', 'full_pdf', 'png', 'svg', '2fofc', 'fofc']:
                 if key in self.output_file_dict:
