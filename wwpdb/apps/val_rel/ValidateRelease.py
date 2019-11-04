@@ -128,6 +128,7 @@ class runValidation:
         return modified
 
     def check_modified(self):
+        self.set_output_dir_and_files()
         pdb_modified = self.check_pdb_already_run()
         emdb_modified = self.check_emdb_already_run()
 
@@ -143,6 +144,7 @@ class runValidation:
                 outputRoot=self.outputRoot,
             )   
         self.entry_output_folder = self.of.get_entry_output_folder()
+        logging.info('output folder: {}'.format(self.entry_output_folder))
         self.output_file_dict = self.of.get_all_validation_files()
 
     def run_process(self, message):
@@ -276,11 +278,8 @@ class runValidation:
             if self.pdbid:
                 self.sfPath = self.rel_files.get_sf(self.pdbid)
                 self.csPath = self.rel_files.get_cs(self.pdbid)
-            
-            # setup output folder
-            self.set_output_dir_and_files()
 
-            # check if any input files have changed
+            # check if any input files have changed and set output folders
             is_modified = self.check_modified()
             if not is_modified:
                 logging.info("skipping {}/{} as entry files have not changed".format(self.pdbid, self.emdbid))

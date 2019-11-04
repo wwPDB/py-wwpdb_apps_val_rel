@@ -73,9 +73,7 @@ class outputFiles:
 
     def get_core_validation_files(self):
         logging.debug("getting core files for: {}".format(self._entryID))
-        logging.debug(
-            "path: {}".format(os.path.join(self.entry_output_folder, self._entryID))
-        )
+        logging.debug("path: {}".format(self.entry_output_folder))
 
         self.set_accession()
         logging.debug('accession set to {}'.format(self.accession))
