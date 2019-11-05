@@ -97,8 +97,8 @@ class ModifiedFolderTests(unittest.TestCase):
         time.sleep(1)
         os.makedirs(self.pdb_output_folder)
         ret = self.rv.check_modified()
+        # expected False - not modified - don't run validation
         self.assertFalse(ret)
-        pass
 
 
 
