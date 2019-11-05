@@ -307,6 +307,8 @@ class runValidation:
             # make output directory if it doesn't exist
             if not os.path.exists(self.entry_output_folder):
                 os.makedirs(self.entry_output_folder)
+            else:
+                os.utime(self.entry_output_folder)
                 
             logging.info("Entry output folder: {}".format(self.entry_output_folder))
             self.logPath = os.path.join(self.entry_output_folder, "validation.log")
