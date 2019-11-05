@@ -23,10 +23,12 @@ class ModifiedFolderTests(unittest.TestCase):
         touch(self.emdb_file)
         self.output_dir = tempfile.mkdtemp()
         self.pdb_output_folder =  os.path.join(self.output_dir, self.pdbid_hash, self.pdbid)
+        self.emdb_output_folder =  os.path.join(self.output_dir, self.emdb)
         self.rv = runValidation()
         self.rv.outputRoot = self.output_dir
         time.sleep(1)
         os.makedirs(self.pdb_output_folder)
+        os.makedirs(self.emdb_output_folder)
 
     def tearDown(self):
         if os.path.exists(self.output_dir):
@@ -84,6 +86,7 @@ class ModifiedFolderTests(unittest.TestCase):
         self.rv.pdbid = self.pdbid
         self.rv.emdbid = self.emdb
         self.rv.modelPath = self.pdbid_file
+        self.rv.emXmlPath = self.emdb_file
         touch(self.emdb_file)
         ret = self.rv.check_modified()
         # expected True - modified - do run validation
