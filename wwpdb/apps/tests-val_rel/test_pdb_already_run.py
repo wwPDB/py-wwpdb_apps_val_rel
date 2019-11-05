@@ -37,46 +37,51 @@ class ModifiedFolderTests(unittest.TestCase):
     def test_always_run(self):
         self.rv.pdbid = self.pdbid
         self.rv.always_recalculate = True
-        ret = self.rv.check_modified()
+        ret = self.rv.check_pdb_already_run()
         # expected True - is modified - run validation
         self.assertTrue(ret)
 
     def test_pdb_not_modified(self):
         self.rv.pdbid = self.pdbid
         self.rv.modelPath = self.pdbid_file
-        ret = self.rv.check_modified()
+        self.rv.pdb_output_folder = self.pdb_output_folder
+        ret = self.rv.check_pdb_already_run()
         # expected False - not modified - don't run validation
         self.assertFalse(ret)
 
     def test_emdb_not_modified(self):
         self.rv.emdbid = self.emdb
         self.rv.emXmlPath = self.emdb_file
-        ret = self.rv.check_modified()
+        self.rv.pdb_output_folder = self.pdb_output_folder
+        ret = self.rv.check_pdb_already_run()
         # expected False - not modified - don't run validation
         self.assertFalse(ret)
 
     def test_pdb_modified(self):
         self.rv.pdbid = self.pdbid
         self.rv.modelPath = self.pdbid_file
+        self.rv.pdb_output_folder = self.pdb_output_folder
         touch(self.pdbid_file)
-        ret = self.rv.check_modified()
+        ret = self.rv.check_pdb_already_run()
         # expected True - modified - do run validation
         self.assertTrue(ret)
 
     def test_emdb_modified(self):
         self.rv.emdbid = self.emdb
         self.rv.emXmlPath = self.emdb_file
+        self.rv.pdb_output_folder = self.pdb_output_folder
         touch(self.emdb_file)
-        ret = self.rv.check_modified()
-        # expected True - modified - do run validation
-        self.assertTrue(ret)
+        ret = self.rv.check_pdb_already_run()
+        # expected False - EMDB not modified - do run validation
+        self.assertFalse(ret)
 
     def test_pdb_and_emdb_with_pdb_modified(self):
         self.rv.pdbid = self.pdbid
         self.rv.emdbid = self.emdb
         self.rv.modelPath = self.pdbid_file
+        self.rv.pdb_output_folder = self.pdb_output_folder
         touch(self.pdbid_file)
-        ret = self.rv.check_modified()
+        ret = self.rv.check_pdb_already_run()
         # expected True - modified - do run validation
         self.assertTrue(ret)
 
@@ -84,21 +89,23 @@ class ModifiedFolderTests(unittest.TestCase):
         self.rv.pdbid = self.pdbid
         self.rv.emdbid = self.emdb
         self.rv.modelPath = self.pdbid_file
+        self.rv.pdb_output_folder = self.pdb_output_folder
         touch(self.emdb_file)
-        ret = self.rv.check_modified()
-        # expected True - modified - do run validation
-        self.assertTrue(ret)
+        ret = self.rv.check_pdb_already_run()
+        # expected False - PDB not modified - do run validation
+        self.assertFalse(ret)
 
     def test_pdb_folder_modified(self):
         self.rv.pdbid = self.pdbid
         self.rv.modelPath = self.pdbid_file
+        self.rv.pdb_output_folder = self.pdb_output_folder
         touch(self.pdbid_file)
         shutil.rmtree(self.pdb_output_folder)
         time.sleep(1)
         os.makedirs(self.pdb_output_folder)
-        ret = self.rv.check_modified()
+        ret = self.rv.check_pdb_already_run()
+        # expected False - PDB not modified - do run validation
         self.assertFalse(ret)
-        pass
 
 
 
