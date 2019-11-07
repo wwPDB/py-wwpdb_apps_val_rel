@@ -209,7 +209,6 @@ class runValidation:
                 # self.contour_level = cf.get_em_map_contour_level() # not needed as its in the XML
                 if not self.emdbid:
                     self.emdbid = cf.get_associated_emdb()
-                    self.copy_to_root_emdb = True
 
             return self.run_validation()
 
@@ -217,34 +216,36 @@ class runValidation:
             self.emXmlPath = self.rel_files.get_emdb_xml(self.emdbid)
             
             self.pdbids = get_pdbids_from_xml(self.emXmlPath)
+            all_worked = []
 
             if self.pdbids:
-                for position, self.pdbid in enumerate(self.pdbids):
+                for self.pdbid in self.pdbids:
                     self.pdbid = self.pdbid.lower()
-                    if position == 0:
-                        self.copy_to_root_emdb = True
-                    else:
-                        self.copy_to_root_emdb = False
-                    all_worked = []
+                    
                     self.modelPath = self.rel_files.get_model(self.pdbid)
-                    worked = self.run_validation()
-                    all_worked.append(worked)
-                if list(set(all_worked)) == [True]:
-                    return True
-                else:
-                    logging.error(self.pdbids)
-                    logging.error(all_worked)
-                    return False
+                    if self.modelPath:
+                        # run validation
+                        worked = self.run_validation()
+                        all_worked.append(worked)
+                
+            # make map only validation report without models
+            self.pdbid = None
+            self.modelPath = os.path.join(
+                self.tempDir, "{}_minimal.cif".format(self.emdbid)
+            )
+            GenerateMinimalCif(emdb_xml=self.emXmlPath).write_out(
+                output_cif=self.modelPath
+            )
+            # run validation
+            worked = self.run_validation()
+            all_worked.append(worked)
 
+            if list(set(all_worked)) == [True]:
+                return True
             else:
-                self.modelPath = os.path.join(
-                    self.tempDir, "{}_minimal.cif".format(self.emdbid)
-                )
-                GenerateMinimalCif(emdb_xml=self.emXmlPath).write_out(
-                    output_cif=self.modelPath
-                )
-                # run validation
-                return self.run_validation()
+                logging.error(self.pdbids)
+                logging.error(all_worked)
+                return False
 
     def copy_to_emdb(self, copy_to_root_emdb=False):
         if self.emdbid:
@@ -271,8 +272,9 @@ class runValidation:
                                 shutil.copy(
                                     self.output_file_dict[k], emdb_output_file_dict[k]
                                 )
-                    for f in emdb_output_file_dict.values():
-                        gzip_file(f)
+                    if not self.skip_gzip:
+                        for f in emdb_output_file_dict.values():
+                            gzip_file(f)
                 else:
                     logging.error(
                         "EMDB output folder {} does not exist".format(
@@ -336,10 +338,10 @@ class runValidation:
                 em_of.set_accession_variables(with_emdb=True)
                 emdb_output_file_dict = em_of.get_core_validation_files()
                 remove_files(emdb_output_file_dict.values())
-                if self.copy_to_root_emdb:
-                    em_of.set_accession_variables(with_emdb=True, copy_to_root_emdb=self.copy_to_root_emdb)
-                    emdb_output_file_dict = em_of.get_core_validation_files()
-                    remove_files(emdb_output_file_dict.values())
+                #if self.copy_to_root_emdb:
+                #    em_of.set_accession_variables(with_emdb=True, copy_to_root_emdb=self.copy_to_root_emdb)
+                #    emdb_output_file_dict = em_of.get_core_validation_files()
+                #    remove_files(emdb_output_file_dict.values())
 
             self.runDir = tempfile.mkdtemp(
                 dir=self.session_path,
@@ -403,12 +405,12 @@ class runValidation:
                 if not ok:
                     logging.error('failed to copy to emdb folder')
                     return False
-                if self.copy_to_root_emdb:
-                    logging.info('copy to EMDB folder without PDBID')
-                    ok = self.copy_to_emdb(self.copy_to_root_emdb)
-                    if not ok:
-                        logging.error('failed to copy to emdb folder as root')
-                        return False
+                #if self.copy_to_root_emdb:
+                #    logging.info('copy to EMDB folder without PDBID')
+                #    ok = self.copy_to_emdb(self.copy_to_root_emdb)
+                #    if not ok:
+                #        logging.error('failed to copy to emdb folder as root')
+                #        return False
             
             if not self.skip_gzip:
                 self.gzip_output()
