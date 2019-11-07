@@ -6,9 +6,11 @@ import shutil
 import json
 import sys
 from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
-from wwpdb.apps.val_ws_server.validate.ValidateRelease import outputFiles, get_gzip_name
 from wwpdb.utils.message_queue.MessagePublisher import MessagePublisher
-from wwpdb.apps.val_ws_server.validate.ValidateRelease import queue_name, routing_key, exchange
+from wwpdb.apps.val_rel.outputFiles import outputFiles
+from wwpdb.apps.val_rel.ValidateRelease import queue_name, routing_key, exchange, get_gzip_name, get_pdbids_from_xml
+from wwpdb.apps.val_rel.getFilesRelease import getFilesRelease
+
 
 logger = logging.getLogger()
 
@@ -38,8 +40,8 @@ class FindEntries:
         for entry in entries:
             if entry:
                 self.get_pdb_output_folder(pdbid=entry)
-                files_to_check_list, file_to_check_dict = self.of.get_core_validation_files()
-                for f in files_to_check_list:
+                file_to_check_dict = self.of.get_core_validation_files()
+                for f in file_to_check_dict.values():
                     if self.check_for_missing(f):
                         if entry not in self.entries_missing_files:
                             self.entries_missing_files.append(entry)
@@ -57,8 +59,8 @@ class FindEntries:
         for entry in entries:
             if entry:
                 self.get_emdb_output_folder(emdbid=entry)
-                files_to_check_list, file_to_check_dict = self.of.get_core_validation_files()
-                for f in files_to_check_list:
+                file_to_check_dict = self.of.get_core_validation_files()
+                for f in file_to_check_dict.values():
                     if self.check_for_missing(f):
                         if entry not in self.entries_missing_files:
                             self.entries_missing_files.append(entry)
@@ -97,7 +99,7 @@ class FindEntries:
 
 
 def main(entry_list=None, entry_file=None, release=False, modified=False, emdb_release=False, missing_pdb=False, missing_emdb=False, 
-        siteID=getSiteId(), python_siteID=None, pdb=False, emdb=False, keep_logs=False,output_root=None,
+        siteID=getSiteId(), python_siteID=None, keep_logs=False,output_root=None,
         always_recalculate=False, skipGzip=False):
     pdb_entries = []
     emdb_entries = []
@@ -139,27 +141,35 @@ def main(entry_list=None, entry_file=None, release=False, modified=False, emdb_r
         else:
             logging.error('file: %s not found' % entry_file)
     
-    if entries and pdb:
-        pdb_entries.extend(entries)
-    elif entries and emdb:
-        emdb_entries.extend(entries)
-    else:
-        logging.error('entries given but not specified if pdb or emdb IDs')
+    for entry in entries:
+        if 'EMD-' in entry.upper():
+            emdb_entries.append(entry)
+        else:
+            pdb_entries.append(entry)
 
     added_entries = []
+
+    for emdb_entry in emdb_entries:
+        if emdb_entry not in added_entries:
+            # stop duplication of making EM validation reports twice
+            em_xml = getFilesRelease().get_emdb_xml(emdb_entry)
+            em_vol = getFilesRelease().get_emdb_volume(emdb_entry)
+            if em_vol:
+                pdbids = get_pdbids_from_xml(em_xml)
+                for pdbid in pdbids:
+                    pdbid = pdbid.lower()
+                    if pdbid in pdb_entries:
+                        pdb_entries.remove(pdbid)
+
+                message = {'emdbID': emdb_entry}
+                messages.append(message)
+                added_entries.append(emdb_entry)
 
     for pdb_entry in pdb_entries:
         if pdb_entry not in added_entries:
             message = {'pdbID': pdb_entry}
-            
             messages.append(message)
             added_entries.append(pdb_entry)
-
-    for emdb_entry in emdb_entries:
-        if emdb_entry not in added_entries:
-            message = {'emdbID': emdb_entry}
-            messages.append(message)
-            added_entries.append(emdb_entry)
 
     if messages:
         for message in messages:
@@ -183,8 +193,6 @@ if '__main__' in __name__:
                         default=logging.INFO)
     parser.add_argument('--entry_list', help='comma separated list of entries', type=str)
     parser.add_argument('--entry_file', help='file containing list of entries - one per line', type=str)
-    parser.add_argument('--emdb', help='entries are EMDB', action='store_true')
-    parser.add_argument('--pdb', help='entries are PDB', action='store_true')
     parser.add_argument('--release', help='run entries scheduled for new release', action='store_true')
     parser.add_argument('--modified', help='run entries scheduled for modified release', action='store_true')
     parser.add_argument('--emdb_release', help='run entries scheduled for emdb release', action='store_true')
@@ -195,17 +203,13 @@ if '__main__' in __name__:
     parser.add_argument('--skipGzip', help='skip gizpping output files', action='store_true')
     parser.add_argument('--siteID', help='siteID', type=str, default=getSiteId())
     parser.add_argument('--python_siteID', help='siteID for the OneDep code', type=str)
-    parser.add_argument('--output_root', help='folder to output the results to - overwrides default onedep folder', type=str)
+    parser.add_argument('--output_root', help='folder to output the results to - overwrides default OneDep folder', type=str)
     args = parser.parse_args()
     logger.setLevel(args.loglevel)
 
-    if (args.entry_list or args.entry_file) and not (args.emdb or args.pdb):
-        print('please specify if entries are --pdb or --emdb')
-        sys.exit(1)
-
     main(entry_list=args.entry_list, entry_file=args.entry_file,
          modified=args.modified, release=args.release, emdb_release=args.emdb_release, missing_pdb=args.find_missing_pdb, missing_emdb=args.find_missing_emdb, 
-         siteID=args.siteID, pdb=args.pdb, emdb=args.emdb, python_siteID=args.python_siteID,
+         siteID=args.siteID, python_siteID=args.python_siteID,
          keep_logs=args.keep_logs, always_recalculate=args.always_recalculate, skipGzip=args.skipGzip)
 
     
