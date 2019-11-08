@@ -6,16 +6,17 @@ import shutil
 import time
 from wwpdb.apps.val_rel.ValidateRelease import already_run
 
+
 def touch(fname, times=None):
-    with open(fname, 'a'):
+    with open(fname, "a"):
         os.utime(fname, times)
 
-class ModifiedFolderTests(unittest.TestCase):
 
+class ModifiedFolderTests(unittest.TestCase):
     def setUp(self):
         self.test_dir = tempfile.mkdtemp()
         self.test_input_dir = tempfile.mkdtemp()
-        self.test_file = os.path.join(self.test_input_dir, 'test.file')
+        self.test_file = os.path.join(self.test_input_dir, "test.file")
 
     def tearDown(self):
         if os.path.exists(self.test_dir):
@@ -38,7 +39,7 @@ class ModifiedFolderTests(unittest.TestCase):
         ret = already_run(test_file=self.test_file, output_folder=self.test_dir)
         # expected False - its not already run
         self.assertFalse(ret)
-    
+
     def test_missing_dir(self):
         touch(self.test_file)
         shutil.rmtree(self.test_dir)
@@ -55,5 +56,6 @@ class ModifiedFolderTests(unittest.TestCase):
         # expected True - its already run
         self.assertTrue(ret)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

@@ -30,19 +30,25 @@ from wwpdb.utils.detach.DetachedProcessBase import DetachedProcessBase
 from wwpdb.utils.message_queue.MessageConsumerBase import MessageConsumerBase
 from wwpdb.utils.message_queue.MessageQueueConnection import MessageQueueConnection
 from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
-from wwpdb.apps.val_rel.ValidateRelease import runValidation, queue_name, routing_key, exchange
+from wwpdb.apps.val_rel.ValidateRelease import (
+    runValidation,
+    queue_name,
+    routing_key,
+    exchange,
+)
 
 
-
-#from wwpdb.apps.val_ws_server.validate.Validate import Validate
+# from wwpdb.apps.val_ws_server.validate.Validate import Validate
 
 logger = logging.getLogger()
-logging.basicConfig(level=logging.INFO, format='\n%(asctime)s [%(levelname)s]-%(module)s.%(funcName)s: %(message)s')
+logging.basicConfig(
+    level=logging.INFO,
+    format="\n%(asctime)s [%(levelname)s]-%(module)s.%(funcName)s: %(message)s",
+)
 logging.getLogger("pika").setLevel(logging.INFO)
 
 
 class MessageConsumer(MessageConsumerBase):
-
     def __init__(self, amqpUrl):
         super(MessageConsumer, self).__init__(amqpUrl)
 
@@ -65,7 +71,6 @@ class MessageConsumer(MessageConsumerBase):
 
 
 class MessageConsumerWorker(object):
-
     def __init__(self):
         self.__setup()
 
@@ -105,10 +110,25 @@ class MyDetachedProcess(DetachedProcessBase):
          Illustrates the use of python logging and various I/O channels in detached process.
     """
 
-    def __init__(self, pidFile='/tmp/DetachedProcessBase.pid', stdin=os.devnull, stdout=os.devnull, stderr=os.devnull, wrkDir='/',
-                 gid=None, uid=None):
-        super(MyDetachedProcess, self).__init__(pidFile=pidFile, stdin=stdin, stdout=stdout, stderr=stderr, wrkDir=wrkDir,
-                                                gid=gid, uid=uid)
+    def __init__(
+        self,
+        pidFile="/tmp/DetachedProcessBase.pid",
+        stdin=os.devnull,
+        stdout=os.devnull,
+        stderr=os.devnull,
+        wrkDir="/",
+        gid=None,
+        uid=None,
+    ):
+        super(MyDetachedProcess, self).__init__(
+            pidFile=pidFile,
+            stdin=stdin,
+            stdout=stdout,
+            stderr=stderr,
+            wrkDir=wrkDir,
+            gid=gid,
+            uid=uid,
+        )
         self.__mcw = MessageConsumerWorker()
 
     def run(self):
@@ -139,17 +159,53 @@ def main():
     except AttributeError:
         pass
 
-    parser.add_argument("--start", default=False, action='store_true', dest="startOp", help="Start consumer client process")
-    parser.add_argument("--stop", default=False, action="store_true", dest="stopOp", help="Stop consumer client process")
-    parser.add_argument("--restart", default=False, action="store_true", dest="restartOp", help="Restart consumer client process")
-    parser.add_argument("--status", default=False, action="store_true", dest="statusOp", help="Report consumer client process status")
+    parser.add_argument(
+        "--start",
+        default=False,
+        action="store_true",
+        dest="startOp",
+        help="Start consumer client process",
+    )
+    parser.add_argument(
+        "--stop",
+        default=False,
+        action="store_true",
+        dest="stopOp",
+        help="Stop consumer client process",
+    )
+    parser.add_argument(
+        "--restart",
+        default=False,
+        action="store_true",
+        dest="restartOp",
+        help="Restart consumer client process",
+    )
+    parser.add_argument(
+        "--status",
+        default=False,
+        action="store_true",
+        dest="statusOp",
+        help="Report consumer client process status",
+    )
 
     # parser.add_argument("-v", "--verbose", default=False, action="store_true", dest="verbose", help="Enable verbose output")
-    parser.add_argument("--debug", default=1, type=int, dest="debugLevel", help="Debug level (default: 1 [0-3]")
-    parser.add_argument("--instance", default=1, type=int, dest="instanceNo", help="Instance number [1-n]")
+    parser.add_argument(
+        "--debug",
+        default=1,
+        type=int,
+        dest="debugLevel",
+        help="Debug level (default: 1 [0-3]",
+    )
+    parser.add_argument(
+        "--instance",
+        default=1,
+        type=int,
+        dest="instanceNo",
+        help="Instance number [1-n]",
+    )
     parser.add_argument("--siteID", default=getSiteId(), type=str, help="wwPDB site ID")
     #
-    #(options, args) = parser.parse_args()
+    # (options, args) = parser.parse_args()
 
     options = parser.parse_args()
     if isinstance(options, tuple):
@@ -158,29 +214,38 @@ def main():
         args = options
     del options
 
-
-    #siteId = getSiteId(defaultSiteId=None)
+    # siteId = getSiteId(defaultSiteId=None)
     siteId = args.siteID
     cI = ConfigInfo(siteId)
 
     #    topPath = cI.get('SITE_WEB_APPS_TOP_PATH')
-    topSessionPath = cI.get('SITE_WEB_APPS_TOP_SESSIONS_PATH')
+    topSessionPath = cI.get("SITE_WEB_APPS_TOP_SESSIONS_PATH")
 
     #
     myFullHostName = platform.uname()[1]
-    myHostName = str(myFullHostName.split('.')[0]).lower()
+    myHostName = str(myFullHostName.split(".")[0]).lower()
     #
     wsLogDirPath = os.path.join(topSessionPath, "rel-val-logs")
 
     #
-    pidFilePath = os.path.join(wsLogDirPath, myHostName + '_' + str(args.instanceNo) + '.pid')
-    stdoutFilePath = os.path.join(wsLogDirPath, myHostName + '_' + str(args.instanceNo) + '_stdout.log')
-    stderrFilePath = os.path.join(wsLogDirPath, myHostName + '_' + str(args.instanceNo) + '_stderr.log')
-    wfLogFilePath = os.path.join(wsLogDirPath, myHostName + '_' + str(args.instanceNo) + '_' + now + '.log')
+    pidFilePath = os.path.join(
+        wsLogDirPath, myHostName + "_" + str(args.instanceNo) + ".pid"
+    )
+    stdoutFilePath = os.path.join(
+        wsLogDirPath, myHostName + "_" + str(args.instanceNo) + "_stdout.log"
+    )
+    stderrFilePath = os.path.join(
+        wsLogDirPath, myHostName + "_" + str(args.instanceNo) + "_stderr.log"
+    )
+    wfLogFilePath = os.path.join(
+        wsLogDirPath, myHostName + "_" + str(args.instanceNo) + "_" + now + ".log"
+    )
     #
-    logger = logging.getLogger(name='root')
+    logger = logging.getLogger(name="root")
     logging.captureWarnings(True)
-    formatter = logging.Formatter('%(asctime)s [%(levelname)s]-%(module)s.%(funcName)s: %(message)s')
+    formatter = logging.Formatter(
+        "%(asctime)s [%(levelname)s]-%(module)s.%(funcName)s: %(message)s"
+    )
     handler = logging.FileHandler(wfLogFilePath)
     handler.setFormatter(formatter)
     logger.addHandler(handler)
@@ -195,25 +260,40 @@ def main():
         logger.setLevel(logging.ERROR)
     #
     #
-    myDP = MyDetachedProcess(pidFile=pidFilePath, stdout=stdoutFilePath, stderr=stderrFilePath, wrkDir=wsLogDirPath)
+    myDP = MyDetachedProcess(
+        pidFile=pidFilePath,
+        stdout=stdoutFilePath,
+        stderr=stderrFilePath,
+        wrkDir=wsLogDirPath,
+    )
 
     if args.startOp:
-        sys.stdout.write("+DetachedMessageConsumer() starting consumer service at %s\n" % lt)
+        sys.stdout.write(
+            "+DetachedMessageConsumer() starting consumer service at %s\n" % lt
+        )
         logger.info("DetachedMessageConsumer() starting consumer service at %s" % lt)
         myDP.start()
     elif args.stopOp:
-        sys.stdout.write("+DetachedMessageConsumer() stopping consumer service at %s\n" % lt)
+        sys.stdout.write(
+            "+DetachedMessageConsumer() stopping consumer service at %s\n" % lt
+        )
         logger.info("DetachedMessageConsumer() stopping consumer service at %s" % lt)
         myDP.stop()
     elif args.restartOp:
-        sys.stdout.write("+DetachedMessageConsumer() restarting consumer service at %s\n" % lt)
+        sys.stdout.write(
+            "+DetachedMessageConsumer() restarting consumer service at %s\n" % lt
+        )
         logger.info("DetachedMessageConsumer() restarting consumer service at %s" % lt)
         myDP.restart()
     elif args.statusOp:
-        sys.stdout.write("+DetachedMessageConsumer() reporting status for consumer service at %s\n" % lt)
+        sys.stdout.write(
+            "+DetachedMessageConsumer() reporting status for consumer service at %s\n"
+            % lt
+        )
         sys.stdout.write(myDP.status())
     else:
         pass
+
 
 if __name__ == "__main__":
     main()
