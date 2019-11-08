@@ -27,10 +27,12 @@ class getFilesRelease:
 
     def get_pdb_path_search_order(self, pdbid, coordinates=False, sf=False, cs=False):
         ret_list = [
-            os.path.join(self.rp.getForReleasePath('added'), pdbid),
-            os.path.join(self.rp.getForReleasePath('modified'), pdbid),
-            os.path.join(self.rp.getForReleasePath('added', version='previous'), pdbid),
-            os.path.join(self.rp.getForReleasePath('modified', version='previous'), pdbid),
+            os.path.join(self.rp.getForReleasePath("added"), pdbid),
+            os.path.join(self.rp.getForReleasePath("modified"), pdbid),
+            os.path.join(self.rp.getForReleasePath("added", version="previous"), pdbid),
+            os.path.join(
+                self.rp.getForReleasePath("modified", version="previous"), pdbid
+            ),
         ]
         if coordinates:
             ret_list.append(self.local_ftp_mmcif_path)
@@ -41,7 +43,9 @@ class getFilesRelease:
         return ret_list
 
     def search_nfs_pdb(self, filename, pdbid, coordinates=False, sf=False, cs=False):
-        for path in self.get_pdb_path_search_order(pdbid, coordinates=coordinates, sf=sf, cs=cs):
+        for path in self.get_pdb_path_search_order(
+            pdbid, coordinates=coordinates, sf=sf, cs=cs
+        ):
             file_path = os.path.join(path, filename)
             logging.debug("searching: {}".format(file_path))
             if os.path.exists(file_path):
@@ -51,13 +55,15 @@ class getFilesRelease:
 
     def get_model(self, pdbid):
         filename = self.rf.get_model(pdbid)
-        file_path = self.search_nfs_pdb(filename=filename, pdbid=pdbid, coordinates=True)
+        file_path = self.search_nfs_pdb(
+            filename=filename, pdbid=pdbid, coordinates=True
+        )
         if file_path:
             return file_path
         return None
 
     def get_sf(self, pdbid):
-        filename = self.rf.get_structure_factor(pdbid, for_release=True) 
+        filename = self.rf.get_structure_factor(pdbid, for_release=True)
         file_path = self.search_nfs_pdb(filename=filename, pdbid=pdbid, sf=True)
         if file_path:
             return file_path
@@ -68,7 +74,7 @@ class getFilesRelease:
         return None
 
     def get_cs(self, pdbid):
-        filename =  self.rf.get_chemical_shifts(pdbid, for_release=True)
+        filename = self.rf.get_chemical_shifts(pdbid, for_release=True)
         file_path = self.search_nfs_pdb(filename=filename, pdbid=pdbid, cs=True)
         if file_path:
             return file_path
@@ -80,8 +86,8 @@ class getFilesRelease:
 
     def get_emdb_path_search_order(self, emdbid):
         ret_list = [
-            os.path.join(self.rp.getForReleasePath('emd'), emdbid),
-            os.path.join(self.rp.getForReleasePath('emd', version='previous'), emdbid),
+            os.path.join(self.rp.getForReleasePath("emd"), emdbid),
+            os.path.join(self.rp.getForReleasePath("emd", version="previous"), emdbid),
             os.path.join(self.local_ftp_emdb_path, emdbid),
         ]
 
@@ -105,17 +111,17 @@ class getFilesRelease:
 
     def get_emdb_xml(self, emdbid):
         accession = self.get_emdb_id_file_format(emdbid)
-        filename =  self.rf.get_emdb_xml(accession, for_release=True)
+        filename = self.rf.get_emdb_xml(accession, for_release=True)
         filepath = self.return_emdb_path(
-                filename=filename, subfolder="header", emdbid=emdbid
-                )
+            filename=filename, subfolder="header", emdbid=emdbid
+        )
         if filepath:
             return filepath
         accession = self.get_emdb_id_file_format_xml(emdbid)
-        filename =  self.rf.get_emdb_xml(accession)
+        filename = self.rf.get_emdb_xml(accession)
         filepath = self.return_emdb_path(
-                        filename=filename, subfolder="header", emdbid=emdbid
-                    )
+            filename=filename, subfolder="header", emdbid=emdbid
+        )
         if filepath:
             return filepath
         return None

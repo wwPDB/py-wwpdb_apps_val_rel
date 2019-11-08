@@ -1,5 +1,4 @@
-class releaseFileNames():
-
+class releaseFileNames:
     def __init__(self, gzip=False):
         self.gzip = gzip
 
@@ -7,26 +6,26 @@ class releaseFileNames():
         if set_gzip:
             self.gzip = True
         if self.gzip:
-            return  filename + ".gz"
+            return filename + ".gz"
         return filename
 
     def get_model(self, accession):
-        return self.add_gzip(accession + '.cif', set_gzip=True)
+        return self.add_gzip(accession + ".cif", set_gzip=True)
 
     def get_structure_factor(self, accession, for_release=False):
         if for_release:
-            return accession + '-sf.cif'
-        return self.add_gzip('r{}sf.ent'.format(accession), set_gzip=True)
+            return accession + "-sf.cif"
+        return self.add_gzip("r{}sf.ent".format(accession), set_gzip=True)
 
     def get_chemical_shifts(self, accession, for_release=False):
-        fname = '{}_cs.str'.format(accession)
+        fname = "{}_cs.str".format(accession)
         if for_release:
             return fname
         return self.add_gzip(fname, set_gzip=True)
 
     def get_emdb_xml(self, accession, for_release=False):
         if for_release:
-            return self.add_gzip(accession + '_v3.xml')
+            return self.add_gzip(accession + "_v3.xml")
         return self.add_gzip(accession + "-v30.xml")
 
     def get_emdb_map(self, accession):
@@ -37,7 +36,7 @@ class releaseFileNames():
 
     def get_validation_pdf(self, accession):
         return self.add_gzip(accession + "_validation.pdf")
-    
+
     def get_validation_full_pdf(self, accession):
         return self.add_gzip(accession + "_full_validation.pdf")
 

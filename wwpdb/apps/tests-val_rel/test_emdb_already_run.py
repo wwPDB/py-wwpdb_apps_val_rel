@@ -6,23 +6,24 @@ import shutil
 import time
 from wwpdb.apps.val_rel.ValidateRelease import runValidation
 
+
 def touch(fname, times=None):
-    with open(fname, 'a'):
+    with open(fname, "a"):
         os.utime(fname, times)
 
-class ModifiedFolderTests(unittest.TestCase):
 
+class ModifiedFolderTests(unittest.TestCase):
     def setUp(self):
         self.input_dir = tempfile.mkdtemp()
-        self.pdbid = '1cbs'
+        self.pdbid = "1cbs"
         self.pdbid_hash = self.pdbid[1:3]
-        self.emdb = 'EMD-1234'
-        self.pdbid_file = os.path.join(self.input_dir, self.pdbid + '.cif')
-        self.emdb_file = os.path.join(self.input_dir, self.emdb + '.xml')
+        self.emdb = "EMD-1234"
+        self.pdbid_file = os.path.join(self.input_dir, self.pdbid + ".cif")
+        self.emdb_file = os.path.join(self.input_dir, self.emdb + ".xml")
         touch(self.pdbid_file)
         touch(self.emdb_file)
         self.output_dir = tempfile.mkdtemp()
-        #self.pdb_output_folder =  os.path.join(self.output_dir, self.pdbid_hash, self.pdbid)
+        # self.pdb_output_folder =  os.path.join(self.output_dir, self.pdbid_hash, self.pdbid)
         self.emdb_output_folder = os.path.join(self.output_dir, self.emdb)
         self.rv = runValidation()
         self.rv.outputRoot = self.output_dir
@@ -109,7 +110,5 @@ class ModifiedFolderTests(unittest.TestCase):
         self.assertFalse(ret)
 
 
-
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

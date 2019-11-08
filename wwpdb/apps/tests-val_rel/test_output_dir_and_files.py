@@ -5,17 +5,18 @@ import tempfile
 import shutil
 from wwpdb.apps.val_rel.ValidateRelease import runValidation
 
+
 def touch(fname, times=None):
-    with open(fname, 'a'):
+    with open(fname, "a"):
         os.utime(fname, times)
 
-class OuputFolderTests(unittest.TestCase):
 
+class OuputFolderTests(unittest.TestCase):
     def setUp(self):
-        self.pdbid = '1cbs'
+        self.pdbid = "1cbs"
         self.pdbid_hash = self.pdbid[1:3]
-        self.emdb = 'EMD-1234'
-        self.output_folder = '/nfs/test'
+        self.emdb = "EMD-1234"
+        self.output_folder = "/nfs/test"
         self.rv = runValidation()
 
     def test_pdbid(self):
@@ -40,5 +41,6 @@ class OuputFolderTests(unittest.TestCase):
         self.rv.set_output_dir_and_files()
         self.assertTrue(self.rv.entry_output_folder == output_dir)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()
