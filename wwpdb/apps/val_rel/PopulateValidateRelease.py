@@ -189,7 +189,7 @@ def main(
                 pdbids = get_pdbids_from_xml(em_xml)
                 if pdbids:
                     logging.info(
-                        "PDB entries associated with EMDB: {}".format(",".join(pdbids))
+                        "PDB entries associated with {}: {}".format(emdb_entry, ",".join(pdbids))
                     )
                     for pdbid in pdbids:
                         pdbid = pdbid.lower()
