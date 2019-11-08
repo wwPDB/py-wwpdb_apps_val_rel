@@ -5,7 +5,6 @@ import gzip
 import os
 import sys
 import argparse
-import xml.etree.ElementTree as ET
 import logging
 from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
 from wwpdb.utils.dp.ValidationWrapper import ValidationWrapper
@@ -13,6 +12,7 @@ from wwpdb.apps.validation.src.utils.minimal_map_cif import GenerateMinimalCif
 from wwpdb.apps.val_rel.outputFiles import outputFiles
 from wwpdb.apps.val_rel.getFilesRelease import getFilesRelease
 from wwpdb.apps.val_rel.mmCIFInfo import mmCIFInfo
+from wwpdb.apps.val_rel.xml_data import xmlInfo
 
 logger = logging.getLogger()
 FORMAT = "%(funcName)s (%(levelname)s) - %(message)s"
@@ -23,17 +23,7 @@ routing_key = "val_release_requests"
 exchange = "val_release_exchange"
 
 
-def get_pdbids_from_xml(xml_file):
-    pdbids = []
-    tree = ET.parse(xml_file)
-    root = tree.getroot()
-    if list(root.iter("pdb_id")):
-        for pdbid in root.iter("pdb_id"):
-            pdbids.append(pdbid.text)
-        logging.info(pdbids)
-        return pdbids
-    else:
-        return []
+
 
 
 def already_run(test_file, output_folder):
@@ -214,7 +204,7 @@ class runValidation:
             self.volPath = self.rel_files.get_emdb_volume(self.emdbid)
 
             if self.volPath:
-                self.pdbids = get_pdbids_from_xml(self.emXmlPath)
+                self.pdbids = xmlInfo(self.emXmlPath).get_pdbids_from_xml()
                 all_worked = []
 
                 if self.pdbids:

@@ -16,6 +16,7 @@ from wwpdb.apps.val_rel.ValidateRelease import (
     get_pdbids_from_xml,
 )
 from wwpdb.apps.val_rel.getFilesRelease import getFilesRelease
+from wwpdb.apps.val_rel.xml_data import xmlInfo
 
 
 logger = logging.getLogger()
@@ -183,10 +184,14 @@ def main(
     for emdb_entry in emdb_entries:
         if emdb_entry not in added_entries:
             # stop duplication of making EM validation reports twice
-            em_xml = getFilesRelease().get_emdb_xml(emdb_entry)
-            em_vol = getFilesRelease().get_emdb_volume(emdb_entry)
+            logging.debug(emdb_entry)
+            re = getFilesRelease(siteID=siteID)
+            em_xml = re.get_emdb_xml(emdb_entry)
+            
+            em_vol = re.get_emdb_volume(emdb_entry)
             if em_vol:
-                pdbids = get_pdbids_from_xml(em_xml)
+                logging.debug('using XML: {}'.format(em_xml))
+                pdbids = xmlInfo(em_xml).get_pdbids_from_xml() 
                 if pdbids:
                     logging.info(
                         "PDB entries associated with {}: {}".format(emdb_entry, ",".join(pdbids))
