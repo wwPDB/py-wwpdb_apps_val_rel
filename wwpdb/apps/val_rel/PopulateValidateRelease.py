@@ -13,7 +13,6 @@ from wwpdb.apps.val_rel.ValidateRelease import (
     routing_key,
     exchange,
     get_gzip_name,
-    get_pdbids_from_xml,
 )
 from wwpdb.apps.val_rel.getFilesRelease import getFilesRelease
 from wwpdb.apps.val_rel.xml_data import xmlInfo
