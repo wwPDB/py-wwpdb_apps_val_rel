@@ -187,10 +187,19 @@ def main(
             em_vol = getFilesRelease().get_emdb_volume(emdb_entry)
             if em_vol:
                 pdbids = get_pdbids_from_xml(em_xml)
-                for pdbid in pdbids:
-                    pdbid = pdbid.lower()
-                    if pdbid in pdb_entries:
-                        pdb_entries.remove(pdbid)
+                if pdbids:
+                    logging.info(
+                        "PDB entries associated with EMDB: {}".format(",".split(pdbids))
+                    )
+                    for pdbid in pdbids:
+                        pdbid = pdbid.lower()
+                        if pdbid in pdb_entries:
+                            logging.info(
+                                "removing {} from the PDB queue to stop duplication of report generation".format(
+                                    pdbid
+                                )
+                            )
+                            pdb_entries.remove(pdbid)
 
                 message = {"emdbID": emdb_entry}
                 messages.append(message)
