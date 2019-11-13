@@ -286,6 +286,7 @@ if "__main__" in __name__:
     )
     parser.add_argument("--siteID", help="siteID", type=str, default=getSiteId())
     parser.add_argument("--python_siteID", help="siteID for the OneDep code", type=str)
+    parser.add_argument("--validation_subdir", help="validation sub directory", type=str, default='current')
     parser.add_argument(
         "--output_root",
         help="folder to output the results to - overwrides default OneDep folder",
@@ -307,5 +308,6 @@ if "__main__" in __name__:
         keep_logs=args.keep_logs,
         always_recalculate=args.always_recalculate,
         skipGzip=args.skipGzip,
+        validation_sub_dir=args.validation_subdir
     )
 
