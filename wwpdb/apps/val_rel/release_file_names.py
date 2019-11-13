@@ -10,18 +10,18 @@ class releaseFileNames:
         return filename
 
     def get_model(self, accession):
-        return self.add_gzip(accession + ".cif", set_gzip=True)
+        return accession + ".cif.gz"
 
     def get_structure_factor(self, accession, for_release=False):
         if for_release:
             return accession + "-sf.cif"
-        return self.add_gzip("r{}sf.ent".format(accession), set_gzip=True)
+        return "r{}sf.ent.gz".format(accession)
 
     def get_chemical_shifts(self, accession, for_release=False):
         fname = "{}_cs.str".format(accession)
         if for_release:
             return fname
-        return self.add_gzip(fname, set_gzip=True)
+        return fname + '.gz'
 
     def get_emdb_xml(self, accession, for_release=False):
         if for_release:
@@ -29,7 +29,7 @@ class releaseFileNames:
         return self.add_gzip(accession + "-v30.xml")
 
     def get_emdb_map(self, accession):
-        return self.add_gzip(accession + ".map", set_gzip=True)
+        return accession + ".map.gz"
 
     def get_emdb_fsc(self, accession):
         return self.add_gzip(accession + "_fsc.xml")

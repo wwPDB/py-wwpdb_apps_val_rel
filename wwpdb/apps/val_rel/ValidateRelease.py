@@ -93,6 +93,7 @@ class runValidation:
         self.runDir = None
         # self.contour_level = None # not needed as its in the xml
         self.entry_output_folder = None
+        self.validation_sub_folder = 'current'
         self.pdb_output_folder = None
         self.emdb_output_folder = None
         self.output_file_list = []
@@ -142,6 +143,7 @@ class runValidation:
             emdbID=self.emdbid,
             siteID=self.siteID,
             outputRoot=self.outputRoot,
+            validation_sub_directory=self.validation_sub_folder
         )
         self.entry_output_folder = of.get_entry_output_folder()
         logging.info("output folder: {}".format(self.entry_output_folder))
@@ -161,6 +163,7 @@ class runValidation:
         self.skip_gzip = message.get("skipGzip", False)
         self.always_recalculate = message.get("alwaysRecalculate", False)
         self.keepLog = message.get("keepLog", False)
+        self.validation_sub_folder = message.get("subfolder", 'current')
         if self.pdbid:
             self.entry_id = self.pdbid
         elif self.emdbid:
@@ -243,6 +246,7 @@ class runValidation:
                 emdbID=self.emdbid,
                 siteID=self.siteID,
                 outputRoot=self.outputRoot,
+                validation_sub_directory=self.validation_sub_folder
             )
             logging.info("EMDB ID: {}".format(self.emdbid))
             emdb_output_folder = of.get_emdb_output_folder()
@@ -324,6 +328,7 @@ class runValidation:
                     emdbID=self.emdbid,
                     siteID=self.siteID,
                     outputRoot=self.outputRoot,
+                    validation_sub_directory=self.validation_sub_folder
                 )
                 # make emdb output folder if it doesn't exist
                 emdb_output_folder = em_of.get_emdb_output_folder()
