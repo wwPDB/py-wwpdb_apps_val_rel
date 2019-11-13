@@ -128,6 +128,7 @@ def main(
     output_root=None,
     always_recalculate=False,
     skipGzip=False,
+    validation_sub_dir='current'
 ):
     pdb_entries = []
     emdb_entries = []
@@ -219,6 +220,7 @@ def main(
         for message in messages:
             message["siteID"] = siteID
             message["keepLog"] = keep_logs
+            message['subfolder'] = validation_sub_dir
             if python_siteID:
                 message["python_site_id"] = python_siteID
             if output_root:

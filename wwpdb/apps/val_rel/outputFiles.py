@@ -13,11 +13,13 @@ class outputFiles:
         outputRoot="",
         siteID=getSiteId(),
         skip_pdb_hash=False,
+        validation_sub_directory='current'
     ):
         self._pdbID = pdbID
         self._emdbID = emdbID
         self.siteID = siteID
         self.output_root = outputRoot
+        self.validation_sub_directory = validation_sub_directory
         self._entryID = None
         self.skip_pdb_hash = skip_pdb_hash
         self.entry_output_folder = self.get_entry_output_folder()
@@ -26,6 +28,18 @@ class outputFiles:
         self.accession = ""
         self.rf = releaseFileNames(gzip=False)
         self.rp = ReleasePathInfo(self.siteID)
+
+    def get_pdb_root_folder(self):
+        rp = ReleasePathInfo(self.siteID)
+        return os.path.join(rp.getForReleasePath("val_reports"), self.validation_sub_directory)
+
+    def get_emdb_root_folder(self):
+        rp = ReleasePathInfo(self.siteID)
+        return os.path.join(rp.getForReleasePath("em_val_reports"),
+                "emd")
+
+    def set_validation_subdirectory(self, sub_dir):
+        self.validation_sub_directory = sub_dir
 
     def set_entry_id(self, entry_id):
         self._entryID = entry_id
@@ -137,9 +151,9 @@ class outputFiles:
                 self.output_root, pdb_hash, self.get_pdb_id()
             )
         else:
-            rp = ReleasePathInfo(self.siteID)
+            
             self.entry_output_folder = os.path.join(
-                rp.getForReleasePath("val_reports"), self.get_pdb_id()
+                self.get_pdb_root_folder(), self.get_pdb_id()
             )
         return self.entry_output_folder
 
@@ -150,10 +164,9 @@ class outputFiles:
                 self.output_root, self.get_emdb_id()
             )
         else:
-            rp = ReleasePathInfo(self.siteID)
+            
             self.entry_output_folder = os.path.join(
-                rp.getForReleasePath("em_val_reports"),
-                "emd",
+                self.get_emdb_root_folder(),
                 self.get_emdb_id(),
                 "validation",
             )
