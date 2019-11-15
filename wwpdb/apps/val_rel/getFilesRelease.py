@@ -54,32 +54,39 @@ class getFilesRelease:
         return None
 
     def get_model(self, pdbid):
-        filename = self.rf.get_model(pdbid)
         file_path = self.search_nfs_pdb(
-            filename=filename, pdbid=pdbid, coordinates=True
+            filename=self.rf.get_model(pdbid), pdbid=pdbid, coordinates=True
         )
         if file_path:
             return file_path
         return None
 
     def get_sf(self, pdbid):
-        filename = self.rf.get_structure_factor(pdbid, for_release=True)
-        file_path = self.search_nfs_pdb(filename=filename, pdbid=pdbid, sf=True)
+        file_path = self.search_nfs_pdb(
+            filename=self.rf.get_structure_factor(pdbid, for_release=True),
+            pdbid=pdbid,
+            sf=True,
+        )
         if file_path:
             return file_path
-        filename = self.rf.get_structure_factor(pdbid)
-        file_path = self.search_nfs_pdb(filename=filename, pdbid=pdbid, sf=True)
+        file_path = self.search_nfs_pdb(
+            filename=self.rf.get_structure_factor(pdbid), pdbid=pdbid, sf=True
+        )
         if file_path:
             return file_path
         return None
 
     def get_cs(self, pdbid):
-        filename = self.rf.get_chemical_shifts(pdbid, for_release=True)
-        file_path = self.search_nfs_pdb(filename=filename, pdbid=pdbid, cs=True)
+        file_path = self.search_nfs_pdb(
+            filename=self.rf.get_chemical_shifts(pdbid, for_release=True),
+            pdbid=pdbid,
+            cs=True,
+        )
         if file_path:
             return file_path
-        filename = self.rf.get_chemical_shifts(pdbid)
-        file_path = self.search_nfs_pdb(filename=filename, pdbid=pdbid, cs=True)
+        file_path = self.search_nfs_pdb(
+            filename=self.rf.get_chemical_shifts(pdbid), pdbid=pdbid, cs=True
+        )
         if file_path:
             return file_path
         return None
@@ -109,15 +116,15 @@ class getFilesRelease:
         return None
 
     def get_emdb_xml(self, emdbid):
-        filename = self.rf.get_emdb_xml(emdbid, for_release=True)
         filepath = self.return_emdb_path(
-            filename=filename, subfolder="header", emdbid=emdbid
+            filename=self.rf.get_emdb_xml(emdbid, for_release=True),
+            subfolder="header",
+            emdbid=emdbid,
         )
         if filepath:
             return filepath
-        filename = self.rf.get_emdb_xml(emdbid)
         filepath = self.return_emdb_path(
-            filename=filename, subfolder="header", emdbid=emdbid
+            filename=self.rf.get_emdb_xml(emdbid), subfolder="header", emdbid=emdbid
         )
         if filepath:
             return filepath
