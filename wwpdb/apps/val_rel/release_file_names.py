@@ -9,7 +9,17 @@ class releaseFileNames:
             return filename + ".gz"
         return filename
 
-    def get_model(self, accession):
+    def get_emdb_number(self, accession):
+        return accession[4:]
+        #return accession.split("-")[-1]
+
+    def emdb_underscore_format(self, accession):
+        return "emd_{}".format(self.get_emdb_number(accession))
+
+    def emdb_hyphen_format(self, accession):
+        return "emd-{}".format(self.get_emdb_number(accession))
+
+    def get_model(self, accession, for_release=False):
         return accession + ".cif.gz"
 
     def get_structure_factor(self, accession, for_release=False):
@@ -25,33 +35,33 @@ class releaseFileNames:
 
     def get_emdb_xml(self, accession, for_release=False):
         if for_release:
-            return self.add_gzip(accession + "_v3.xml")
-        return self.add_gzip(accession + "-v30.xml")
+            return self.add_gzip(self.emdb_underscore_format(accession) + "_v3.xml")
+        return self.add_gzip(self.emdb_hyphen_format(accession) + "-v30.xml")
 
-    def get_emdb_map(self, accession):
-        return accession + ".map.gz"
+    def get_emdb_map(self, accession, for_release=False):
+        return self.emdb_underscore_format(accession) + ".map.gz"
 
-    def get_emdb_fsc(self, accession):
-        return self.add_gzip(accession + "_fsc.xml")
+    def get_emdb_fsc(self, accession, for_release=False):
+        return self.add_gzip(self.emdb_underscore_format(accession) + "_fsc.xml")
 
-    def get_validation_pdf(self, accession):
+    def get_validation_pdf(self, accession, for_release=False):
         return self.add_gzip(accession + "_validation.pdf")
 
-    def get_validation_full_pdf(self, accession):
+    def get_validation_full_pdf(self, accession, for_release=False):
         return self.add_gzip(accession + "_full_validation.pdf")
 
-    def get_validation_xml(self, accession):
+    def get_validation_xml(self, accession, for_release=False):
         return self.add_gzip(accession + "_validation.xml")
 
-    def get_validation_png(self, accession):
+    def get_validation_png(self, accession, for_release=False):
         return self.add_gzip(accession + "_multipercentile_validation.png")
 
-    def get_validation_svg(self, accession):
+    def get_validation_svg(self, accession, for_release=False):
         return self.add_gzip(accession + "_multipercentile_validation.svg")
 
-    def get_2fofc(self, accession):
+    def get_2fofc(self, accession, for_release=False):
         return self.add_gzip(accession + "_validation_2fo-fc_map_coef.cif")
 
-    def get_fofc(self, accession):
+    def get_fofc(self, accession, for_release=False):
         return self.add_gzip(accession + "_validation_fo-fc_map_coef.cif")
 

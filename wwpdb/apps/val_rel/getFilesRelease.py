@@ -84,41 +84,38 @@ class getFilesRelease:
             return file_path
         return None
 
-    def get_emdb_path_search_order(self, emdbid):
+    def get_emdb_path_search_order(self, emdbid, subfolder):
         ret_list = [
-            os.path.join(self.rp.getForReleasePath("emd"), emdbid),
-            os.path.join(self.rp.getForReleasePath("emd", version="previous"), emdbid),
+            os.path.join(
+                self.rp.getForReleasePath(subdir="emd", em_sub_path=subfolder), emdbid
+            ),
+            os.path.join(
+                self.rp.getForReleasePath(
+                    subdir="emd", version="previous", em_sub_path=subfolder
+                ),
+                emdbid,
+            ),
             os.path.join(self.local_ftp_emdb_path, emdbid),
         ]
 
         return ret_list
 
     def return_emdb_path(self, filename, subfolder, emdbid):
-        for path in self.get_emdb_path_search_order(emdbid):
-            file_path = os.path.join(path, subfolder, filename)
+        for path in self.get_emdb_path_search_order(emdbid=emdbid, subfolder=subfolder):
+            file_path = os.path.join(path, filename)
             logging.debug(file_path)
             if os.path.exists(file_path):
                 return file_path
         return None
 
-    def get_emdb_id_file_format(self, emdbid):
-        emdb_number = emdbid.split("-")[-1]
-        return "emd_{}".format(emdb_number)
-
-    def get_emdb_id_file_format_xml(self, emdbid):
-        emdb_number = emdbid.split("-")[-1]
-        return "emd-{}".format(emdb_number)
-
     def get_emdb_xml(self, emdbid):
-        accession = self.get_emdb_id_file_format(emdbid)
-        filename = self.rf.get_emdb_xml(accession, for_release=True)
+        filename = self.rf.get_emdb_xml(emdbid, for_release=True)
         filepath = self.return_emdb_path(
             filename=filename, subfolder="header", emdbid=emdbid
         )
         if filepath:
             return filepath
-        accession = self.get_emdb_id_file_format_xml(emdbid)
-        filename = self.rf.get_emdb_xml(accession)
+        filename = self.rf.get_emdb_xml(emdbid)
         filepath = self.return_emdb_path(
             filename=filename, subfolder="header", emdbid=emdbid
         )
@@ -127,9 +124,11 @@ class getFilesRelease:
         return None
 
     def get_emdb_volume(self, emdbid):
-        filename = self.rf.get_emdb_map(self.get_emdb_id_file_format(emdbid))
-        return self.return_emdb_path(filename=filename, subfolder="map", emdbid=emdbid)
+        return self.return_emdb_path(
+            filename=self.rf.get_emdb_map(emdbid), subfolder="map", emdbid=emdbid
+        )
 
     def get_emdb_fsc(self, emdbid):
-        filename = self.rf.get_emdb_fsc(self.get_emdb_id_file_format(emdbid))
-        return self.return_emdb_path(filename=filename, subfolder="fsc", emdbid=emdbid)
+        return self.return_emdb_path(
+            filename=self.rf.get_emdb_fsc(emdbid), subfolder="fsc", emdbid=emdbid
+        )
