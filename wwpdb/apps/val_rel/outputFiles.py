@@ -67,7 +67,8 @@ class outputFiles:
 
     def get_emdb_lower_underscore(self):
         if self.get_emdb_id():
-            return self.get_emdb_id().lower().replace("-", "_")
+            return self.rf.emdb_underscore_format(self.get_emdb_id())
+            #return self.get_emdb_id().lower().replace("-", "_")
         return ""
 
     def get_entry_id(self):
