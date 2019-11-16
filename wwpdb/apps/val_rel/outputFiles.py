@@ -1,7 +1,8 @@
 import logging
 import os
 from wwpdb.utils.config.ConfigInfo import getSiteId
-from wwpdb.io.locator.ReleasePathInfo import ReleasePathInfo, ReleaseFileNames
+from wwpdb.io.locator.ReleasePathInfo import ReleasePathInfo
+from wwpdb.io.locator.ReleaseFileNames import ReleaseFileNames
 
 
 class outputFiles:

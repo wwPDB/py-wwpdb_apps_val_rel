@@ -2,7 +2,9 @@ import os
 import logging
 from wwpdb.apps.val_rel.em_name_handling import EmNameHandling
 from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
-from wwpdb.io.locator.ReleasePathInfo import ReleasePathInfo, ReleaseFileNames
+from wwpdb.io.locator.ReleasePathInfo import ReleasePathInfo
+from wwpdb.io.locator.ReleaseFileNames import ReleaseFileNames
+
 
 
 class getFilesRelease:
