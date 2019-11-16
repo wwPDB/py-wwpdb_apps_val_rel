@@ -25,7 +25,7 @@ class outputFiles:
         self.with_emdb = False
         self.copy_to_root_emdb = False
         self.accession = ""
-        self.rf = releaseFileNames()
+        self.rf = ReleaseFileNames()
         self.rp = ReleasePathInfo(self.siteID)
 
     def get_pdb_root_folder(self):
