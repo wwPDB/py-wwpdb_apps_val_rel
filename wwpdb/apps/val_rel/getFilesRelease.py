@@ -1,8 +1,8 @@
 import os
 import logging
-from wwpdb.apps.val_rel.release_file_names import releaseFileNames
+from wwpdb.apps.val_rel.em_name_handling import EmNameHandling
 from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
-from wwpdb.io.locator.ReleasePathInfo import ReleasePathInfo
+from wwpdb.io.locator.ReleasePathInfo import ReleasePathInfo, ReleaseFileNames
 
 
 class getFilesRelease:
@@ -15,10 +15,10 @@ class getFilesRelease:
         self.ftp = False
         self.pdb_id = None
         self.emdb_id = None
-        self.rf = releaseFileNames()
         self.siteID = siteID
         self.cI = ConfigInfo(self.siteID)
         self.rp = ReleasePathInfo(self.siteID)
+        self.rf = ReleaseFileNames()
 
         self.local_ftp_mmcif_path = self.cI.get("SITE_MMCIF_DIR", "")
         self.local_ftp_sf_path = self.cI.get("SITE_STRFACTORS_DIR", "")

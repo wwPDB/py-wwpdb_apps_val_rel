@@ -1,8 +1,7 @@
 import logging
 import os
-from wwpdb.apps.val_rel.release_file_names import releaseFileNames
 from wwpdb.utils.config.ConfigInfo import getSiteId
-from wwpdb.io.locator.ReleasePathInfo import ReleasePathInfo
+from wwpdb.io.locator.ReleasePathInfo import ReleasePathInfo, releaseFileNames
 
 
 class outputFiles:
@@ -13,7 +12,7 @@ class outputFiles:
         outputRoot="",
         siteID=getSiteId(),
         skip_pdb_hash=False,
-        validation_sub_directory='current'
+        validation_sub_directory="current",
     ):
         self._pdbID = pdbID
         self._emdbID = emdbID
@@ -26,17 +25,18 @@ class outputFiles:
         self.with_emdb = False
         self.copy_to_root_emdb = False
         self.accession = ""
-        self.rf = releaseFileNames(gzip=False)
+        self.rf = releaseFileNames()
         self.rp = ReleasePathInfo(self.siteID)
 
     def get_pdb_root_folder(self):
         rp = ReleasePathInfo(self.siteID)
-        return os.path.join(rp.getForReleasePath("val_reports"), self.validation_sub_directory)
+        return os.path.join(
+            rp.getForReleasePath("val_reports"), self.validation_sub_directory
+        )
 
     def get_emdb_root_folder(self):
         rp = ReleasePathInfo(self.siteID)
-        return os.path.join(rp.getForReleasePath("em_val_reports"),
-                "emd")
+        return os.path.join(rp.getForReleasePath("em_val_reports"), "emd")
 
     def set_validation_subdirectory(self, sub_dir):
         self.validation_sub_directory = sub_dir
@@ -67,8 +67,7 @@ class outputFiles:
 
     def get_emdb_lower_underscore(self):
         if self.get_emdb_id():
-            return self.rf.emdb_underscore_format(self.get_emdb_id())
-            #return self.get_emdb_id().lower().replace("-", "_")
+            return self.rf.get_lower_emdb_hyphen_format(self.get_emdb_id())
         return ""
 
     def get_entry_id(self):
@@ -126,9 +125,11 @@ class outputFiles:
 
         ret = {}
         ret["2fofc"] = self.add_output_folder_accession(
-            self.rf.get_2fofc(self.accession)
+            self.rf.get_valiation_2fofc(self.accession)
         )
-        ret["fofc"] = self.add_output_folder_accession(self.rf.get_fofc(self.accession))
+        ret["fofc"] = self.add_output_folder_accession(
+            self.rf.get_validation_fofc(self.accession)
+        )
 
         return ret
 
@@ -152,7 +153,7 @@ class outputFiles:
                 self.output_root, pdb_hash, self.get_pdb_id()
             )
         else:
-            
+
             self.entry_output_folder = os.path.join(
                 self.get_pdb_root_folder(), self.get_pdb_id()
             )
@@ -165,11 +166,9 @@ class outputFiles:
                 self.output_root, self.get_emdb_id()
             )
         else:
-            
+
             self.entry_output_folder = os.path.join(
-                self.get_emdb_root_folder(),
-                self.get_emdb_id(),
-                "validation",
+                self.get_emdb_root_folder(), self.get_emdb_id(), "validation"
             )
         return self.entry_output_folder
 
