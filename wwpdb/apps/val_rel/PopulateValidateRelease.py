@@ -16,6 +16,7 @@ from wwpdb.apps.val_rel.ValidateRelease import (
 )
 from wwpdb.apps.val_rel.getFilesRelease import getFilesRelease
 from wwpdb.apps.val_rel.xml_data import xmlInfo
+from wwpdb.apps.val_rel.mmCIFInfo import mmCIFInfo
 
 
 logger = logging.getLogger()
@@ -198,13 +199,23 @@ def main(
                     )
                     for pdbid in pdbids:
                         pdbid = pdbid.lower()
-                        if pdbid in pdb_entries:
-                            logging.info(
-                                "removing {} from the PDB queue to stop duplication of report generation".format(
-                                    pdbid
-                                )
-                            )
-                            pdb_entries.remove(pdbid)
+                        pdb_file = re.get_model(pdbid)
+                        if pdb_file:
+                            cf = mmCIFInfo(pdb_file)
+                            associated_emdb = cf.get_associated_emdb()
+                            if associated_emdb == emdb_entry:
+                                if pdbid in pdb_entries:
+                                    logging.info(
+                                        "removing {} from the PDB queue to stop duplication of report generation".format(
+                                            pdbid
+                                        )
+                                    )
+                                    pdb_entries.remove(pdbid)
+                            # what if its not? should it be added to the queue?
+                        else:
+                            if pdbid in pdb_entries:
+                                logging.info('removing {} as pdb file does not exist'.format(pdbid))
+                                pdb_entries.remove(pdbid)
 
                 message = {"emdbID": emdb_entry}
                 messages.append(message)
