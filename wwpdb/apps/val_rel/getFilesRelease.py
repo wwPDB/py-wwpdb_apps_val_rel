@@ -95,11 +95,11 @@ class getFilesRelease:
     def get_emdb_path_search_order(self, emdbid, subfolder):
         ret_list = [
             os.path.join(
-                self.rp.getForReleasePath(subdir="emd", em_sub_path=subfolder), emdbid
+                self.rp.getForReleasePath(subdir="emd", accession=emdbid, em_sub_path=subfolder), emdbid
             ),
             os.path.join(
                 self.rp.getForReleasePath(
-                    subdir="emd", version="previous", em_sub_path=subfolder
+                    subdir="emd", version="previous", accession=emdbid, em_sub_path=subfolder
                 ),
                 emdbid,
             ),
