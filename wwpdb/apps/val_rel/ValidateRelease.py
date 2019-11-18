@@ -77,6 +77,7 @@ class runValidation:
         self.keepLog = False
         self.pdbid = None
         self.emdbid = None
+        self.run_map_only = False
         self.emdbids = []
         self.pdbids = []
         self.siteID = None
@@ -137,6 +138,12 @@ class runValidation:
             return True
         return False
 
+    def get_emdb_pdb_string(self):
+        emdb_pdb_string = ''
+        if self.emdbid and self.pdbid:
+            emdb_pdb_string = '{}-{}'.format(self.emdbid, self.pdbid)
+        return emdb_pdb_string
+
     def set_output_dir_and_files(self):
         of = outputFiles(
             pdbID=self.pdbid,
@@ -188,6 +195,17 @@ class runValidation:
             prefix="{}_validation_release_temp_".format(self.entry_id),
         )
 
+        all_worked = []
+        run_pdb = []
+        run_emdb = []
+        run_emdb_and_pdbid = []
+
+        if self.emdbid:
+            self.emXmlPath = self.rel_files.get_emdb_xml(self.emdbid)
+            self.volPath = self.rel_files.get_emdb_volume(self.emdbid)
+            if self.volPath:
+                self.run_map_only = True
+
         if self.pdbid:
             self.modelPath = self.rel_files.get_model(self.pdbid)
             self.sfPath = self.rel_files.get_sf(self.pdbid)
@@ -195,49 +213,50 @@ class runValidation:
 
             cf = mmCIFInfo(self.modelPath)
             exp_methods = cf.get_exp_methods()
-            if "ELECTRON MICROSCOPY" in exp_methods:
-                # self.contour_level = cf.get_em_map_contour_level() # not needed as its in the XML
+            if "ELECTRON MICROSCOPY" in exp_methods or 'ELECTRON CRYSTALLOGRAPHY' in exp_methods:
                 if not self.emdbid:
                     self.emdbid = cf.get_associated_emdb()
+                    run_emdb.append(self.emdbid)
+                    run_emdb_and_pdbid.append(self.get_emdb_pdb_string())
 
-            return self.run_validation()
+            run_pdb.append(self.pdbid)
+            worked = self.run_validation()
+            all_worked.append(worked)
 
-        elif self.emdbid:
-            self.emXmlPath = self.rel_files.get_emdb_xml(self.emdbid)
-            self.volPath = self.rel_files.get_emdb_volume(self.emdbid)
+        if self.emdbid:
+            if self.emdbid not in run_emdb:
+                if self.volPath:
+                    self.pdbids = xmlInfo(self.emXmlPath).get_pdbids_from_xml()
+                    if self.pdbids:
+                        for self.pdbid in self.pdbids:
+                            self.pdbid = self.pdbid.lower()
+                            if self.get_emdb_pdb_string() not in run_emdb_and_pdbid:
+                                self.modelPath = self.rel_files.get_model(self.pdbid)
+                                if self.modelPath:
+                                    # run validation
+                                    worked = self.run_validation()
+                                    all_worked.append(worked)
+                            else:
+                                logging.info('report already run for {}'.format(self.get_emdb_pdb_string()))
 
-            if self.volPath:
-                self.pdbids = xmlInfo(self.emXmlPath).get_pdbids_from_xml()
-                all_worked = []
+        if self.run_map_only:
+            # make map only validation report without models
+            self.pdbid = None
+            self.modelPath = os.path.join(
+                self.tempDir, "{}_minimal.cif".format(self.emdbid)
+            )
+            GenerateMinimalCif(emdb_xml=self.emXmlPath).write_out(
+                output_cif=self.modelPath
+            )
+            # run validation
+            worked = self.run_validation()
+            all_worked.append(worked)
 
-                if self.pdbids:
-                    for self.pdbid in self.pdbids:
-                        self.pdbid = self.pdbid.lower()
-
-                        self.modelPath = self.rel_files.get_model(self.pdbid)
-                        if self.modelPath:
-                            # run validation
-                            worked = self.run_validation()
-                            all_worked.append(worked)
-
-                # make map only validation report without models
-                self.pdbid = None
-                self.modelPath = os.path.join(
-                    self.tempDir, "{}_minimal.cif".format(self.emdbid)
-                )
-                GenerateMinimalCif(emdb_xml=self.emXmlPath).write_out(
-                    output_cif=self.modelPath
-                )
-                # run validation
-                worked = self.run_validation()
-                all_worked.append(worked)
-
-                if list(set(all_worked)) == [True]:
-                    return True
-                else:
-                    logging.error(self.pdbids)
-                    logging.error(all_worked)
-                    return False
+        if list(set(all_worked)) == [True]:
+            return True
+        else:
+            logging.error(all_worked)
+            return False
 
     def copy_to_emdb(self, copy_to_root_emdb=False):
         if self.emdbid:
