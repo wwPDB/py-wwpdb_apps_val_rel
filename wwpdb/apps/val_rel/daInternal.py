@@ -28,7 +28,10 @@ class DaInternal(MyConnectionBase):
                     "PDBID_TO_ASSOC_EMDBID": """select a.db_id from pdbx_database_related a, rcsb_status b
                                     where a.structure_id = b.structure_id
                                     and a.db_name = 'EMDB' and a.content_type = 'associated EM volume'
-                                    and b.pdb_id = '%s'"""
+                                    and b.pdb_id = '%s'""",
+                    "PDBIDs_FROM_ASSOC_EMDBID": """select b.pdb_id from pdbx_database_related a, rcsb_status b
+                                    where a.structure_id = b.structure_id
+                                    and a.db_name = 'EMDB' and a.content_type = 'associated EM volume' and db_id = '%s'"""
     }
 
     def __init__(self, siteId=None, verbose=True, log=sys.stderr):
