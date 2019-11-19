@@ -13,6 +13,7 @@ from wwpdb.apps.val_rel.outputFiles import outputFiles
 from wwpdb.apps.val_rel.getFilesRelease import getFilesRelease
 from wwpdb.apps.val_rel.mmCIFInfo import mmCIFInfo
 from wwpdb.apps.val_rel.xml_data import xmlInfo
+from wwpdb.apps.val_rel.daInternal import DaInternal
 
 logger = logging.getLogger()
 FORMAT = "%(funcName)s (%(levelname)s) - %(message)s"
@@ -81,6 +82,7 @@ class runValidation:
         self.emdbids = []
         self.pdbids = []
         self.siteID = None
+        self.da_internal  = None
         self.outputRoot = None
         self.entry_id = None
         self.modelPath = None
@@ -184,6 +186,7 @@ class runValidation:
         self.pythonSiteID = message.get("python_site_id", self.siteID)
         self.cI = ConfigInfo(self.siteID)
         self.entry_output_folder = None
+        self.da_internal = DaInternal(self.siteID)
 
         if self.remove_validation_files:
             self.set_output_dir_and_files()
@@ -232,6 +235,9 @@ class runValidation:
         if self.emdbid:
             if self.emdbid not in run_emdb:
                 if self.volPath:
+                    da_internal_pdbids = self.da_internal.selectData('PDBIDs_FROM_ASSOC_EMDBID', self.emdbid)
+                    logging.info('data from da_internal')
+                    logging.info(da_internal_pdbids)
                     self.pdbids = xmlInfo(self.emXmlPath).get_pdbids_from_xml()
                     if self.pdbids:
                         for self.pdbid in self.pdbids:
@@ -265,7 +271,11 @@ class runValidation:
             return False
 
     def remove_existing_files(self):
-        remove_files(self.output_file_dict.values())
+        self.output_file_list = []
+        for key in ["pdf", "xml", "full_pdf", "png", "svg", "2fofc", "fofc"]:
+            if key in self.output_file_dict:
+                self.output_file_list.append(self.output_file_dict[key])
+        remove_files(self.output_file_list)
         if self.emdbid:
             em_of = outputFiles(
                 pdbID=self.pdbid,
