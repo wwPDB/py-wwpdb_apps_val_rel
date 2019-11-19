@@ -171,6 +171,7 @@ class runValidation:
         self.always_recalculate = message.get("alwaysRecalculate", False)
         self.keepLog = message.get("keepLog", False)
         self.validation_sub_folder = message.get("subfolder", 'current')
+        self.remove_validation_files = message.get('removeValFiles', False)
         if self.pdbid:
             self.entry_id = self.pdbid
         elif self.emdbid:
@@ -183,6 +184,11 @@ class runValidation:
         self.pythonSiteID = message.get("python_site_id", self.siteID)
         self.cI = ConfigInfo(self.siteID)
         self.entry_output_folder = None
+
+        if self.remove_validation_files:
+            self.set_output_dir_and_files()
+            self.remove_existing_files()
+            return True
 
         logging.info("running validation for {}, {}".format(self.pdbid, self.emdbid))
 
@@ -258,6 +264,25 @@ class runValidation:
             logging.error(all_worked)
             return False
 
+    def remove_existing_files(self):
+        remove_files(self.output_file_dict.values())
+        if self.emdbid:
+            em_of = outputFiles(
+                pdbID=self.pdbid,
+                emdbID=self.emdbid,
+                siteID=self.siteID,
+                outputRoot=self.outputRoot,
+                validation_sub_directory=self.validation_sub_folder
+            )
+            # make emdb output folder if it doesn't exist
+            emdb_output_folder = em_of.get_emdb_output_folder()
+            if emdb_output_folder != self.entry_output_folder:
+                if not os.path.exists(emdb_output_folder):
+                    os.makedirs(emdb_output_folder)
+            em_of.set_accession_variables(with_emdb=True)
+            emdb_output_file_dict = em_of.get_core_validation_files()
+            remove_files(emdb_output_file_dict.values())
+
     def copy_to_emdb(self, copy_to_root_emdb=False):
         if self.emdbid:
             of = outputFiles(
@@ -328,39 +353,13 @@ class runValidation:
             if not os.path.exists(self.entry_output_folder):
                 os.makedirs(self.entry_output_folder)
             else:
-                os.utime(self.entry_output_folder)
+                os.utime(self.entry_output_folder, None)
 
             logging.info("Entry output folder: {}".format(self.entry_output_folder))
             self.logPath = os.path.join(self.entry_output_folder, "validation.log")
 
             # clearing existing reports before making new ones
-            self.output_file_list = []
-            for key in ["pdf", "xml", "full_pdf", "png", "svg", "2fofc", "fofc"]:
-                if key in self.output_file_dict:
-                    self.output_file_list.append(self.output_file_dict[key])
-
-            remove_files(self.output_file_list)
-
-            if self.emdbid:
-                em_of = outputFiles(
-                    pdbID=self.pdbid,
-                    emdbID=self.emdbid,
-                    siteID=self.siteID,
-                    outputRoot=self.outputRoot,
-                    validation_sub_directory=self.validation_sub_folder
-                )
-                # make emdb output folder if it doesn't exist
-                emdb_output_folder = em_of.get_emdb_output_folder()
-                if emdb_output_folder != self.entry_output_folder:
-                    if not os.path.exists(emdb_output_folder):
-                        os.makedirs(emdb_output_folder)
-                em_of.set_accession_variables(with_emdb=True)
-                emdb_output_file_dict = em_of.get_core_validation_files()
-                remove_files(emdb_output_file_dict.values())
-                # if self.copy_to_root_emdb:
-                #    em_of.set_accession_variables(with_emdb=True, copy_to_root_emdb=self.copy_to_root_emdb)
-                #    emdb_output_file_dict = em_of.get_core_validation_files()
-                #    remove_files(emdb_output_file_dict.values())
+            self.remove_existing_files()
 
             self.runDir = tempfile.mkdtemp(
                 dir=self.session_path,
@@ -467,6 +466,9 @@ if "__main__" in __name__:
     parser.add_argument(
         "--keep_log", help="keep the log file from validation", action="store_true"
     )
+    parser.add_argument(
+        "--remove_files", help="clear out the existing files for a validation run", action="store_true"
+    )
     args = parser.parse_args()
     logger.setLevel(args.loglevel)
 
@@ -479,6 +481,7 @@ if "__main__" in __name__:
         "siteID": args.site_id,
         "pythonSiteID": args.python_site_id,
         "keepLog": args.keep_log,
+        "removeValFiles": args.remove_files,
     }
 
     runValidation().run_process(message=message)
