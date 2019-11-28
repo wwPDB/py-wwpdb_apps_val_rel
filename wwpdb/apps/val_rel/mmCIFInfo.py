@@ -112,8 +112,8 @@ class mmCIFInfo:
                 if latest_audit_ordinal:
                     if ordinal > latest_audit_ordinal:
                         latest_audit_ordinal = ordinal
-                    else:
-                        latest_audit_ordinal = ordinal
+                else:
+                    latest_audit_ordinal = ordinal
         if latest_audit_ordinal:
             logging.info('latest audit ordinal: {}'.format(latest_audit_ordinal))
             ret = self.get_category_list_of_dictionaries(category="pdbx_audit_revision_category")
