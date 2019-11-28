@@ -34,10 +34,8 @@ _exptl.method            'X-RAY DIFFRACTION'
 """
 
     def tearDown(self):
-        if os.path.exists(self.mmCIF_file):
-            os.remove(self.mmCIF_file)
         if os.path.exists(self.test_dir):
-            os.remove(self.test_dir)
+            shutil.rmtree(self.test_dir, ignore_errors=True)
 
     def write_mmcif(self):
         mmcif_data = self.base_mmcif_content
@@ -49,6 +47,7 @@ _exptl.method            'X-RAY DIFFRACTION'
     def test_get_exptl(self):
         mf = mmCIFInfo(mmCIF_file=self.mmCIF_file)
         exptl = mf.get_exp_methods()
+        print(exptl)
         self.assertTrue(exptl == ['X-RAY DIFFRACTION'])
 
     def test_get_associated_with_none(self):
@@ -64,6 +63,7 @@ PDB 1X7N ? unspecified
         self.write_mmcif()
         mf = mmCIFInfo(mmCIF_file=self.mmCIF_file)
         emdb_id = mf.get_associated_emdb()
+        print(emdb_id)
         self.assertTrue(emdb_id is None)
 
     def test_get_associated_with_emd_1234(self):
@@ -79,6 +79,7 @@ EMDB EMD-1234 ? 'associated EM volume'
         self.write_mmcif()
         mf = mmCIFInfo(mmCIF_file=self.mmCIF_file)
         emdb_id = mf.get_associated_emdb()
+        print(emdb_id)
         self.assertTrue(emdb_id == 'EMD-1234')
 
     def test_get_modified_categories(self):
@@ -106,7 +107,9 @@ loop_
         self.write_mmcif()
         mf = mmCIFInfo(mmCIF_file=self.mmCIF_file)
         cats = mf.get_latest_modified_categories()
+        print(cats)
         self.assertTrue(cats == ['citation_author', 'citation'])
+
 
 if __name__ == "__main__":
     unittest.main()
