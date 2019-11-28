@@ -105,8 +105,7 @@ loop_
         self.write_mmcif()
         mf = mmCIFInfo(mmCIF_file=self.mmCIF_file)
         cats = mf.get_latest_modified_categories()
-        print(cats)
-        #self.assertTrue(cats == ['citation_author', 'citation'])
+        self.assertTrue(cats == ['citation_author', 'citation'])
 
 
 if __name__ == "__main__":
