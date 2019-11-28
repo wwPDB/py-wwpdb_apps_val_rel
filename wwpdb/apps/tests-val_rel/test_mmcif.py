@@ -63,7 +63,6 @@ PDB 1X7N ? unspecified
         self.write_mmcif()
         mf = mmCIFInfo(mmCIF_file=self.mmCIF_file)
         emdb_id = mf.get_associated_emdb()
-        print(emdb_id)
         self.assertTrue(emdb_id is None)
 
     def test_get_associated_with_emd_1234(self):
@@ -79,7 +78,6 @@ EMDB EMD-1234 ? 'associated EM volume'
         self.write_mmcif()
         mf = mmCIFInfo(mmCIF_file=self.mmCIF_file)
         emdb_id = mf.get_associated_emdb()
-        print(emdb_id)
         self.assertTrue(emdb_id == 'EMD-1234')
 
     def test_get_modified_categories(self):
