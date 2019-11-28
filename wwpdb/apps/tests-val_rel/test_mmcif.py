@@ -107,3 +107,6 @@ loop_
         mf = mmCIFInfo(mmCIF_file=self.mmCIF_file)
         cats = mf.get_latest_modified_categories()
         self.assertTrue(cats == ['citation_author', 'citation'])
+
+if __name__ == "__main__":
+    unittest.main()
