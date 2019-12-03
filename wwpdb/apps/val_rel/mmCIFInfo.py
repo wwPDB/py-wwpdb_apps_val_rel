@@ -12,13 +12,19 @@ class mmCIFInfo:
         self.io = IoAdapter
         self.mmcif_data = None
 
-        self.category_list = ["exptl", "pdbx_database_related", "em_map"]
+        #self.category_list = ["exptl",
+        #                      "pdbx_database_related",
+        #                      "em_map",
+        #                      'pdbx_audit_revision_history',
+        #                      "pdbx_audit_revision_category"]
+
+        self.exclude_category_list = ['atom_site', 'atom_site_anisotrop']
 
     def parse_mmcif(self):
         if self.mmcif:
             try:
                 logging.debug("parsing {}".format(self.mmcif))
-                cList = self.io.readFile(self.mmcif, selectList=self.category_list)
+                cList = self.io.readFile(self.mmcif, selectList=self.exclude_category_list, excludeFlag=True)
                 self.mmcif_data = cList[0]
                 return self.mmcif_data
             except Exception as e:
@@ -97,3 +103,27 @@ class mmCIFInfo:
                 if map_type == "primary":
                     return contour_level
         return None
+
+    def get_latest_modified_categories(self):
+        latest_audit_ordinal = None
+        latest_audit_categories = []
+        ret = self.get_category_list_of_dictionaries(category="pdbx_audit_revision_history")
+        if ret:
+            for row in ret:
+                ordinal = row.get('ordinal')
+                if latest_audit_ordinal:
+                    if ordinal > latest_audit_ordinal:
+                        latest_audit_ordinal = ordinal
+                else:
+                    latest_audit_ordinal = ordinal
+        if latest_audit_ordinal:
+            logging.info('latest audit ordinal: {}'.format(latest_audit_ordinal))
+            ret = self.get_category_list_of_dictionaries(category="pdbx_audit_revision_category")
+            if ret:
+                for row in ret:
+                    revision_ordinal = row.get('revision_ordinal')
+                    category = row.get('category')
+                    if revision_ordinal == latest_audit_ordinal:
+                        latest_audit_categories.append(category)
+
+        return latest_audit_categories

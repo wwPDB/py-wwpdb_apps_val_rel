@@ -13,7 +13,8 @@ from wwpdb.apps.val_rel.outputFiles import outputFiles
 from wwpdb.apps.val_rel.getFilesRelease import getFilesRelease
 from wwpdb.apps.val_rel.mmCIFInfo import mmCIFInfo
 from wwpdb.apps.val_rel.xml_data import xmlInfo
-#from wwpdb.apps.val_rel.daInternal import DaInternal
+
+# from wwpdb.apps.val_rel.daInternal import DaInternal
 
 logger = logging.getLogger()
 FORMAT = "%(funcName)s (%(levelname)s) - %(message)s"
@@ -23,9 +24,7 @@ queue_name = "val_release_queue"
 routing_key = "val_release_requests"
 exchange = "val_release_exchange"
 
-
-
-
+SKIP_LIST = ['citation', 'citation_author', 'pdbx_audit_support']
 
 def already_run(test_file, output_folder):
     if test_file:
@@ -54,11 +53,11 @@ def get_gzip_name(f):
     return f + ".gz"
 
 
-def gzip_file(inFile):
-    if os.path.exists(inFile):
-        with open(inFile) as f_in, gzip.open(get_gzip_name(inFile), "wb") as f_out:
+def gzip_file(in_file):
+    if os.path.exists(in_file):
+        with open(in_file) as f_in, gzip.open(get_gzip_name(in_file), "wb") as f_out:
             f_out.writelines(f_in)
-        os.unlink(inFile)
+        os.unlink(in_file)
 
 
 def remove_files(file_list):
@@ -81,8 +80,10 @@ class runValidation:
         self.run_map_only = False
         self.emdbids = []
         self.pdbids = []
+        self.cI = None
+        self.pythonSiteID = None
         self.siteID = None
-        self.da_internal  = None
+        self.da_internal = None
         self.outputRoot = None
         self.entry_id = None
         self.modelPath = None
@@ -94,6 +95,7 @@ class runValidation:
         self.tempDir = None
         self.session_path = None
         self.runDir = None
+        self.logPath = None
         # self.contour_level = None # not needed as its in the xml
         self.entry_output_folder = None
         self.validation_sub_folder = 'current'
@@ -104,17 +106,39 @@ class runValidation:
 
         self.skip_gzip = False
         self.always_recalculate = False
+        self.remove_validation_files = False
 
         self.copy_to_root_emdb = False
 
         self.rel_files = None
+
+    @staticmethod
+    def exptl_is_em(exp_methods):
+        if "ELECTRON MICROSCOPY" in exp_methods or 'ELECTRON CRYSTALLOGRAPHY' in exp_methods:
+            return True
+        return False
+
+    def is_simple_modification(self):
+        
+        cf = mmCIFInfo(self.modelPath)
+        modified_cats = cf.get_latest_modified_categories()
+        if modified_cats:
+            all_simple = True
+            for item in modified_cats:
+                if item not in SKIP_LIST:
+                    all_simple = False
+            if all_simple:
+                logging.info('{} only a simple modification: {}'.format(self.pdbid, ','.join(modified_cats)))
+                return True
+        return False
 
     def check_pdb_already_run(self):
         if self.always_recalculate:
             return True
         modified = False
         if not already_run(self.modelPath, self.pdb_output_folder):
-            modified = True
+            if not self.is_simple_modification():
+                modified = True
         if self.sfPath:
             if not already_run(self.sfPath, self.pdb_output_folder):
                 modified = True
@@ -186,7 +210,7 @@ class runValidation:
         self.pythonSiteID = message.get("python_site_id", self.siteID)
         self.cI = ConfigInfo(self.siteID)
         self.entry_output_folder = None
-        #self.da_internal = DaInternal(self.siteID)
+        # self.da_internal = DaInternal(self.siteID)
 
         if self.remove_validation_files:
             self.set_output_dir_and_files()
@@ -222,7 +246,7 @@ class runValidation:
 
             cf = mmCIFInfo(self.modelPath)
             exp_methods = cf.get_exp_methods()
-            if "ELECTRON MICROSCOPY" in exp_methods or 'ELECTRON CRYSTALLOGRAPHY' in exp_methods:
+            if self.exptl_is_em(exp_methods):
                 if not self.emdbid:
                     self.emdbid = cf.get_associated_emdb()
                     run_emdb.append(self.emdbid)
@@ -231,13 +255,14 @@ class runValidation:
             run_pdb.append(self.pdbid)
             worked = self.run_validation()
             all_worked.append(worked)
+            
 
         if self.emdbid:
             if self.emdbid not in run_emdb:
                 if self.volPath:
-                    #da_internal_pdbids = self.da_internal.selectData('PDBIDs_FROM_ASSOC_EMDBID', self.emdbid)
-                    #logging.info('data from da_internal')
-                    #logging.info(da_internal_pdbids)
+                    # da_internal_pdbids = self.da_internal.selectData('PDBIDs_FROM_ASSOC_EMDBID', self.emdbid)
+                    # logging.info('data from da_internal')
+                    # logging.info(da_internal_pdbids)
                     self.pdbids = xmlInfo(self.emXmlPath).get_pdbids_from_xml()
                     if self.pdbids:
                         for self.pdbid in self.pdbids:
@@ -316,8 +341,8 @@ class runValidation:
                     )
                     for k in self.output_file_dict:
                         if k in emdb_output_file_dict:
-                            inFile = self.output_file_dict[k]
-                            if os.path.exists(inFile):
+                            in_file = self.output_file_dict[k]
+                            if os.path.exists(in_file):
                                 shutil.copy(
                                     self.output_file_dict[k], emdb_output_file_dict[k]
                                 )
