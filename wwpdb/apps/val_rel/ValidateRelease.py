@@ -123,7 +123,7 @@ class runValidation:
         cf = mmCIFInfo(self.modelPath)
         modified_cats = cf.get_latest_modified_categories()
         if modified_cats:
-            if all(modified_cats) in SKIP_LIST:
+            if all(elem in modified_cats for elem in SKIP_LIST):
                 logging.info('{} only a simple modification: {}'.format(self.pdbid, ','.join(modified_cats)))
                 return True
         return False
