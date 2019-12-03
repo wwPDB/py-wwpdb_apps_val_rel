@@ -73,7 +73,7 @@ loop_
         ret = self.runValidation.is_simple_modification()
         self.assertTrue(ret)
 
-    def test_get_simple_revision(self):
+    def test_get_complex_revision(self):
         self.additional_content = """
 loop_
     _pdbx_audit_revision_history.ordinal
