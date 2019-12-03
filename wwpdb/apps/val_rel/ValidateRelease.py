@@ -24,6 +24,7 @@ queue_name = "val_release_queue"
 routing_key = "val_release_requests"
 exchange = "val_release_exchange"
 
+SKIP_LIST = ['citation', 'citation_author', 'pdbx_audit_support']
 
 def already_run(test_file, output_folder):
     if test_file:
@@ -112,27 +113,27 @@ class runValidation:
         self.rel_files = None
 
     @staticmethod
-    def is_simple_modification(cf):
-        skip_list = ['citation', 'citation_author', 'pdbx_audit_support']
-        modified_cats = cf.get_latest_modified_categories()
-        if modified_cats:
-            if all(modified_cats) in skip_list:
-                return True
-        return False
-
-    @staticmethod
     def exptl_is_em(exp_methods):
         if "ELECTRON MICROSCOPY" in exp_methods or 'ELECTRON CRYSTALLOGRAPHY' in exp_methods:
             return True
         return False
 
+    def is_simple_modification(self):
+        
+        cf = mmCIFInfo(self.modelPath)
+        modified_cats = cf.get_latest_modified_categories()
+        if modified_cats:
+            if all(modified_cats) in SKIP_LIST:
+                return True
+        return False
 
     def check_pdb_already_run(self):
         if self.always_recalculate:
             return True
         modified = False
         if not already_run(self.modelPath, self.pdb_output_folder):
-            modified = True
+            if not self.is_simple_modification():
+                modified = True
         if self.sfPath:
             if not already_run(self.sfPath, self.pdb_output_folder):
                 modified = True
@@ -239,20 +240,17 @@ class runValidation:
             self.csPath = self.rel_files.get_cs(self.pdbid)
 
             cf = mmCIFInfo(self.modelPath)
-            is_simple_modification = self.is_simple_modification(cf=cf)
-            if self.always_recalculate or not is_simple_modification:
-                exp_methods = cf.get_exp_methods()
-                if self.exptl_is_em(exp_methods):
-                    if not self.emdbid:
-                        self.emdbid = cf.get_associated_emdb()
-                        run_emdb.append(self.emdbid)
-                        run_emdb_and_pdbid.append(self.get_emdb_pdb_string())
+            exp_methods = cf.get_exp_methods()
+            if self.exptl_is_em(exp_methods):
+                if not self.emdbid:
+                    self.emdbid = cf.get_associated_emdb()
+                    run_emdb.append(self.emdbid)
+                    run_emdb_and_pdbid.append(self.get_emdb_pdb_string())
 
-                run_pdb.append(self.pdbid)
-                worked = self.run_validation()
-                all_worked.append(worked)
-            else:
-                logging.info('is simple modification - not running {}'.format(self.pdbid))
+            run_pdb.append(self.pdbid)
+            worked = self.run_validation()
+            all_worked.append(worked)
+            
 
         if self.emdbid:
             if self.emdbid not in run_emdb:
