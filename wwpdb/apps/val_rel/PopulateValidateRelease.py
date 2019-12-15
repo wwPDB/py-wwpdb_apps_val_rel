@@ -307,6 +307,10 @@ if "__main__" in __name__:
     args = parser.parse_args()
     logger.setLevel(args.loglevel)
 
+    # Set logging for pika to be lower
+    plogging = logging.getLogger('pika')
+    plogging.setLevel(logging.ERROR)
+
     main(
         entry_list=args.entry_list,
         entry_file=args.entry_file,
