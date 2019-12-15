@@ -17,10 +17,8 @@ logger.setLevel(logging.DEBUG)
 from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
 from wwpdb.utils.message_queue.MessagePublisher import MessagePublisher
 from wwpdb.apps.val_rel.outputFiles import outputFiles
+from wwpdb.apps.val_rel.config.ValConfig import ValConfig
 from wwpdb.apps.val_rel.ValidateRelease import (
-    queue_name,
-    routing_key,
-    exchange,
     get_gzip_name,
 )
 from wwpdb.apps.val_rel.getFilesRelease import getFilesRelease
@@ -248,11 +246,12 @@ def main(
                 message["alwaysRecalculate"] = always_recalculate
             if skipGzip:
                 message["skipGzip"] = skipGzip
+            vc = ValConfig()
             MessagePublisher().publish(
                 message=json.dumps(message),
-                exchangeName=exchange,
-                queueName=queue_name,
-                routingKey=routing_key,
+                exchangeName=vc.exchange,
+                queueName=vc.queue_name,
+                routingKey=vc.routing_key,
             )
 
 

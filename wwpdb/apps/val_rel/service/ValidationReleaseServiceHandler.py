@@ -30,11 +30,9 @@ from wwpdb.utils.detach.DetachedProcessBase import DetachedProcessBase
 from wwpdb.utils.message_queue.MessageConsumerBase import MessageConsumerBase
 from wwpdb.utils.message_queue.MessageQueueConnection import MessageQueueConnection
 from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
+from wwpdb.apps.val_rel.config.ValConfig import ValConfig
 from wwpdb.apps.val_rel.ValidateRelease import (
     runValidation,
-    queue_name,
-    routing_key,
-    exchange,
 )
 
 
@@ -78,8 +76,9 @@ class MessageConsumerWorker(object):
         mqc = MessageQueueConnection()
         url = mqc._getDefaultConnectionUrl()
         self.__mc = MessageConsumer(amqpUrl=url)
-        self.__mc.setQueue(queueName=queue_name, routingKey=routing_key)
-        self.__mc.setExchange(exchange=exchange, exchangeType="topic")
+        vc = ValConfig()
+        self.__mc.setQueue(queueName=vc.queue_name, routingKey=vc.routing_key)
+        self.__mc.setExchange(exchange=vc.exchange, exchangeType="topic")
         #
 
     def run(self):
