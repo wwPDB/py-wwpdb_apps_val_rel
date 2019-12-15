@@ -17,7 +17,7 @@ from wwpdb.apps.val_rel.ValidateRelease import (
 from wwpdb.apps.val_rel.getFilesRelease import getFilesRelease
 from wwpdb.apps.val_rel.xml_data import xmlInfo
 from wwpdb.apps.val_rel.mmCIFInfo import mmCIFInfo
-
+from wwpdb.io.locator.ReleasePathInfo import ReleasePathInfo
 
 logger = logging.getLogger()
 
@@ -87,8 +87,9 @@ class FindEntries:
 
     def get_release_entries(self, subfolder):
         entries = list()
+        rpi = ReleasePathInfo(self.siteID)
         full_entries = glob.glob(
-            os.path.join(self.cI.get("FOR_RELEASE_DATA_PATH"), subfolder) + "/*"
+            os.path.join(rpi.getForReleasePath(subdir=subfolder), "*")
         )
         for full_entry in full_entries:
             if not ".new" in full_entry:
