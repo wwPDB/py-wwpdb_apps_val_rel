@@ -13,6 +13,7 @@ from wwpdb.apps.val_rel.outputFiles import outputFiles
 from wwpdb.apps.val_rel.getFilesRelease import getFilesRelease
 from wwpdb.apps.val_rel.mmCIFInfo import mmCIFInfo
 from wwpdb.apps.val_rel.xml_data import xmlInfo
+from wwpdb.apps.val_rel.utils.Files import get_gzip_name, gzip_file, remove_files
 
 # from wwpdb.apps.val_rel.daInternal import DaInternal
 
@@ -44,28 +45,6 @@ def already_run(test_file, output_folder):
         logging.info("missing input file - not running")
         return True
 
-
-def get_gzip_name(f):
-    return f + ".gz"
-
-
-def gzip_file(in_file):
-    if os.path.exists(in_file):
-        with open(in_file) as f_in, gzip.open(get_gzip_name(in_file), "wb") as f_out:
-            f_out.writelines(f_in)
-        os.unlink(in_file)
-
-
-def remove_files(file_list):
-    if file_list:
-        logging.debug("removing existing files")
-        logging.debug(file_list)
-        for f in file_list:
-            if os.path.exists(f):
-                os.remove(f)
-            gzip_f = get_gzip_name(f)
-            if os.path.exists(gzip_f):
-                os.remove(gzip_f)
 
 
 class runValidation:

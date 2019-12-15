@@ -18,9 +18,7 @@ from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
 from wwpdb.utils.message_queue.MessagePublisher import MessagePublisher
 from wwpdb.apps.val_rel.outputFiles import outputFiles
 from wwpdb.apps.val_rel.config.ValConfig import ValConfig
-from wwpdb.apps.val_rel.ValidateRelease import (
-    get_gzip_name,
-)
+from wwpdb.apps.val_rel.utils.Files import get_gzip_name
 from wwpdb.apps.val_rel.getFilesRelease import getFilesRelease
 from wwpdb.apps.val_rel.xml_data import xmlInfo
 from wwpdb.apps.val_rel.mmCIFInfo import mmCIFInfo
