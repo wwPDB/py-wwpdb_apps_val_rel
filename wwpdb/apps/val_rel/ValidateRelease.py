@@ -12,7 +12,7 @@ from wwpdb.apps.validation.src.utils.minimal_map_cif import GenerateMinimalCif
 from wwpdb.apps.val_rel.outputFiles import outputFiles
 from wwpdb.apps.val_rel.getFilesRelease import getFilesRelease
 from wwpdb.apps.val_rel.mmCIFInfo import mmCIFInfo
-from wwpdb.apps.val_rel.xml_data import xmlInfo
+from wwpdb.apps.val_rel.utils.XmlInfo import XmlInfo
 from wwpdb.apps.val_rel.utils.Files import get_gzip_name, gzip_file, remove_files
 
 # from wwpdb.apps.val_rel.daInternal import DaInternal
@@ -238,7 +238,7 @@ class runValidation:
                     # da_internal_pdbids = self.da_internal.selectData('PDBIDs_FROM_ASSOC_EMDBID', self.emdbid)
                     # logging.info('data from da_internal')
                     # logging.info(da_internal_pdbids)
-                    self.pdbids = xmlInfo(self.emXmlPath).get_pdbids_from_xml()
+                    self.pdbids = XmlInfo(self.emXmlPath).get_pdbids_from_xml()
                     if self.pdbids:
                         for self.pdbid in self.pdbids:
                             self.pdbid = self.pdbid.lower()

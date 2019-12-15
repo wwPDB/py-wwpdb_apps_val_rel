@@ -1,8 +1,9 @@
-import os
+"""Parses EMDB XML header file and extracts pertinent data"""
+
 import xml.etree.ElementTree as ET
 
 
-class xmlInfo:
+class XmlInfo:
 
     def __init__(self, xml_file):
         self.tree = ET.parse(xml_file)

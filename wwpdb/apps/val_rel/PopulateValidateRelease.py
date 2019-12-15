@@ -20,7 +20,7 @@ from wwpdb.apps.val_rel.outputFiles import outputFiles
 from wwpdb.apps.val_rel.config.ValConfig import ValConfig
 from wwpdb.apps.val_rel.utils.Files import get_gzip_name
 from wwpdb.apps.val_rel.getFilesRelease import getFilesRelease
-from wwpdb.apps.val_rel.xml_data import xmlInfo
+from wwpdb.apps.val_rel.utils.XmlInfo import XmlInfo
 from wwpdb.apps.val_rel.mmCIFInfo import mmCIFInfo
 from wwpdb.io.locator.ReleasePathInfo import ReleasePathInfo
 
@@ -203,7 +203,7 @@ def main(
             em_vol = re.get_emdb_volume(emdb_entry)
             if em_vol:
                 logger.debug('using XML: {}'.format(em_xml))
-                pdbids = xmlInfo(em_xml).get_pdbids_from_xml() 
+                pdbids = XmlInfo(em_xml).get_pdbids_from_xml() 
                 if pdbids:
                     logger.info(
                         "PDB entries associated with {}: {}".format(emdb_entry, ",".join(pdbids))

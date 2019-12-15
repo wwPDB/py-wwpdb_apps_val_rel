@@ -4,7 +4,7 @@ import os
 import tempfile
 import shutil
 import time
-from wwpdb.apps.val_rel.xml_data import xmlInfo
+from wwpdb.apps.val_rel.utils.XmlInfo import XmlInfo
 
 class XmlInfoTests(unittest.TestCase):
     def setUp(self):
@@ -35,7 +35,7 @@ d" emdb_id="EMD-3863" version="3.0.1.5">
         with open(self.test_file, 'w') as outFile:
             outFile.write(test_xml_data)
 
-        ret = xmlInfo(xml_file=self.test_file).get_pdbids_from_xml()
+        ret = XmlInfo(xml_file=self.test_file).get_pdbids_from_xml()
         self.assertTrue(ret == ['5oyp'])
 
     
@@ -66,7 +66,7 @@ d" emdb_id="EMD-3863" version="3.0.1.5">
         with open(self.test_file, 'w') as outFile:
             outFile.write(test_xml_data)
 
-        ret = xmlInfo(xml_file=self.test_file).get_pdbids_from_xml()
+        ret = XmlInfo(xml_file=self.test_file).get_pdbids_from_xml()
         self.assertTrue(ret == ['5oyp', '5oyt'])
 
 
@@ -102,7 +102,7 @@ d" emdb_id="EMD-3863" version="3.0.1.5">
         with open(self.test_file, 'w') as outFile:
             outFile.write(test_xml_data)
 
-        ret = xmlInfo(xml_file=self.test_file).get_pdbids_from_xml()
+        ret = XmlInfo(xml_file=self.test_file).get_pdbids_from_xml()
         self.assertTrue(ret == ['5oyp', '5oyt'])
 
 
