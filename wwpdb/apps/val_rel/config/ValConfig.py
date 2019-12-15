@@ -12,8 +12,18 @@ Contains settings pertinent to configuring the behaviour of the Validation Servi
 """
 
 class ValConfig(object):
-    # Exchange queue names
-    queue_name = "val_release_queue"
-    routing_key = "val_release_requests"
-    exchange = "val_release_exchange"
+    def __init__(self, siteID):
+        self.__siteID = siteID
+
+    @property
+    def queue_name(self):
+        return "val_release_queue"
+
+    @property
+    def routing_key(self):
+        return "val_release_requests"
+
+    @property
+    def exchange(self):
+        return "val_release_exchange"
 

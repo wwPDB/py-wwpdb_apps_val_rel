@@ -69,14 +69,15 @@ class MessageConsumer(MessageConsumerBase):
 
 
 class MessageConsumerWorker(object):
-    def __init__(self):
+    def __init__(self, siteID):
+        self.__siteID=siteID
         self.__setup()
 
     def __setup(self):
         mqc = MessageQueueConnection()
         url = mqc._getDefaultConnectionUrl()
         self.__mc = MessageConsumer(amqpUrl=url)
-        vc = ValConfig()
+        vc = ValConfig(self.__siteID)
         self.__mc.setQueue(queueName=vc.queue_name, routingKey=vc.routing_key)
         self.__mc.setExchange(exchange=vc.exchange, exchangeType="topic")
         #
@@ -110,14 +111,15 @@ class MyDetachedProcess(DetachedProcessBase):
     """
 
     def __init__(
-        self,
-        pidFile="/tmp/DetachedProcessBase.pid",
-        stdin=os.devnull,
-        stdout=os.devnull,
-        stderr=os.devnull,
-        wrkDir="/",
-        gid=None,
-        uid=None,
+            self,
+            pidFile="/tmp/DetachedProcessBase.pid",
+            stdin=os.devnull,
+            stdout=os.devnull,
+            stderr=os.devnull,
+            wrkDir="/",
+            siteID=None,
+            gid=None,
+            uid=None
     ):
         super(MyDetachedProcess, self).__init__(
             pidFile=pidFile,
@@ -128,7 +130,7 @@ class MyDetachedProcess(DetachedProcessBase):
             gid=gid,
             uid=uid,
         )
-        self.__mcw = MessageConsumerWorker()
+        self.__mcw = MessageConsumerWorker(siteID)
 
     def run(self):
         logger.info("STARTING detached run method")
@@ -264,6 +266,7 @@ def main():
         stdout=stdoutFilePath,
         stderr=stderrFilePath,
         wrkDir=wsLogDirPath,
+        siteID=siteId
     )
 
     if args.startOp:

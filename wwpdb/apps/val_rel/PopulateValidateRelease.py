@@ -42,13 +42,14 @@ class FindEntries:
     def find_missing_pdb_entries(self):
         entries = []
         entries.extend(self.get_added_pdb_entries())
-        entries.extend(self.get_modifed_pdb_entries())
+        entries.extend(self.get_modified_pdb_entries())
 
         logger.info("checking {} entries".format(len(entries)))
 
         for entry in entries:
             if entry:
                 self.get_pdb_output_folder(pdbid=entry)
+                self.of.set_entry_id(entry)
                 file_to_check_dict = self.of.get_core_validation_files()
                 for f in file_to_check_dict.values():
                     if self.check_for_missing(f):
@@ -87,26 +88,33 @@ class FindEntries:
 
         return self.entries_missing_files
 
-    def get_release_entries(self, subfolder):
+    def _get_release_entries(self, subfolder):
+        """Returns list of entries in for_release/subfolder directory.
+        Ignores directories that end in ".new" being created by release module.
+        """
         entries = list()
         rpi = ReleasePathInfo(self.siteID)
-        full_entries = glob.glob(
-            os.path.join(rpi.getForReleasePath(subdir=subfolder), "*")
-        )
+        dirpath= rpi.getForReleasePath(subdir=subfolder)
+        full_entries = glob.glob(os.path.join(dirpath, "*"))
         for full_entry in full_entries:
             if not ".new" in full_entry:
-                entry = os.path.basename(full_entry)
-                entries.append(entry)
+                # Ensure not some other random file
+                if os.path.isdir(full_entry):
+                    entry = os.path.basename(full_entry)
+                    entries.append(entry)
         return entries
 
-    def get_modifed_pdb_entries(self):
-        return self.get_release_entries(subfolder="modified")
+    def get_modified_pdb_entries(self):
+        """Returns list of entries in the for_release/modified directory"""
+        return self._get_release_entries(subfolder="modified")
 
     def get_added_pdb_entries(self):
-        return self.get_release_entries(subfolder="added")
+        """Return list of entries in the for_release/added directory"""
+        return self._get_release_entries(subfolder="added")
 
     def get_emdb_entries(self):
-        return self.get_release_entries(subfolder="emd")
+        """Return list of entries in the for_release/emd directory"""
+        return self._get_release_entries(subfolder="emd")
 
     def get_pdb_output_folder(self, pdbid):
         self.of.pdbID = pdbid
@@ -144,7 +152,7 @@ def main(
     if release:
         pdb_entries.extend(fe.get_added_pdb_entries())
     if modified:
-        pdb_entries.extend(fe.get_modifed_pdb_entries())
+        pdb_entries.extend(fe.get_modified_pdb_entries())
 
     if emdb_release:
         emdb_entries.extend(fe.get_emdb_entries())
@@ -216,7 +224,7 @@ def main(
                                     pdb_entries.remove(pdbid)
                             # what if its not? should it be added to the queue?
                         else:
-                            if pdbid in pdb_entries:
+                             if pdbid in pdb_entries:
                                 logger.info('removing {} as pdb file does not exist'.format(pdbid))
                                 pdb_entries.remove(pdbid)
 
@@ -244,7 +252,7 @@ def main(
                 message["alwaysRecalculate"] = always_recalculate
             if skipGzip:
                 message["skipGzip"] = skipGzip
-            vc = ValConfig()
+            vc = ValConfig(siteID)
             MessagePublisher().publish(
                 message=json.dumps(message),
                 exchangeName=vc.exchange,
