@@ -5,6 +5,15 @@ import glob
 import shutil
 import json
 import sys
+
+
+# Create logger - 
+FORMAT = '[%(asctime)s %(levelname)s]-%(module)s.%(funcName)s: %(message)s'
+logging.basicConfig(format=FORMAT)
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+
+
 from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
 from wwpdb.utils.message_queue.MessagePublisher import MessagePublisher
 from wwpdb.apps.val_rel.outputFiles import outputFiles
@@ -19,9 +28,6 @@ from wwpdb.apps.val_rel.xml_data import xmlInfo
 from wwpdb.apps.val_rel.mmCIFInfo import mmCIFInfo
 from wwpdb.io.locator.ReleasePathInfo import ReleasePathInfo
 
-logger = logging.getLogger()
-
-
 class FindEntries:
     def __init__(self, siteID=getSiteId()):
         self.siteID = siteID
@@ -33,7 +39,7 @@ class FindEntries:
     def check_for_missing(self, f):
         if not os.path.exists(get_gzip_name(f)):
             self.missing_files.append(get_gzip_name(f))
-            logging.error("{} missing".format(get_gzip_name(f)))
+            logger.error("{} missing".format(get_gzip_name(f)))
             return True
         return False
 
@@ -42,7 +48,7 @@ class FindEntries:
         entries.extend(self.get_added_pdb_entries())
         entries.extend(self.get_modifed_pdb_entries())
 
-        logging.info("checking {} entries".format(len(entries)))
+        logger.info("checking {} entries".format(len(entries)))
 
         for entry in entries:
             if entry:
@@ -53,19 +59,19 @@ class FindEntries:
                         if entry not in self.entries_missing_files:
                             self.entries_missing_files.append(entry)
 
-        logging.error(
+        logger.error(
             "{} entries missing files out of {}".format(
                 len(self.entries_missing_files), len(entries)
             )
         )
-        logging.error(",".join(self.entries_missing_files))
+        logger.error(",".join(self.entries_missing_files))
 
         return self.entries_missing_files
 
     def find_missing_emdb_entries(self):
         entries = self.get_emdb_entries()
 
-        logging.info("checking {} entries".format(len(entries)))
+        logger.info("checking {} entries".format(len(entries)))
 
         for entry in entries:
             if entry:
@@ -76,12 +82,12 @@ class FindEntries:
                         if entry not in self.entries_missing_files:
                             self.entries_missing_files.append(entry)
 
-        logging.error(
+        logger.error(
             "{} entries missing files out of {}".format(
                 len(self.entries_missing_files), len(entries)
             )
         )
-        logging.error(",".join(self.entries_missing_files))
+        logger.error(",".join(self.entries_missing_files))
 
         return self.entries_missing_files
 
@@ -149,20 +155,20 @@ def main(
 
     if missing_pdb:
         missing_pdbs = fe.find_missing_pdb_entries()
-        logging.info(
+        logger.info(
             "{} entries missing validation information".format(len(missing_pdbs))
         )
-        logging.info(missing_pdbs)
+        logger.info(missing_pdbs)
         pdb_entries.extend(missing_pdbs)
         for entry in fe.find_missing_pdb_entries():
             shutil.rmtree(fe.get_pdb_output_folder(pdbid=entry), ignore_errors=True)
 
     if missing_emdb:
         missing_emdbs = fe.find_missing_emdb_entries()
-        logging.info(
+        logger.info(
             "{} entries missing validation information".format(len(missing_emdbs))
         )
-        logging.info(missing_emdbs)
+        logger.info(missing_emdbs)
         emdb_entries.extend(missing_emdbs)
 
     elif entry_list:
@@ -173,7 +179,7 @@ def main(
                 for l in inFile:
                     entries.append(l.strip())
         else:
-            logging.error("file: %s not found" % entry_file)
+            logger.error("file: %s not found" % entry_file)
 
     for entry in entries:
         if "EMD-" in entry.upper():
@@ -186,16 +192,16 @@ def main(
     for emdb_entry in emdb_entries:
         if emdb_entry not in added_entries:
             # stop duplication of making EM validation reports twice
-            logging.debug(emdb_entry)
+            logger.debug(emdb_entry)
             re = getFilesRelease(siteID=siteID)
             em_xml = re.get_emdb_xml(emdb_entry)
             
             em_vol = re.get_emdb_volume(emdb_entry)
             if em_vol:
-                logging.debug('using XML: {}'.format(em_xml))
+                logger.debug('using XML: {}'.format(em_xml))
                 pdbids = xmlInfo(em_xml).get_pdbids_from_xml() 
                 if pdbids:
-                    logging.info(
+                    logger.info(
                         "PDB entries associated with {}: {}".format(emdb_entry, ",".join(pdbids))
                     )
                     for pdbid in pdbids:
@@ -206,7 +212,7 @@ def main(
                             associated_emdb = cf.get_associated_emdb()
                             if associated_emdb == emdb_entry:
                                 if pdbid in pdb_entries:
-                                    logging.info(
+                                    logger.info(
                                         "removing {} from the PDB queue to stop duplication of report generation".format(
                                             pdbid
                                         )
@@ -215,7 +221,7 @@ def main(
                             # what if its not? should it be added to the queue?
                         else:
                             if pdbid in pdb_entries:
-                                logging.info('removing {} as pdb file does not exist'.format(pdbid))
+                                logger.info('removing {} as pdb file does not exist'.format(pdbid))
                                 pdb_entries.remove(pdbid)
 
                 message = {"emdbID": emdb_entry}
@@ -230,6 +236,7 @@ def main(
 
     if messages:
         for message in messages:
+            logger.info('MESSAGE req %s' % message) 
             message["siteID"] = siteID
             message["keepLog"] = keep_logs
             message['subfolder'] = validation_sub_dir
