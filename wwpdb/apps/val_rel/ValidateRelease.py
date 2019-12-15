@@ -20,10 +20,6 @@ logger = logging.getLogger()
 FORMAT = "%(funcName)s (%(levelname)s) - %(message)s"
 logging.basicConfig(format=FORMAT)
 
-queue_name = "val_release_queue"
-routing_key = "val_release_requests"
-exchange = "val_release_exchange"
-
 SKIP_LIST = ['citation', 'citation_author', 'pdbx_audit_support']
 
 def already_run(test_file, output_folder):
