@@ -8,11 +8,10 @@ logger = logging.getLogger(__name__)
 
 class mmCIFInfo:
     """Class for parsing model file mmCIF file"""
-    def __init__(self, mmCIF_file, IoAdapter=IoAdapterCore(), log=sys.stderr):
-        self.mmcif = mmCIF_file
-        self.logFileHandler = log
-        self.io = IoAdapter
-        self.mmcif_data = None
+    def __init__(self, mmCIF_file, IoAdapter=IoAdapterCore()):
+        self.__mmcif = mmCIF_file
+        self.__io = IoAdapter
+        self.__mmcif_data = None
 
         #self.category_list = ["exptl",
         #                      "pdbx_database_related",
@@ -23,23 +22,23 @@ class mmCIFInfo:
         self.exclude_category_list = ['atom_site', 'atom_site_anisotrop']
 
     def parse_mmcif(self):
-        if self.mmcif:
+        if self.__mmcif:
             try:
-                logger.debug("parsing {}".format(self.mmcif))
-                cList = self.io.readFile(self.mmcif, selectList=self.exclude_category_list, excludeFlag=True)
-                self.mmcif_data = cList[0]
-                return self.mmcif_data
+                logger.debug("parsing {}".format(self.__mmcif))
+                cList = self.__io.readFile(self.__mmcif, selectList=self.exclude_category_list, excludeFlag=True)
+                self.__mmcif_data = cList[0]
+                return self.__mmcif_data
             except Exception as e:
-                logger.error("failed to parse: %s" % self.mmcif)
+                logger.error("failed to parse: %s" % self.__mmcif)
                 logger.error(e)
 
         return None
 
     def get_category(self, category):
-        if not self.mmcif_data:
+        if not self.__mmcif_data:
             self.parse_mmcif()
-        if self.mmcif_data:
-            dcObj = self.mmcif_data.getObj(category)
+        if self.__mmcif_data:
+            dcObj = self.__mmcif_data.getObj(category)
             return dcObj
         return None
 
