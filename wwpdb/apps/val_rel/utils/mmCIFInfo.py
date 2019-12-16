@@ -4,8 +4,10 @@ import sys
 from mmcif.io.IoAdapterCore import IoAdapterCore as IoAdapterCore
 from mmcif.api.DataCategory import DataCategory
 
+logger = logging.getLogger(__name__)
 
 class mmCIFInfo:
+    """Class for parsing model file mmCIF file"""
     def __init__(self, mmCIF_file, IoAdapter=IoAdapterCore(), log=sys.stderr):
         self.mmcif = mmCIF_file
         self.logFileHandler = log
@@ -23,13 +25,13 @@ class mmCIFInfo:
     def parse_mmcif(self):
         if self.mmcif:
             try:
-                logging.debug("parsing {}".format(self.mmcif))
+                logger.debug("parsing {}".format(self.mmcif))
                 cList = self.io.readFile(self.mmcif, selectList=self.exclude_category_list, excludeFlag=True)
                 self.mmcif_data = cList[0]
                 return self.mmcif_data
             except Exception as e:
-                logging.error("failed to parse: %s" % self.mmcif)
-                logging.error(e)
+                logger.error("failed to parse: %s" % self.mmcif)
+                logger.error(e)
 
         return None
 
@@ -117,7 +119,7 @@ class mmCIFInfo:
                 else:
                     latest_audit_ordinal = ordinal
         if latest_audit_ordinal:
-            logging.info('latest audit ordinal: {}'.format(latest_audit_ordinal))
+            logger.info('latest audit ordinal: {}'.format(latest_audit_ordinal))
             ret = self.get_category_list_of_dictionaries(category="pdbx_audit_revision_category")
             if ret:
                 for row in ret:

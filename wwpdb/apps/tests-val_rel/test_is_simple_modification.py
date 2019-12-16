@@ -4,7 +4,7 @@ import os
 import tempfile
 import shutil
 import time
-from wwpdb.apps.val_rel.mmCIFInfo import mmCIFInfo
+from wwpdb.apps.val_rel.utils.mmCIFInfo import mmCIFInfo
 from wwpdb.apps.val_rel.ValidateRelease import runValidation
 
 class mmCIFInfoTests(unittest.TestCase):
