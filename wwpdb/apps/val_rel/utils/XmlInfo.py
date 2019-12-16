@@ -6,12 +6,12 @@ import xml.etree.ElementTree as ET
 class XmlInfo:
 
     def __init__(self, xml_file):
-        self.tree = ET.parse(xml_file)
-        self.root = self.tree.getroot()      
+        self.__tree = ET.parse(xml_file)
+        #self.__root = self.__tree.getroot()      
 
     def get_values_from_xpath(self, xpath):
         ret = []
-        values = self.tree.findall(xpath)
+        values = self.__tree.findall(xpath)
         for value in values:
             ret.append(value.text)
         return ret
