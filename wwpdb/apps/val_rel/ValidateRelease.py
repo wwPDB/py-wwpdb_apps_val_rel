@@ -1,7 +1,7 @@
 import logging
 import shutil
 import tempfile
-import gzip
+# import gzip
 import os
 import sys
 import argparse
