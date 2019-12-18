@@ -272,7 +272,7 @@ class runValidation:
 
     def remove_existing_files(self):
         self.output_file_list = []
-        for key in ["pdf", "xml", "full_pdf", "png", "svg", "2fofc", "fofc"]:
+        for key in ["pdf", "xml", "full_pdf", "png", "svg", "fofc", "2fofc"]:
             if key in self.output_file_dict:
                 self.output_file_list.append(self.output_file_dict[key])
         remove_files(self.output_file_list)
