@@ -71,7 +71,6 @@ class runValidation:
         self.__validation_sub_folder = 'current'
         self.__pdb_output_folder = None
         self.__emdb_output_folder = None
-        self.__output_file_list = []
         self.__output_file_dict = {}
 
         self.__skip_gzip = False
@@ -300,11 +299,7 @@ class runValidation:
             return False
 
     def remove_existing_files(self):
-        self.__output_file_list = []
-        for key in ["pdf", "xml", "full_pdf", "png", "svg", "fofc", "2fofc"]:
-            if key in self.__output_file_dict:
-                self.__output_file_list.append(self.__output_file_dict[key])
-        remove_files(self.__output_file_list)
+        remove_files(list(self.__output_file_dict.values()))
         if self.__emdbid:
             em_of = outputFiles(
                 pdbID=self.__pdbid,
@@ -314,13 +309,13 @@ class runValidation:
                 validation_sub_directory=self.__validation_sub_folder
             )
             # make emdb output folder if it doesn't exist
-            __emdb_output_folder = em_of.get___emdb_output_folder()
-            if __emdb_output_folder != self.__entry_output_folder:
-                if not os.path.exists(__emdb_output_folder):
-                    os.makedirs(__emdb_output_folder)
+            emdb_output_folder = em_of.get_emdb_output_folder()
+            if emdb_output_folder != self.__entry_output_folder:
+                if not os.path.exists(emdb_output_folder):
+                    os.makedirs(emdb_output_folder)
             em_of.set_accession_variables(with_emdb=True)
-            emdb___output_file_dict = em_of.get_core_validation_files()
-            remove_files(emdb___output_file_dict.values())
+            emdb_output_file_dict = em_of.get_core_validation_files()
+            remove_files(emdb_output_file_dict.values())
 
     def copy_to_emdb(self, copy_to_root_emdb=False):
         if self.__emdbid:
@@ -332,25 +327,25 @@ class runValidation:
                 validation_sub_directory=self.__validation_sub_folder
             )
             logger.info("EMDB ID: %s", self.__emdbid)
-            __emdb_output_folder = of.get___emdb_output_folder()
+            __emdb_output_folder = of.get_emdb_output_folder()
             if __emdb_output_folder != self.__entry_output_folder:
                 if os.path.exists(__emdb_output_folder):
                     logger.info("EMDB output folder: %s", __emdb_output_folder)
                     of.set_accession_variables(
                         with_emdb=True, copy_to_root_emdb=copy_to_root_emdb
                     )
-                    emdb___output_file_dict = of.get_core_validation_files()
-                    logger.info("EMDB output file dict: %s", emdb___output_file_dict)
+                    emdb_output_file_dict = of.get_core_validation_files()
+                    logger.info("EMDB output file dict: %s", emdb_output_file_dict)
 
                     for k in self.__output_file_dict:
-                        if k in emdb___output_file_dict:
+                        if k in emdb_output_file_dict:
                             in_file = self.__output_file_dict[k]
                             if os.path.exists(in_file):
                                 shutil.copy(
-                                    self.__output_file_dict[k], emdb___output_file_dict[k]
+                                    self.__output_file_dict[k], emdb_output_file_dict[k]
                                 )
                     if not self.__skip_gzip:
-                        for f in emdb___output_file_dict.values():
+                        for f in emdb_output_file_dict.values():
                             gzip_file(f)
                 else:
                     logger.error("EMDB output folder %s does not exist", __emdb_output_folder)
@@ -358,8 +353,9 @@ class runValidation:
 
         return True
 
-    def __gzip_output(self):
-        for f in self.__output_file_list:
+    def __gzip_output(self, filelist):
+        """Compresses list of files"""
+        for f in filelist:
             gzip_file(f)
 
     def run_validation(self):
@@ -448,9 +444,18 @@ class runValidation:
             if self.__keepLog:
                 vw.expLog(logPath)
 
-            logger.info(self.__output_file_list)
+
+            output_file_list = []
+            # Keys needs to be in order of arguments
+            for key in ["pdf", "xml", "full_pdf", "png", "svg", "fofc", "2fofc"]:
+                if key in self.__output_file_dict:
+                    output_file_list.append(self.__output_file_dict[key])
+
+            logger.info(output_file_list)
             logger.info(self.__output_file_dict)
-            vw.expList(dstPathList=self.__output_file_list)
+
+
+            vw.expList(dstPathList=output_file_list)
 
             # clean up temp folder after run
             # vw.cleanup()
@@ -469,7 +474,7 @@ class runValidation:
                 #        return False
 
             if not self.__skip_gzip:
-                self.__gzip_output()
+                self.__gzip_output(output_file_list)
 
             self.__sds.setValidationRunning(False)
             return True
