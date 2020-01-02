@@ -381,6 +381,7 @@ class runValidation:
                 logger.info("skipping %s/%s as entry files have not changed",
                             self.__pdbid, self.__emdbid)
 
+                self.__sds.setValidationRunning(False)
                 return True
 
             # make output directory if it doesn't exist
@@ -458,6 +459,7 @@ class runValidation:
                 ok = self.copy_to_emdb()
                 if not ok:
                     logger.error("failed to copy to emdb folder")
+                    self.__sds.setValidationRunning(False)
                     return False
                 # if self.copy_to_root_emdb:
                 #    logger.info('copy to EMDB folder without PDBID')
