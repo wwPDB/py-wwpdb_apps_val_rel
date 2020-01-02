@@ -2,6 +2,7 @@
 
 import os
 import logging
+import gzip
 
 logger = logging.getLogger(__name__)
 
@@ -30,4 +31,3 @@ def remove_files(file_list):
             gzip_f = get_gzip_name(f)
             if os.path.exists(gzip_f):
                 os.remove(gzip_f)
-

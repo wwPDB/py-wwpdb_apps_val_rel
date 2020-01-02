@@ -1,10 +1,9 @@
 import logging
-import sys
 
 from mmcif.io.IoAdapterCore import IoAdapterCore as IoAdapterCore
-from mmcif.api.DataCategory import DataCategory
 
 logger = logging.getLogger(__name__)
+
 
 class mmCIFInfo:
     """Class for parsing model file mmCIF file"""
@@ -12,12 +11,6 @@ class mmCIFInfo:
         self.__mmcif = mmCIF_file
         self.__io = IoAdapter
         self.__mmcif_data = None
-
-        #self.category_list = ["exptl",
-        #                      "pdbx_database_related",
-        #                      "em_map",
-        #                      'pdbx_audit_revision_history',
-        #                      "pdbx_audit_revision_category"]
 
         self.exclude_category_list = ['atom_site', 'atom_site_anisotrop']
 

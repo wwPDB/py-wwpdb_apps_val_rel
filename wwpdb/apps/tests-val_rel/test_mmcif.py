@@ -1,10 +1,9 @@
 import unittest
-import logging
 import os
 import tempfile
 import shutil
-import time
 from wwpdb.apps.val_rel.utils.mmCIFInfo import mmCIFInfo
+
 
 class mmCIFInfoTests(unittest.TestCase):
     def setUp(self):
@@ -13,23 +12,23 @@ class mmCIFInfoTests(unittest.TestCase):
         self.additional_content = ""
         self.base_mmcif_content = """
 data_2GC2
-# 
-_entry.id   2GC2 
-# 
-_audit_conform.dict_name       mmcif_pdbx.dic 
-_audit_conform.dict_version    5.281 
-_audit_conform.dict_location   http://mmcif.pdb.org/dictionaries/ascii/mmcif_pdbx.dic 
-# 
-loop_
-_database_2.database_id 
-_database_2.database_code 
-PDB   2GC2         
-RCSB  RCSB036939   
-WWPDB D_1000036939 
 #
-_exptl.entry_id          2GC2 
-_exptl.crystals_number   1 
-_exptl.method            'X-RAY DIFFRACTION' 
+_entry.id   2GC2
+#
+_audit_conform.dict_name       mmcif_pdbx.dic
+_audit_conform.dict_version    5.281
+_audit_conform.dict_location   http://mmcif.pdb.org/dictionaries/ascii/mmcif_pdbx.dic
+#
+loop_
+_database_2.database_id
+_database_2.database_code
+PDB   2GC2
+RCSB  RCSB036939
+WWPDB D_1000036939
+#
+_exptl.entry_id          2GC2
+_exptl.crystals_number   1
+_exptl.method            'X-RAY DIFFRACTION'
 #
 """
 
@@ -53,11 +52,11 @@ _exptl.method            'X-RAY DIFFRACTION'
     def test_get_associated_with_none(self):
         self.additional_content = """
 loop_
-_pdbx_database_related.db_name 
-_pdbx_database_related.db_id 
-_pdbx_database_related.details 
-_pdbx_database_related.content_type 
-PDB 1X7N ? unspecified 
+_pdbx_database_related.db_name
+_pdbx_database_related.db_id
+_pdbx_database_related.details
+_pdbx_database_related.content_type
+PDB 1X7N ? unspecified
 #
 """
         self.write_mmcif()
@@ -68,10 +67,10 @@ PDB 1X7N ? unspecified
     def test_get_associated_with_emd_1234(self):
         self.additional_content = """
 loop_
-_pdbx_database_related.db_name 
-_pdbx_database_related.db_id 
-_pdbx_database_related.details 
-_pdbx_database_related.content_type 
+_pdbx_database_related.db_name
+_pdbx_database_related.db_id
+_pdbx_database_related.details
+_pdbx_database_related.content_type
 EMDB EMD-1234 ? 'associated EM volume'
 #
 """
@@ -88,8 +87,8 @@ loop_
     _pdbx_audit_revision_history.major_revision
     _pdbx_audit_revision_history.minor_revision
     _pdbx_audit_revision_history.revision_date
-    1 'Structure model' 1 0 2017-03-01 
-    2 'Structure model' 1 1 2017-03-08 
+    1 'Structure model' 1 0 2017-03-01
+    2 'Structure model' 1 1 2017-03-08
 #
 loop_
     _pdbx_audit_revision_category.ordinal

@@ -1,7 +1,6 @@
 import unittest
-import logging
 import os
-from wwpdb.apps.val_rel.outputFiles import outputFiles
+from wwpdb.apps.val_rel.utils.outputFiles import outputFiles
 
 
 class OutputFilesTests(unittest.TestCase):

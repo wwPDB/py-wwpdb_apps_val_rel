@@ -4,25 +4,23 @@ import os
 import glob
 import shutil
 import json
-import sys
-
-
-# Create logger - 
-FORMAT = '[%(asctime)s %(levelname)s]-%(module)s.%(funcName)s: %(message)s'
-logging.basicConfig(format=FORMAT)
-logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
-
 
 from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
 from wwpdb.utils.message_queue.MessagePublisher import MessagePublisher
-from wwpdb.apps.val_rel.outputFiles import outputFiles
+from wwpdb.apps.val_rel.utils.outputFiles import outputFiles
 from wwpdb.apps.val_rel.config.ValConfig import ValConfig
 from wwpdb.apps.val_rel.utils.Files import get_gzip_name
 from wwpdb.apps.val_rel.utils.getFilesRelease import getFilesRelease
 from wwpdb.apps.val_rel.utils.XmlInfo import XmlInfo
 from wwpdb.apps.val_rel.utils.mmCIFInfo import mmCIFInfo
 from wwpdb.io.locator.ReleasePathInfo import ReleasePathInfo
+
+# Create logger -
+FORMAT = '[%(asctime)s %(levelname)s]-%(module)s.%(funcName)s: %(message)s'
+logging.basicConfig(format=FORMAT)
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+
 
 class FindEntries:
     def __init__(self, siteID=getSiteId()):
@@ -94,10 +92,10 @@ class FindEntries:
         """
         entries = list()
         rpi = ReleasePathInfo(self.siteID)
-        dirpath= rpi.getForReleasePath(subdir=subfolder)
+        dirpath = rpi.getForReleasePath(subdir=subfolder)
         full_entries = glob.glob(os.path.join(dirpath, "*"))
         for full_entry in full_entries:
-            if not ".new" in full_entry:
+            if ".new" not in full_entry:
                 # Ensure not some other random file
                 if os.path.isdir(full_entry):
                     entry = os.path.basename(full_entry)
@@ -117,7 +115,7 @@ class FindEntries:
         return self._get_release_entries(subfolder="emd")
 
     def get_pdb_output_folder(self, pdbid):
-        self.of.pdbID = pdbid
+        self.of.set_pdb_id(pdbid)
         return self.of.get_entry_output_folder()
 
     def get_emdb_output_folder(self, emdbid):
@@ -199,11 +197,11 @@ def main(
             logger.debug(emdb_entry)
             re = getFilesRelease(siteID=siteID)
             em_xml = re.get_emdb_xml(emdb_entry)
-            
+
             em_vol = re.get_emdb_volume(emdb_entry)
             if em_vol:
                 logger.debug('using XML: {}'.format(em_xml))
-                pdbids = XmlInfo(em_xml).get_pdbids_from_xml() 
+                pdbids = XmlInfo(em_xml).get_pdbids_from_xml()
                 if pdbids:
                     logger.info(
                         "PDB entries associated with {}: {}".format(emdb_entry, ",".join(pdbids))
@@ -224,7 +222,7 @@ def main(
                                     pdb_entries.remove(pdbid)
                             # what if its not? should it be added to the queue?
                         else:
-                             if pdbid in pdb_entries:
+                            if pdbid in pdb_entries:
                                 logger.info('removing {} as pdb file does not exist'.format(pdbid))
                                 pdb_entries.remove(pdbid)
 
@@ -240,7 +238,7 @@ def main(
 
     if messages:
         for message in messages:
-            logger.info('MESSAGE req %s' % message) 
+            logger.info('MESSAGE req %s' % message)
             message["siteID"] = siteID
             message["keepLog"] = keep_logs
             message['subfolder'] = validation_sub_dir
@@ -338,4 +336,3 @@ if "__main__" in __name__:
         skipGzip=args.skipGzip,
         validation_sub_dir=args.validation_subdir
     )
-

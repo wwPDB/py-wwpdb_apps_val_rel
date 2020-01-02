@@ -54,23 +54,23 @@ class MessageConsumer(MessageConsumerBase):
         try:
             logger.debug("Message body %r" % msgBody)
             pD = json.loads(msgBody)
-        except:
-            logger.error("Message format error - discarding")
+        except Exception as e:
+            logger.error("Message format error - discarding %r", str(e))
             return False
         #
         successFlag = True
         try:
             logger.info("Message body %r" % pD)
             runValidation().run_process(pD)
-        except:
-            logger.exception("Failed service execution")
+        except Exception as e:
+            logger.exception("Failed service execution %r", str(e))
 
         return successFlag
 
 
 class MessageConsumerWorker(object):
     def __init__(self, siteID):
-        self.__siteID=siteID
+        self.__siteID = siteID
         self.__setup()
 
     def __setup(self):
@@ -93,8 +93,8 @@ class MessageConsumerWorker(object):
                 self.__mc.run()
             except KeyboardInterrupt:
                 self.__mc.stop()
-        except:
-            logger.exception("MessageConsumer failing")
+        except Exception as e:
+            logger.exception("MessageConsumer failing %r", str(e))
 
         endTime = time.time()
         logger.info("Completed (%f seconds)" % (endTime - startTime))
@@ -140,7 +140,8 @@ class MyDetachedProcess(DetachedProcessBase):
         logger.info("SUSPENDING detached process")
         try:
             self.__mcw.suspend()
-        except:
+        except Exception as e:
+            logger.error("SUSPENDING failed %r", str(e))
             pass
 
 

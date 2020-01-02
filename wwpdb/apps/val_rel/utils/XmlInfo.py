@@ -7,7 +7,6 @@ class XmlInfo:
 
     def __init__(self, xml_file):
         self.__tree = ET.parse(xml_file)
-        #self.__root = self.__tree.getroot()      
 
     def get_values_from_xpath(self, xpath):
         ret = []

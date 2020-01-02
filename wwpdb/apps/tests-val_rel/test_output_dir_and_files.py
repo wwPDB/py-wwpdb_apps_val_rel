@@ -1,8 +1,5 @@
 import unittest
-import logging
 import os
-import tempfile
-import shutil
 from wwpdb.apps.val_rel.ValidateRelease import runValidation
 
 

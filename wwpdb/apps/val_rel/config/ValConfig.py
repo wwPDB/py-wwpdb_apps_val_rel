@@ -7,9 +7,9 @@
 #
 ##
 """
-
 Contains settings pertinent to configuring the behaviour of the Validation Services
 """
+
 
 class ValConfig(object):
     def __init__(self, siteID):
@@ -26,4 +26,3 @@ class ValConfig(object):
     @property
     def exchange(self):
         return "val_release_exchange"
-
