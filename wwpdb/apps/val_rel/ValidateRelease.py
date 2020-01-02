@@ -15,9 +15,7 @@ from wwpdb.apps.val_rel.utils.Files import gzip_file, remove_files
 
 # from wwpdb.apps.val_rel.daInternal import DaInternal
 
-logger = logging.getLogger()
-FORMAT = "%(funcName)s (%(levelname)s) - %(message)s"
-logging.basicConfig(format=FORMAT)
+logger = logging.getLogger(__name__)
 
 SKIP_LIST = ['citation', 'citation_author', 'pdbx_audit_support']
 
@@ -29,19 +27,19 @@ def already_run(test_file, output_folder):
                 input_modification_time = os.path.getmtime(test_file)
                 output_modification_time = os.path.getmtime(output_folder)
                 if input_modification_time < output_modification_time:
-                    logging.info("already run validation")
+                    logger.info("already run validation")
                     return True
                 else:
-                    logging.info("validation to be run")
+                    logger.info("validation to be run")
                     return False
             else:
-                logging.info("validation to be run")
+                logger.info("validation to be run")
                 return False
         else:
-            logging.info("missing input file - not running")
+            logger.info("missing input file - not running")
             return True
     else:
-        logging.info("missing input file - not running")
+        logger.info("missing input file - not running")
         return True
 
 
@@ -49,41 +47,36 @@ class runValidation:
     def __init__(self):
         self.__keepLog = False
         self.__pdbid = None
-        self.emdbid = None
-        self.run_map_only = False
-        self.emdbids = []
+        self.__emdbid = None
+        self.__run_map_only = False
+        self.__emdbids = []
         self.__pdbids = []
-        self.cI = None
-        self.pythonSiteID = None
+        self.__cI = None
+        self.__pythonSiteID = None
         self.siteID = None
-        self.da_internal = None
-        self.outputRoot = None
-        self.entry_id = None
-        self.modelPath = None
-        self.csPath = None
-        self.sfPath = None
-        self.emXmlPath = None
-        self.volPath = None
-        self.fscPath = None
-        self.tempDir = None
-        self.session_path = None
-        self.runDir = None
-        self.logPath = None
+        # self.__da_internal = None
+        self.__outputRoot = None
+        self.__entry_id = None
+        self.__modelPath = None
+        self.__csPath = None
+        self.__sfPath = None
+        self.__emXmlPath = None
+        self.__volPath = None
+        self.__fscPath = None
+        self.__tempDir = None
+        self.__sessionPath = None
         # self.contour_level = None # not needed as its in the xml
-        self.entry_output_folder = None
-        self.validation_sub_folder = 'current'
-        self.pdb_output_folder = None
-        self.emdb_output_folder = None
-        self.output_file_list = []
-        self.output_file_dict = {}
+        self.__entry_output_folder = None
+        self.__validation_sub_folder = 'current'
+        self.__pdb_output_folder = None
+        self.__emdb_output_folder = None
+        self.__output_file_list = []
+        self.__output_file_dict = {}
 
-        self.skip_gzip = False
-        self.always_recalculate = False
-        self.remove_validation_files = False
+        self.__skip_gzip = False
+        self.__always_recalculate = False
 
-        self.copy_to_root_emdb = False
-
-        self.rel_files = None
+        self.__rel_files = None
 
     @staticmethod
     def exptl_is_em(exp_methods):
@@ -93,7 +86,7 @@ class runValidation:
 
     def is_simple_modification(self):
 
-        cf = mmCIFInfo(self.modelPath)
+        cf = mmCIFInfo(self.__modelPath)
         modified_cats = cf.get_latest_modified_categories()
         if modified_cats:
             all_simple = True
@@ -101,30 +94,30 @@ class runValidation:
                 if item not in SKIP_LIST:
                     all_simple = False
             if all_simple:
-                logging.info('{} only a simple modification: {}'.format(self.__pdbid, ','.join(modified_cats)))
+                logger.info('%s only a simple modification: %s', self.__pdbid, ','.join(modified_cats))
                 return True
         return False
 
     def check_pdb_already_run(self):
-        if self.always_recalculate:
+        if self.__always_recalculate:
             return True
         modified = False
-        if not already_run(self.modelPath, self.pdb_output_folder):
+        if not already_run(self.__modelPath, self.__pdb_output_folder):
             if not self.is_simple_modification():
                 modified = True
-        if self.sfPath:
-            if not already_run(self.sfPath, self.pdb_output_folder):
+        if self.__sfPath:
+            if not already_run(self.__sfPath, self.__pdb_output_folder):
                 modified = True
-        if self.csPath:
-            if not already_run(self.csPath, self.pdb_output_folder):
+        if self.__csPath:
+            if not already_run(self.__csPath, self.__pdb_output_folder):
                 modified = True
         return modified
 
     def check_emdb_already_run(self):
-        if self.always_recalculate:
+        if self.__always_recalculate:
             return True
         modified = False
-        if not already_run(self.emXmlPath, self.emdb_output_folder):
+        if not already_run(self.__emXmlPath, self.__emdb_output_folder):
             modified = True
         return modified
 
@@ -139,66 +132,66 @@ class runValidation:
 
     def get_emdb_pdb_string(self):
         emdb_pdb_string = ''
-        if self.emdbid and self.__pdbid:
-            emdb_pdb_string = '{}-{}'.format(self.emdbid, self.__pdbid)
+        if self.__emdbid and self.__pdbid:
+            emdb_pdb_string = '{}-{}'.format(self.__emdbid, self.__pdbid)
         return emdb_pdb_string
 
     def set_output_dir_and_files(self):
         of = outputFiles(
             pdbID=self.__pdbid,
-            emdbID=self.emdbid,
+            emdbID=self.__emdbid,
             siteID=self.siteID,
-            outputRoot=self.outputRoot,
-            validation_sub_directory=self.validation_sub_folder
+            outputRoot=self.__outputRoot,
+            validation_sub_directory=self.__validation_sub_folder
         )
-        self.entry_output_folder = of.get_entry_output_folder()
-        logging.info("output folder: {}".format(self.entry_output_folder))
-        self.output_file_dict = of.get_all_validation_files()
-        self.pdb_output_folder = of.get_pdb_output_folder()
-        self.emdb_output_folder = of.get_emdb_output_folder()
+        self.__entry_output_folder = of.get_entry_output_folder()
+        logger.info("output folder: %s", self.__entry_output_folder)
+        self.__output_file_dict = of.get_all_validation_files()
+        self.__pdb_output_folder = of.get_pdb_output_folder()
+        self.__emdb_output_folder = of.get_emdb_output_folder()
 
     def run_process(self, message):
         self.__pdbid = message.get("pdbID")
         if self.__pdbid:
             self.__pdbid = self.__pdbid.lower()
-        self.emdbid = message.get("emdbID")
-        if self.emdbid:
-            self.emdbid = self.emdbid.upper()
+        self.__emdbid = message.get("emdbID")
+        if self.__emdbid:
+            self.__emdbid = self.__emdbid.upper()
         self.siteID = message.get("siteID")
-        self.outputRoot = message.get("outputRoot")
-        self.skip_gzip = message.get("skipGzip", False)
-        self.always_recalculate = message.get("alwaysRecalculate", False)
+        self.__outputRoot = message.get("outputRoot")
+        self.__skip_gzip = message.get("skipGzip", False)
+        self.__always_recalculate = message.get("alwaysRecalculate", False)
         self.__keepLog = message.get("keepLog", False)
-        self.validation_sub_folder = message.get("subfolder", 'current')
-        self.remove_validation_files = message.get('removeValFiles', False)
+        self.__validation_sub_folder = message.get("subfolder", 'current')
+        remove_validation_files = message.get('removeValFiles', False)
         if self.__pdbid:
-            self.entry_id = self.__pdbid
-        elif self.emdbid:
-            self.entry_id = self.emdbid
+            self.__entry_id = self.__pdbid
+        elif self.__emdbid:
+            self.__entry_id = self.__emdbid
         else:
-            logging.error("No PDB or EMDB provided")
+            logger.error("No PDB or EMDB provided")
             return False
         if not self.siteID:
             self.siteID = getSiteId()
-        self.pythonSiteID = message.get("python_site_id", self.siteID)
-        self.cI = ConfigInfo(self.siteID)
-        self.entry_output_folder = None
+        self.__pythonSiteID = message.get("python_site_id", self.siteID)
+        self.__cI = ConfigInfo(self.siteID)
+        self.__entry_output_folder = None
         # self.da_internal = DaInternal(self.siteID)
 
-        if self.remove_validation_files:
+        if remove_validation_files:
             self.set_output_dir_and_files()
             self.remove_existing_files()
             return True
 
-        logging.info("running validation for {}, {}".format(self.__pdbid, self.emdbid))
+        logger.info("running validation for %s, %s", self.__pdbid, self.__emdbid)
 
-        self.rel_files = getFilesRelease(siteID=self.siteID)
+        self.__rel_files = getFilesRelease(siteID=self.siteID)
 
         worked = False
-        self.session_path = self.cI.get("SITE_WEB_APPS_SESSIONS_PATH")
-        self.tempDir = tempfile.mkdtemp(
-            dir=self.session_path,
-            prefix="{}_validation_release_temp_".format(self.entry_id),
+        self.__sessionPath = self.__cI.get("SITE_WEB_APPS_SESSIONS_PATH")
+        self.__tempDir = tempfile.mkdtemp(
+            dir=self.__sessionPath,
+            prefix="{}_validation_release_temp_".format(self.__entry_id),
         )
 
         all_worked = []
@@ -206,56 +199,56 @@ class runValidation:
         run_emdb = []
         run_emdb_and_pdbid = []
 
-        if self.emdbid:
-            self.emXmlPath = self.rel_files.get_emdb_xml(self.emdbid)
-            self.volPath = self.rel_files.get_emdb_volume(self.emdbid)
-            if self.volPath:
-                self.run_map_only = True
+        if self.__emdbid:
+            self.__emXmlPath = self.__rel_files.get_emdb_xml(self.__emdbid)
+            self.__volPath = self.__rel_files.get_emdb_volume(self.__emdbid)
+            if self.__volPath:
+                self.__run_map_only = True
 
         if self.__pdbid:
-            self.modelPath = self.rel_files.get_model(self.__pdbid)
-            self.sfPath = self.rel_files.get_sf(self.__pdbid)
-            self.csPath = self.rel_files.get_cs(self.__pdbid)
+            self.__modelPath = self.__rel_files.get_model(self.__pdbid)
+            self.__sfPath = self.__rel_files.get_sf(self.__pdbid)
+            self.__csPath = self.__rel_files.get_cs(self.__pdbid)
 
-            cf = mmCIFInfo(self.modelPath)
+            cf = mmCIFInfo(self.__modelPath)
             exp_methods = cf.get_exp_methods()
             if self.exptl_is_em(exp_methods):
-                if not self.emdbid:
-                    self.emdbid = cf.get_associated_emdb()
-                    run_emdb.append(self.emdbid)
+                if not self.__emdbid:
+                    self.__emdbid = cf.get_associated_emdb()
+                    run_emdb.append(self.__emdbid)
                     run_emdb_and_pdbid.append(self.get_emdb_pdb_string())
 
             run_pdb.append(self.__pdbid)
             worked = self.run_validation()
             all_worked.append(worked)
 
-        if self.emdbid:
-            if self.emdbid not in run_emdb:
-                if self.volPath:
-                    # da_internal_pdbids = self.da_internal.selectData('PDBIDs_FROM_ASSOC_EMDBID', self.emdbid)
+        if self.__emdbid:
+            if self.__emdbid not in run_emdb:
+                if self.__volPath:
+                    # da_internal_pdbids = self.da_internal.selectData('PDBIDs_FROM_ASSOC_EMDBID', self.__emdbid)
                     # logging.info('data from da_internal')
-                    # logging.info(da_internal_pdbids)
-                    self.__pdbids = XmlInfo(self.emXmlPath).get_pdbids_from_xml()
+                    # logger.info(da_internal_pdbids)
+                    self.__pdbids = XmlInfo(self.__emXmlPath).get_pdbids_from_xml()
                     if self.__pdbids:
                         for self.__pdbid in self.__pdbids:
                             self.__pdbid = self.__pdbid.lower()
                             if self.get_emdb_pdb_string() not in run_emdb_and_pdbid:
-                                self.modelPath = self.rel_files.get_model(self.__pdbid)
-                                if self.modelPath:
+                                self.__modelPath = self.__rel_files.get_model(self.__pdbid)
+                                if self.__modelPath:
                                     # run validation
                                     worked = self.run_validation()
                                     all_worked.append(worked)
                             else:
-                                logging.info('report already run for {}'.format(self.get_emdb_pdb_string()))
+                                logger.info('report already run for %s', self.get_emdb_pdb_string())
 
-        if self.run_map_only:
+        if self.__run_map_only:
             # make map only validation report without models
             self.__pdbid = None
-            self.modelPath = os.path.join(
-                self.tempDir, "{}_minimal.cif".format(self.emdbid)
+            self.__modelPath = os.path.join(
+                self.__tempDir, "{}_minimal.cif".format(self.__emdbid)
             )
-            GenerateMinimalCif(emdb_xml=self.emXmlPath).write_out(
-                output_cif=self.modelPath
+            GenerateMinimalCif(emdb_xml=self.__emXmlPath).write_out(
+                output_cif=self.__modelPath
             )
             # run validation
             worked = self.run_validation()
@@ -264,189 +257,187 @@ class runValidation:
         if list(set(all_worked)) == [True]:
             return True
         else:
-            logging.error(all_worked)
+            logger.error(all_worked)
             return False
 
     def remove_existing_files(self):
-        self.output_file_list = []
+        self.__output_file_list = []
         for key in ["pdf", "xml", "full_pdf", "png", "svg", "fofc", "2fofc"]:
-            if key in self.output_file_dict:
-                self.output_file_list.append(self.output_file_dict[key])
-        remove_files(self.output_file_list)
-        if self.emdbid:
+            if key in self.__output_file_dict:
+                self.__output_file_list.append(self.__output_file_dict[key])
+        remove_files(self.__output_file_list)
+        if self.__emdbid:
             em_of = outputFiles(
                 pdbID=self.__pdbid,
-                emdbID=self.emdbid,
+                emdbID=self.__emdbid,
                 siteID=self.siteID,
-                outputRoot=self.outputRoot,
-                validation_sub_directory=self.validation_sub_folder
+                outputRoot=self.__outputRoot,
+                validation_sub_directory=self.__validation_sub_folder
             )
             # make emdb output folder if it doesn't exist
-            emdb_output_folder = em_of.get_emdb_output_folder()
-            if emdb_output_folder != self.entry_output_folder:
-                if not os.path.exists(emdb_output_folder):
-                    os.makedirs(emdb_output_folder)
+            __emdb_output_folder = em_of.get___emdb_output_folder()
+            if __emdb_output_folder != self.__entry_output_folder:
+                if not os.path.exists(__emdb_output_folder):
+                    os.makedirs(__emdb_output_folder)
             em_of.set_accession_variables(with_emdb=True)
-            emdb_output_file_dict = em_of.get_core_validation_files()
-            remove_files(emdb_output_file_dict.values())
+            emdb___output_file_dict = em_of.get_core_validation_files()
+            remove_files(emdb___output_file_dict.values())
 
     def copy_to_emdb(self, copy_to_root_emdb=False):
-        if self.emdbid:
+        if self.__emdbid:
             of = outputFiles(
                 pdbID=self.__pdbid,
-                emdbID=self.emdbid,
+                emdbID=self.__emdbid,
                 siteID=self.siteID,
-                outputRoot=self.outputRoot,
-                validation_sub_directory=self.validation_sub_folder
+                outputRoot=self.__outputRoot,
+                validation_sub_directory=self.__validation_sub_folder
             )
-            logging.info("EMDB ID: {}".format(self.emdbid))
-            emdb_output_folder = of.get_emdb_output_folder()
-            if emdb_output_folder != self.entry_output_folder:
-                if os.path.exists(emdb_output_folder):
-                    logging.info("EMDB output folder: {}".format(emdb_output_folder))
+            logger.info("EMDB ID: %s", self.__emdbid)
+            __emdb_output_folder = of.get___emdb_output_folder()
+            if __emdb_output_folder != self.__entry_output_folder:
+                if os.path.exists(__emdb_output_folder):
+                    logger.info("EMDB output folder: %s", __emdb_output_folder)
                     of.set_accession_variables(
                         with_emdb=True, copy_to_root_emdb=copy_to_root_emdb
                     )
-                    emdb_output_file_dict = of.get_core_validation_files()
-                    logging.info(
-                        "EMDB output file dict: {}".format(emdb_output_file_dict)
-                    )
-                    for k in self.output_file_dict:
-                        if k in emdb_output_file_dict:
-                            in_file = self.output_file_dict[k]
+                    emdb___output_file_dict = of.get_core_validation_files()
+                    logger.info("EMDB output file dict: %s", emdb___output_file_dict)
+
+                    for k in self.__output_file_dict:
+                        if k in emdb___output_file_dict:
+                            in_file = self.__output_file_dict[k]
                             if os.path.exists(in_file):
                                 shutil.copy(
-                                    self.output_file_dict[k], emdb_output_file_dict[k]
+                                    self.__output_file_dict[k], emdb___output_file_dict[k]
                                 )
-                    if not self.skip_gzip:
-                        for f in emdb_output_file_dict.values():
+                    if not self.__skip_gzip:
+                        for f in emdb___output_file_dict.values():
                             gzip_file(f)
                 else:
-                    logging.error(
-                        "EMDB output folder {} does not exist".format(
-                            emdb_output_folder
-                        )
-                    )
+                    logger.error("EMDB output folder %s does not exist", __emdb_output_folder)
                     return False
 
         return True
 
-    def gzip_output(self):
-        for f in self.output_file_list:
+    def __gzip_output(self):
+        for f in self.__output_file_list:
             gzip_file(f)
 
     def run_validation(self):
         try:
-            if self.emdbid:
-                if not self.emXmlPath:
-                    self.emXmlPath = self.rel_files.get_emdb_xml(self.emdbid)
-                self.volPath = self.rel_files.get_emdb_volume(self.emdbid)
-                self.fscPath = self.rel_files.get_emdb_fsc(self.emdbid)
+            if self.__emdbid:
+                if not self.__emXmlPath:
+                    self.__emXmlPath = self.__rel_files.get_emdb_xml(self.__emdbid)
+                self.__volPath = self.__rel_files.get_emdb_volume(self.__emdbid)
+                self.__fscPath = self.__rel_files.get_emdb_fsc(self.__emdbid)
             if self.__pdbid:
-                self.sfPath = self.rel_files.get_sf(self.__pdbid)
-                self.csPath = self.rel_files.get_cs(self.__pdbid)
+                self.__sfPath = self.__rel_files.get_sf(self.__pdbid)
+                self.__csPath = self.__rel_files.get_cs(self.__pdbid)
 
             # check if any input files have changed and set output folders
             is_modified = self.check_modified()
             if not is_modified:
-                logging.info(
-                    "skipping {}/{} as entry files have not changed".format(
-                        self.__pdbid, self.emdbid
-                    )
-                )
+                logger.info("skipping %s/%s as entry files have not changed",
+                            self.__pdbid, self.__emdbid)
+
                 return True
 
             # make output directory if it doesn't exist
-            if not os.path.exists(self.entry_output_folder):
-                os.makedirs(self.entry_output_folder)
+            if not os.path.exists(self.__entry_output_folder):
+                os.makedirs(self.__entry_output_folder)
             else:
-                os.utime(self.entry_output_folder, None)
+                # Set the time on output_folder to now
+                os.utime(self.__entry_output_folder, None)
 
-            logging.info("Entry output folder: {}".format(self.entry_output_folder))
-            self.logPath = os.path.join(self.entry_output_folder, "validation.log")
+            logger.info("Entry output folder: %s", self.__entry_output_folder)
 
             # clearing existing reports before making new ones
             self.remove_existing_files()
 
-            self.runDir = tempfile.mkdtemp(
-                dir=self.session_path,
-                prefix="{}_validation_release_rundir_".format(self.entry_id),
+            runDir = tempfile.mkdtemp(
+                dir=self.__sessionPath,
+                prefix="%s_validation_release_rundir_" % self.__entry_id
             )
 
-            logging.info("input files")
-            logging.info("model: {}".format(self.modelPath))
-            logging.info("SF: {}".format(self.sfPath))
-            logging.info("cs: {}".format(self.csPath))
-            logging.info("EM volume: {}".format(self.volPath))
-            logging.info("EM XML: {}".format(self.emXmlPath))
-            logging.info("entry_id: {}".format(self.entry_id))
-            logging.info("pdb_id: {}".format(self.__pdbid))
-            logging.info("emdb_id: {}".format(self.emdbid))
+            logPath = os.path.join(self.__entry_output_folder, "validation.log")
+
+            logger.info("input files")
+            logger.info("model: %s", self.__modelPath)
+            logger.info("SF: %s", self.__sfPath)
+            logger.info("cs: %s", self.__csPath)
+            logger.info("EM volume: %s", self.__volPath)
+            logger.info("EM XML: %s", self.__emXmlPath)
+            logger.info("entry_id: %s", self.__entry_id)
+            logger.info("pdb_id: %s", self.__pdbid)
+            logger.info("emdb_id: %s", self.__emdbid)
 
             vw = ValidationWrapper(
-                tmpPath=self.tempDir,
-                siteId=self.pythonSiteID,
+                tmpPath=self.__tempDir,
+                siteId=self.__pythonSiteID,
                 verbose=False,
                 log=sys.stderr,
             )
-            vw.imp(self.modelPath)
-            vw.addInput(name="run_dir", value=self.runDir)
+            vw.imp(self.__modelPath)
+            vw.addInput(name="run_dir", value=runDir)
             vw.addInput(name="request_validation_mode", value="release")
             if self.__pdbid:
                 vw.addInput(name="entry_id", value=self.__pdbid)
-            elif self.emdbid:
-                vw.addInput(name="entry_id", value=self.emdbid)
-                vw.addInput(name="emdb_id", value=self.emdbid)
+            elif self.__emdbid:
+                vw.addInput(name="entry_id", value=self.__emdbid)
+                vw.addInput(name="emdb_id", value=self.__emdbid)
 
-            if self.sfPath is not None and os.access(self.sfPath, os.R_OK):
+            if self.__sfPath is not None and os.access(self.__sfPath, os.R_OK):
                 vw.addInput(name="sf_file_path", value=self.sfPath)
 
-            if self.csPath is not None and os.access(self.csPath, os.R_OK):
-                vw.addInput(name="cs_file_path", value=self.csPath)
+            if self.__csPath is not None and os.access(self.__csPath, os.R_OK):
+                vw.addInput(name="cs_file_path", value=self.__csPath)
 
-            if self.volPath is not None and os.access(self.volPath, os.R_OK):
-                vw.addInput(name="vol_file_path", value=self.volPath)
+            if self.__volPath is not None and os.access(self.__volPath, os.R_OK):
+                vw.addInput(name="vol_file_path", value=self.__volPath)
 
-            if self.emXmlPath is not None and os.access(self.emXmlPath, os.R_OK):
-                vw.addInput(name="emdb_xml_path", value=self.emXmlPath)
+            if self.__emXmlPath is not None and os.access(self.__emXmlPath, os.R_OK):
+                vw.addInput(name="emdb_xml_path", value=self.__emXmlPath)
 
-            if self.fscPath is not None and os.access(self.fscPath, os.R_OK):
-                vw.addInput(name="fsc_file_path", value=self.fscPath)
+            if self.__fscPath is not None and os.access(self.__fscPath, os.R_OK):
+                vw.addInput(name="fsc_file_path", value=self.__fscPath)
 
             vw.op("annot-wwpdb-validate-all-sf")
             # output log file
             if self.__keepLog:
-                vw.expLog(self.logPath)
+                vw.expLog(logPath)
 
-            logging.info(self.output_file_list)
-            logging.info(self.output_file_dict)
-            vw.expList(dstPathList=self.output_file_list)
+            logger.info(self.__output_file_list)
+            logger.info(self.__output_file_dict)
+            vw.expList(dstPathList=self.__output_file_list)
 
             # clean up temp folder after run
             # vw.cleanup()
 
-            if self.__pdbid and self.emdbid:
+            if self.__pdbid and self.__emdbid:
                 ok = self.copy_to_emdb()
                 if not ok:
-                    logging.error("failed to copy to emdb folder")
+                    logger.error("failed to copy to emdb folder")
                     return False
                 # if self.copy_to_root_emdb:
-                #    logging.info('copy to EMDB folder without PDBID')
+                #    logger.info('copy to EMDB folder without PDBID')
                 #    ok = self.copy_to_emdb(self.copy_to_root_emdb)
                 #    if not ok:
-                #        logging.error('failed to copy to emdb folder as root')
+                #        logger.error('failed to copy to emdb folder as root')
                 #        return False
 
-            if not self.skip_gzip:
-                self.gzip_output()
+            if not self.__skip_gzip:
+                self.__gzip_output()
 
             return True
         except Exception as e:
-            logging.error(e)
+            logger.error(e)
             return False
 
 
-if "__main__" in __name__:
+def main():
+    FORMAT = "%(funcName)s (%(levelname)s) - %(message)s"
+    logging.basicConfig(format=FORMAT)
+
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "-d",
@@ -492,3 +483,6 @@ if "__main__" in __name__:
     }
 
     runValidation().run_process(message=message)
+
+if "__main__" in __name__:
+    main()

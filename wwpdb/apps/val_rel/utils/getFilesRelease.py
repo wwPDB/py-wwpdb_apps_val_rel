@@ -42,9 +42,9 @@ class getFilesRelease:
             pdbid, coordinates=coordinates, sf=sf, cs=cs
         ):
             file_path = os.path.join(path, filename)
-            logger.debug("searching: {}".format(file_path))
+            logger.debug("searching: %s", file_path)
             if os.path.exists(file_path):
-                logging.debug("found: {}".format(file_path))
+                logging.debug("found: %s", file_path)
                 return file_path
         return None
 

@@ -17,13 +17,12 @@ class mmCIFInfo:
     def parse_mmcif(self):
         if self.__mmcif:
             try:
-                logger.debug("parsing {}".format(self.__mmcif))
+                logger.debug("parsing %s", self.__mmcif)
                 cList = self.__io.readFile(self.__mmcif, selectList=self.exclude_category_list, excludeFlag=True)
                 self.__mmcif_data = cList[0]
                 return self.__mmcif_data
             except Exception as e:
-                logger.error("failed to parse: %s" % self.__mmcif)
-                logger.error(e)
+                logger.error("failed to parse: %s error %s", self.__mmcif, str(e))
 
         return None
 
@@ -111,7 +110,7 @@ class mmCIFInfo:
                 else:
                     latest_audit_ordinal = ordinal
         if latest_audit_ordinal:
-            logger.info('latest audit ordinal: {}'.format(latest_audit_ordinal))
+            logger.info('latest audit ordinal: %s', latest_audit_ordinal)
             ret = self.get_category_list_of_dictionaries(category="pdbx_audit_revision_category")
             if ret:
                 for row in ret:

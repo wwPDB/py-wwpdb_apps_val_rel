@@ -52,7 +52,7 @@ class MessageConsumer(MessageConsumerBase):
 
     def workerMethod(self, msgBody, deliveryTag=None):
         try:
-            logger.debug("Message body %r" % msgBody)
+            logger.debug("Message body %r", msgBody)
             pD = json.loads(msgBody)
         except Exception as e:
             logger.error("Message format error - discarding %r", str(e))
@@ -60,7 +60,7 @@ class MessageConsumer(MessageConsumerBase):
         #
         successFlag = True
         try:
-            logger.info("Message body %r" % pD)
+            logger.info("Message body %r", pD)
             runValidation().run_process(pD)
         except Exception as e:
             logger.exception("Failed service execution %r", str(e))
@@ -97,7 +97,7 @@ class MessageConsumerWorker(object):
             logger.exception("MessageConsumer failing %r", str(e))
 
         endTime = time.time()
-        logger.info("Completed (%f seconds)" % (endTime - startTime))
+        logger.info("Completed (%f seconds)", (endTime - startTime))
 
     def suspend(self):
         logger.info("Suspending consumer worker... ")
@@ -142,7 +142,6 @@ class MyDetachedProcess(DetachedProcessBase):
             self.__mcw.suspend()
         except Exception as e:
             logger.error("SUSPENDING failed %r", str(e))
-            pass
 
 
 def main():
@@ -274,19 +273,19 @@ def main():
         sys.stdout.write(
             "+DetachedMessageConsumer() starting consumer service at %s\n" % lt
         )
-        logger.info("DetachedMessageConsumer() starting consumer service at %s" % lt)
+        logger.info("DetachedMessageConsumer() starting consumer service at %s", lt)
         myDP.start()
     elif args.stopOp:
         sys.stdout.write(
             "+DetachedMessageConsumer() stopping consumer service at %s\n" % lt
         )
-        logger.info("DetachedMessageConsumer() stopping consumer service at %s" % lt)
+        logger.info("DetachedMessageConsumer() stopping consumer service at %s", lt)
         myDP.stop()
     elif args.restartOp:
         sys.stdout.write(
             "+DetachedMessageConsumer() restarting consumer service at %s\n" % lt
         )
-        logger.info("DetachedMessageConsumer() restarting consumer service at %s" % lt)
+        logger.info("DetachedMessageConsumer() restarting consumer service at %s", lt)
         myDP.restart()
     elif args.statusOp:
         sys.stdout.write(

@@ -99,11 +99,11 @@ class outputFiles:
         return os.path.join(self.entry_output_folder, filename)
 
     def get_core_validation_files(self):
-        logger.debug("getting core files for: {}".format(self._entryID))
-        logger.debug("path: {}".format(self.entry_output_folder))
+        logger.debug("getting core files for: %s", self._entryID)
+        logger.debug("path: %s", self.entry_output_folder)
 
         self.set_accession()
-        logger.debug("accession set to {}".format(self.accession))
+        logger.debug("accession set to %s", self.accession)
 
         ret = {}
         ret["pdf"] = self.add_output_folder_accession(
