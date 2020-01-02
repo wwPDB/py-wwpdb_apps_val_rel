@@ -37,6 +37,12 @@ class outputFiles:
             rp.getForReleasePath("val_reports"), self._validation_sub_directory
         )
 
+    def get_root_state_folder(self):
+        # Place under pdb val-reports as extra director
+        rp = ReleasePathInfo(self._siteID)
+        return os.path.join(rp.getForReleasePath("val_reports"), 
+                            self._validation_sub_directory + "_state")
+
     def get_emdb_root_folder(self):
         rp = ReleasePathInfo(self._siteID)
         return os.path.join(rp.getForReleasePath("em_val_reports"), "emd")

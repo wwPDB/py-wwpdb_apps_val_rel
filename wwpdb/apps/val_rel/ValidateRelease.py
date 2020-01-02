@@ -12,6 +12,7 @@ from wwpdb.apps.val_rel.utils.getFilesRelease import getFilesRelease
 from wwpdb.apps.val_rel.utils.mmCIFInfo import mmCIFInfo
 from wwpdb.apps.val_rel.utils.XmlInfo import XmlInfo
 from wwpdb.apps.val_rel.utils.Files import gzip_file, remove_files
+from wwpdb.apps.val_rel.utils.ValDataStore import ValDataStore
 
 # from wwpdb.apps.val_rel.daInternal import DaInternal
 
@@ -77,6 +78,8 @@ class runValidation:
         self.__always_recalculate = False
 
         self.__rel_files = None
+        self.__statefolder = None
+        self.__vds = None
 
     @staticmethod
     def exptl_is_em(exp_methods):
@@ -149,6 +152,7 @@ class runValidation:
         self.__output_file_dict = of.get_all_validation_files()
         self.__pdb_output_folder = of.get_pdb_output_folder()
         self.__emdb_output_folder = of.get_emdb_output_folder()
+        self.__statefolder = of.get_root_state_folder()
 
     def run_process(self, message):
         self.__pdbid = message.get("pdbID")
@@ -181,6 +185,13 @@ class runValidation:
         if remove_validation_files:
             self.set_output_dir_and_files()
             self.remove_existing_files()
+            return True
+
+        # If validation already running skip - will reschedule later
+        self.set_output_dir_and_files()  # To get statefolder 
+        self.__sds = ValDataStore(self.__entry_id, self.__statefolder)
+        if self.__sds.isValidationRunning is True:
+            logger.info("Skipping run of %s as run in progress", self.__entry_id)
             return True
 
         logger.info("running validation for %s, %s", self.__pdbid, self.__emdbid)
@@ -324,6 +335,8 @@ class runValidation:
             gzip_file(f)
 
     def run_validation(self):
+
+        self.__sds.setValidationRunning(True)
         try:
             if self.__emdbid:
                 if not self.__emXmlPath:
@@ -428,9 +441,12 @@ class runValidation:
             if not self.__skip_gzip:
                 self.__gzip_output()
 
+            self.__sds.setValidationRunning(False)
             return True
+
         except Exception as e:
             logger.error(e)
+            self.__sds.setValidationRunning(False)
             return False
 
 
