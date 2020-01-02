@@ -7,9 +7,7 @@ import json
 
 from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
 from wwpdb.utils.message_queue.MessagePublisher import MessagePublisher
-from wwpdb.apps.val_rel.utils.outputFiles import outputFiles
 from wwpdb.apps.val_rel.config.ValConfig import ValConfig
-from wwpdb.apps.val_rel.utils.Files import get_gzip_name
 from wwpdb.apps.val_rel.utils.getFilesRelease import getFilesRelease
 from wwpdb.apps.val_rel.utils.XmlInfo import XmlInfo
 from wwpdb.apps.val_rel.utils.mmCIFInfo import mmCIFInfo
@@ -25,62 +23,9 @@ logger.setLevel(logging.DEBUG)
 class FindEntries:
     def __init__(self, siteID=getSiteId()):
         self.siteID = siteID
-        self.of = outputFiles(siteID=self.siteID)
         self.cI = ConfigInfo(self.siteID)
         self.entries_missing_files = []
         self.missing_files = []
-
-    def check_for_missing(self, f):
-        if not os.path.exists(get_gzip_name(f)):
-            self.missing_files.append(get_gzip_name(f))
-            logger.error("%s missing", get_gzip_name(f))
-            return True
-        return False
-
-    def find_missing_pdb_entries(self):
-        entries = []
-        entries.extend(self.get_added_pdb_entries())
-        entries.extend(self.get_modified_pdb_entries())
-
-        logger.info("checking %s entries", len(entries))
-
-        for entry in entries:
-            if entry:
-                self.get_pdb_output_folder(pdbid=entry)
-                self.of.set_entry_id(entry)
-                file_to_check_dict = self.of.get_core_validation_files()
-                for f in file_to_check_dict.values():
-                    if self.check_for_missing(f):
-                        if entry not in self.entries_missing_files:
-                            self.entries_missing_files.append(entry)
-
-        logger.error("%s entries missing files out of %s", 
-                     len(self.entries_missing_files), len(entries))
-        logger.error(",".join(self.entries_missing_files))
-
-        return self.entries_missing_files
-
-    def find_missing_emdb_entries(self):
-        entries = self.get_emdb_entries()
-
-        logger.info("checking %s entries", len(entries))
-
-        for entry in entries:
-            if entry:
-                self.get_emdb_output_folder(emdbid=entry)
-                file_to_check_dict = self.of.get_core_validation_files()
-                for f in file_to_check_dict.values():
-                    if self.check_for_missing(f):
-                        if entry not in self.entries_missing_files:
-                            self.entries_missing_files.append(entry)
-
-        logger.error(
-            "%s entries missing files out of %s",
-                len(self.entries_missing_files), len(entries)
-        )
-        logger.error(",".join(self.entries_missing_files))
-
-        return self.entries_missing_files
 
     def _get_release_entries(self, subfolder):
         """Returns list of entries in for_release/subfolder directory.
@@ -110,15 +55,6 @@ class FindEntries:
         """Return list of entries in the for_release/emd directory"""
         return self._get_release_entries(subfolder="emd")
 
-    def get_pdb_output_folder(self, pdbid):
-        self.of.set_pdb_id(pdbid)
-        return self.of.get_entry_output_folder()
-
-    def get_emdb_output_folder(self, emdbid):
-        self.of.pdbID = None
-        self.of.emdbID = emdbid
-        return self.of.get_entry_output_folder()
-
 
 def main(
     entry_list=None,
@@ -126,8 +62,6 @@ def main(
     release=False,
     modified=False,
     emdb_release=False,
-    missing_pdb=False,
-    missing_emdb=False,
     siteID=getSiteId(),
     python_siteID=None,
     keep_logs=False,
@@ -151,23 +85,7 @@ def main(
     if emdb_release:
         emdb_entries.extend(fe.get_emdb_entries())
 
-    if missing_pdb:
-        missing_pdbs = fe.find_missing_pdb_entries()
-        logger.info("%s entries missing validation information", len(missing_pdbs))
-        logger.info(missing_pdbs)
-        pdb_entries.extend(missing_pdbs)
-        for entry in fe.find_missing_pdb_entries():
-            shutil.rmtree(fe.get_pdb_output_folder(pdbid=entry), ignore_errors=True)
-
-    if missing_emdb:
-        missing_emdbs = fe.find_missing_emdb_entries()
-        logger.info(
-            "%s entries missing validation information", len(missing_emdbs)
-        )
-        logger.info(missing_emdbs)
-        emdb_entries.extend(missing_emdbs)
-
-    elif entry_list:
+    if entry_list:
         entries.extend(entry_list.split(","))
     elif entry_file:
         if os.path.exists(entry_file):
@@ -282,16 +200,6 @@ if "__main__" in __name__:
         help="run entries scheduled for emdb release",
         action="store_true",
     )
-    parser.add_argument(
-        "--find_missing_pdb",
-        help="find PDB entries missing validation reports",
-        action="store_true",
-    )
-    parser.add_argument(
-        "--find_missing_emdb",
-        help="find EMDB entries missing validation reports",
-        action="store_true",
-    )
     parser.add_argument("--keep_logs", help="Keep the log files", action="store_true")
     parser.add_argument(
         "--always_recalculate", help="always recalculate", action="store_true"
@@ -320,8 +228,6 @@ if "__main__" in __name__:
         modified=args.modified,
         release=args.release,
         emdb_release=args.emdb_release,
-        missing_pdb=args.find_missing_pdb,
-        missing_emdb=args.find_missing_emdb,
         siteID=args.siteID,
         python_siteID=args.python_siteID,
         keep_logs=args.keep_logs,
