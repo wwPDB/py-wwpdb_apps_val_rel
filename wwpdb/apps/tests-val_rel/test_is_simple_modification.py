@@ -67,7 +67,7 @@ loop_
 #
 """
         self.write_mmcif()
-        self.runValidation.modelPath = self.mmCIF_file
+        self.runValidation.setModelPath(self.mmCIF_file)
         ret = self.runValidation.is_simple_modification()
         self.assertTrue(ret)
 
@@ -94,7 +94,7 @@ loop_
 #
 """
         self.write_mmcif()
-        self.runValidation.modelPath = self.mmCIF_file
+        self.runValidation.setModelPath(self.mmCIF_file)
         ret = self.runValidation.is_simple_modification()
         self.assertFalse(ret)
 

@@ -36,14 +36,14 @@ class ModifiedFolderTests(unittest.TestCase):
             shutil.rmtree(self.input_dir, ignore_errors=True)
 
     def test_always_run(self):
-        self.rv.pdbid = self.pdbid
-        self.rv.always_recalculate = True
+        self.rv.setPdbId(self.pdbid)
+        self.rv.setAlwaysRecalculate(True)
         ret = self.rv.check_emdb_already_run()
         # expected True - is modified - run validation
         self.assertTrue(ret)
 
     def test_pdb_not_modified(self):
-        self.rv.pdbid = self.pdbid
+        self.rv.setPdbId(self.pdbid)
         self.rv.modelPath = self.pdbid_file
         self.rv.emdb_output_folder = self.emdb_output_folder
         ret = self.rv.check_emdb_already_run()
@@ -59,7 +59,7 @@ class ModifiedFolderTests(unittest.TestCase):
         self.assertFalse(ret)
 
     def test_pdb_modified(self):
-        self.rv.pdbid = self.pdbid
+        self.rv.setPdbId(self.pdbid)
         self.rv.modelPath = self.pdbid_file
         self.rv.emdb_output_folder = self.emdb_output_folder
         touch(self.pdbid_file)
@@ -68,16 +68,16 @@ class ModifiedFolderTests(unittest.TestCase):
         self.assertFalse(ret)
 
     def test_emdb_modified(self):
-        self.rv.emdbid = self.emdb
-        self.rv.emXmlPath = self.emdb_file
-        self.rv.emdb_output_folder = self.emdb_output_folder
+        self.rv.setEmdbId(self.emdb)
+        self.rv.setEmXmlPath(self.emdb_file)
+        self.rv.setEmdbOutputFolder(self.emdb_output_folder)
         touch(self.emdb_file)
         ret = self.rv.check_emdb_already_run()
         # expected True - modified - do run validation
         self.assertTrue(ret)
 
     def test_pdb_and_emdb_with_pdb_modified(self):
-        self.rv.pdbid = self.pdbid
+        self.rv.setPdbId(self.pdbid)
         self.rv.emdbid = self.emdb
         self.rv.modelPath = self.pdbid_file
         self.rv.emdb_output_folder = self.emdb_output_folder
@@ -87,19 +87,19 @@ class ModifiedFolderTests(unittest.TestCase):
         self.assertFalse(ret)
 
     def test_pdb_and_emdb_with_emdb_modified(self):
-        self.rv.pdbid = self.pdbid
-        self.rv.emdbid = self.emdb
-        self.rv.emXmlPath = self.emdb_file
-        self.rv.emdb_output_folder = self.emdb_output_folder
+        self.rv.setPdbId(self.pdbid)
+        self.rv.setEmdbId(self.emdb)
+        self.rv.setEmXmlPath(self.emdb_file)
+        self.rv.setEmdbOutputFolder(self.emdb_output_folder)
         touch(self.emdb_file)
         ret = self.rv.check_emdb_already_run()
         # expected True - modified - do run validation
         self.assertTrue(ret)
 
     def test_output_folder_modified(self):
-        self.rv.emdbid = self.emdb
-        self.rv.emXmlPath = self.emdb_file
-        self.rv.emdb_output_folder = self.emdb_output_folder
+        self.rv.setEmdbId(self.emdb)
+        self.rv.setEmXmlPath(self.emdb_file)
+        self.rv.setEmdbOutputFolder(self.emdb_output_folder)
         touch(self.emdb_file)
         shutil.rmtree(self.emdb_output_folder)
         time.sleep(1)

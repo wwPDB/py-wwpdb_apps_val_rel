@@ -81,6 +81,34 @@ class runValidation:
         self.__statefolder = None
         self.__vds = None
 
+
+    def setOutputRoot(self, outdir):
+        self.__outputRoot = outdir
+
+    def setPdbId(self, pdbid):
+        self.__pdbid = pdbid
+
+    def setEmdbId(self, emdbid):
+        self.__emdbid = emdbid
+
+    def setEmXmlPath(self, path):
+        self.__emXmlPath = path
+
+    def setAlwaysRecalculate(self, recalc):
+        self.__always_recalculate = recalc
+
+    def setModelPath(self, path):
+        self.__modelPath = path
+
+    def setPdbOutputFolder(self, path):
+        self.__pdb_output_folder = path
+
+    def setEmdbOutputFolder(self, path):
+        self.__emdb_output_folder = path
+
+    def getEntryOutputFolder(self):
+        return self.__entry_output_folder
+
     @staticmethod
     def exptl_is_em(exp_methods):
         if "ELECTRON MICROSCOPY" in exp_methods or 'ELECTRON CRYSTALLOGRAPHY' in exp_methods:

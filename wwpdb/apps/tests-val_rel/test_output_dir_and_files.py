@@ -18,25 +18,25 @@ class OuputFolderTests(unittest.TestCase):
 
     def test_pdbid(self):
         output_dir = os.path.join(self.output_folder, self.pdbid_hash, self.pdbid)
-        self.rv.pdbid = self.pdbid
-        self.rv.outputRoot = self.output_folder
+        self.rv.setPdbId(self.pdbid)
+        self.rv.setOutputRoot(self.output_folder)
         self.rv.set_output_dir_and_files()
-        self.assertTrue(self.rv.entry_output_folder == output_dir)
+        self.assertTrue(self.rv.getEntryOutputFolder() == output_dir)
 
     def test_emdbid(self):
         output_dir = os.path.join(self.output_folder, self.emdb)
-        self.rv.emdbid = self.emdb
-        self.rv.outputRoot = self.output_folder
+        self.rv.setEmdbId(self.emdb)
+        self.rv.setOutputRoot(self.output_folder)
         self.rv.set_output_dir_and_files()
-        self.assertTrue(self.rv.entry_output_folder == output_dir)
+        self.assertTrue(self.rv.getEntryOutputFolder() == output_dir)
 
     def test_pdbid_and_emdbid(self):
         output_dir = os.path.join(self.output_folder, self.pdbid_hash, self.pdbid)
-        self.rv.pdbid = self.pdbid
-        self.rv.emdbid = self.emdb
-        self.rv.outputRoot = self.output_folder
+        self.rv.setPdbId(self.pdbid)
+        self.rv.setEmdbId(self.emdb)
+        self.rv.setOutputRoot(self.output_folder)
         self.rv.set_output_dir_and_files()
-        self.assertTrue(self.rv.entry_output_folder == output_dir)
+        self.assertTrue(self.rv.getEntryOutputFolder() == output_dir)
 
 
 if __name__ == "__main__":
