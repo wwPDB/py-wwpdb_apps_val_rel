@@ -1,6 +1,7 @@
 # Simple utilities for workign with files.
 
 import os
+import gzip
 import logging
 import gzip
 
