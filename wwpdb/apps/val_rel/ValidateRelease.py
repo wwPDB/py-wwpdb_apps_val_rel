@@ -18,8 +18,26 @@ from wwpdb.apps.val_rel.utils.ValDataStore import ValDataStore
 
 logger = logging.getLogger(__name__)
 
-SKIP_LIST = ['citation', 'citation_author', 'pdbx_audit_support']
 
+def is_simple_modification(modelPath):
+    """if there are only simple changes based the audit - skip calculation of validation report
+    (currently, citation, citation_author and pdbx_audit_support)
+
+    returns True is only simple changes present
+    """
+
+    SKIP_LIST = ['citation', 'citation_author', 'pdbx_audit_support']
+
+    cf = mmCIFInfo(modelPath)
+    modified_cats = cf.get_latest_modified_categories()
+    if modified_cats:
+        for item in modified_cats:
+            if item not in SKIP_LIST:
+                return False
+
+        logger.info('%s only a simple modification: %s', modelPath, ','.join(modified_cats))
+        return True
+    return False
 
 def already_run(test_file, output_folder):
     if test_file:
@@ -114,26 +132,12 @@ class runValidation:
             return True
         return False
 
-    def is_simple_modification(self):
-
-        cf = mmCIFInfo(self.__modelPath)
-        modified_cats = cf.get_latest_modified_categories()
-        if modified_cats:
-            all_simple = True
-            for item in modified_cats:
-                if item not in SKIP_LIST:
-                    all_simple = False
-            if all_simple:
-                logger.info('%s only a simple modification: %s', self.__pdbid, ','.join(modified_cats))
-                return True
-        return False
-
     def check_pdb_already_run(self):
         if self.__always_recalculate:
             return True
         modified = False
         if not already_run(self.__modelPath, self.__pdb_output_folder):
-            if not self.is_simple_modification():
+            if not is_simple_modification(self.__modelPath):
                 modified = True
         if self.__sfPath:
             if not already_run(self.__sfPath, self.__pdb_output_folder):
@@ -182,6 +186,8 @@ class runValidation:
         self.__statefolder = of.get_root_state_folder()
 
     def run_process(self, message):
+        """Process message and act on it"""
+
         self.__pdbid = message.get("pdbID")
         if self.__pdbid:
             self.__pdbid = self.__pdbid.lower()
@@ -209,13 +215,12 @@ class runValidation:
         self.__entry_output_folder = None
         # self.da_internal = DaInternal(self.siteID)
 
+        self.set_output_dir_and_files()  # To get statefolder and prepare for removal
         if remove_validation_files:
-            self.set_output_dir_and_files()
             self.remove_existing_files()
             return True
 
         # If validation already running skip - will reschedule later
-        self.set_output_dir_and_files()  # To get statefolder 
         self.__sds = ValDataStore(self.__entry_id, self.__statefolder)
         if self.__sds.isValidationRunning is True:
             logger.info("Skipping run of %s as run in progress", self.__entry_id)
@@ -299,6 +304,7 @@ class runValidation:
             return False
 
     def remove_existing_files(self):
+        """Removes existing validation files"""
         remove_files(list(self.__output_file_dict.values()))
         if self.__emdbid:
             em_of = outputFiles(
@@ -466,12 +472,6 @@ class runValidation:
                     logger.error("failed to copy to emdb folder")
                     self.__sds.setValidationRunning(False)
                     return False
-                # if self.copy_to_root_emdb:
-                #    logger.info('copy to EMDB folder without PDBID')
-                #    ok = self.copy_to_emdb(self.copy_to_root_emdb)
-                #    if not ok:
-                #        logger.error('failed to copy to emdb folder as root')
-                #        return False
 
             if not self.__skip_gzip:
                 self.__gzip_output(output_file_list)

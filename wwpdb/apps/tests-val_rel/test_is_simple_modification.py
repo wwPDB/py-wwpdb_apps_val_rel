@@ -2,14 +2,13 @@ import unittest
 import os
 import tempfile
 import shutil
-from wwpdb.apps.val_rel.ValidateRelease import runValidation
+from wwpdb.apps.val_rel.ValidateRelease import is_simple_modification
 
 
 class mmCIFInfoTests(unittest.TestCase):
     def setUp(self):
         self.test_dir = tempfile.mkdtemp()
         self.mmCIF_file = None
-        self.runValidation = runValidation()
         self.additional_content = ""
         self.base_mmcif_content = """
 data_2GC2
@@ -67,8 +66,7 @@ loop_
 #
 """
         self.write_mmcif()
-        self.runValidation.setModelPath(self.mmCIF_file)
-        ret = self.runValidation.is_simple_modification()
+        ret = is_simple_modification(self.mmCIF_file)
         self.assertTrue(ret)
 
     def test_get_complex_revision(self):
@@ -94,8 +92,7 @@ loop_
 #
 """
         self.write_mmcif()
-        self.runValidation.setModelPath(self.mmCIF_file)
-        ret = self.runValidation.is_simple_modification()
+        ret = is_simple_modification(self.mmCIF_file)
         self.assertFalse(ret)
 
 
