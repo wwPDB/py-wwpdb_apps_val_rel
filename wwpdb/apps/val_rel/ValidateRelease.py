@@ -40,6 +40,7 @@ def is_simple_modification(modelPath):
     return False
 
 def already_run(test_file, output_folder):
+    logging.info('checking for {}'.format(test_file))
     if test_file:
         if os.path.exists(test_file):
             if os.path.exists(output_folder):
