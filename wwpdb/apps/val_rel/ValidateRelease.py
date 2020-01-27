@@ -432,7 +432,7 @@ class runValidation:
                 vw.addInput(name="emdb_id", value=self.__emdbid)
 
             if self.__sfPath is not None and os.access(self.__sfPath, os.R_OK):
-                vw.addInput(name="sf_file_path", value=self.sfPath)
+                vw.addInput(name="sf_file_path", value=self.__sfPath)
 
             if self.__csPath is not None and os.access(self.__csPath, os.R_OK):
                 vw.addInput(name="cs_file_path", value=self.__csPath)
