@@ -149,7 +149,7 @@ def main(
 
     if messages:
         for message in messages:
-            logger.info('MESSAGE req %s', message)
+            
             message["siteID"] = siteID
             message["keepLog"] = keep_logs
             message['subfolder'] = validation_sub_dir
@@ -161,13 +161,15 @@ def main(
                 message["alwaysRecalculate"] = always_recalculate
             if skipGzip:
                 message["skipGzip"] = skipGzip
+            logger.info('MESSAGE req %s', message)
             vc = ValConfig(siteID)
-            MessagePublisher().publish(
+            ok = MessagePublisher().publish(
                 message=json.dumps(message),
                 exchangeName=vc.exchange,
                 queueName=vc.queue_name,
                 routingKey=vc.routing_key,
-            )
+                )
+            logger.info('MESSAGE {}'.format(ok))
 
 
 if "__main__" in __name__:
