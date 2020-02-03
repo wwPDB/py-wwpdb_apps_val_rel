@@ -19,7 +19,7 @@ from wwpdb.apps.val_rel.utils.ValDataStore import ValDataStore
 logger = logging.getLogger(__name__)
 
 
-def is_simple_modification(modelPath):
+def is_simple_modification(model_path):
     """if there are only simple changes based the audit - skip calculation of validation report
     (currently, citation, citation_author and pdbx_audit_support)
 
@@ -28,16 +28,17 @@ def is_simple_modification(modelPath):
 
     SKIP_LIST = ['citation', 'citation_author', 'pdbx_audit_support']
 
-    cf = mmCIFInfo(modelPath)
+    cf = mmCIFInfo(model_path)
     modified_cats = cf.get_latest_modified_categories()
     if modified_cats:
         for item in modified_cats:
             if item not in SKIP_LIST:
                 return False
 
-        logger.info('%s only a simple modification: %s', modelPath, ','.join(modified_cats))
+        logger.info('%s only a simple modification: %s', model_path, ','.join(modified_cats))
         return True
     return False
+
 
 def already_run(test_file, output_folder):
     logging.info('checking for {}'.format(test_file))
@@ -98,7 +99,7 @@ class runValidation:
         self.__rel_files = None
         self.__statefolder = None
         self.__vds = None
-
+        self.__sds = None
 
     def setOutputRoot(self, outdir):
         self.__outputRoot = outdir
@@ -231,7 +232,7 @@ class runValidation:
 
         self.__rel_files = getFilesRelease(siteID=self.siteID)
 
-        worked = False
+        # worked = False
         self.__sessionPath = self.__cI.get("SITE_WEB_APPS_SESSIONS_PATH")
         self.__tempDir = tempfile.mkdtemp(
             dir=self.__sessionPath,
@@ -360,7 +361,8 @@ class runValidation:
 
         return True
 
-    def __gzip_output(self, filelist):
+    @staticmethod
+    def __gzip_output(filelist):
         """Compresses list of files"""
         for f in filelist:
             gzip_file(f)
@@ -399,12 +401,12 @@ class runValidation:
             # clearing existing reports before making new ones
             self.remove_existing_files()
 
-            runDir = tempfile.mkdtemp(
+            run_dir = tempfile.mkdtemp(
                 dir=self.__sessionPath,
                 prefix="%s_validation_release_rundir_" % self.__entry_id
             )
 
-            logPath = os.path.join(self.__entry_output_folder, "validation.log")
+            log_path = os.path.join(self.__entry_output_folder, "validation.log")
 
             logger.info("input files")
             logger.info("model: %s", self.__modelPath)
@@ -423,7 +425,7 @@ class runValidation:
                 log=sys.stderr,
             )
             vw.imp(self.__modelPath)
-            vw.addInput(name="run_dir", value=runDir)
+            vw.addInput(name="run_dir", value=run_dir)
             vw.addInput(name="request_validation_mode", value="release")
             if self.__pdbid:
                 vw.addInput(name="entry_id", value=self.__pdbid)
@@ -449,8 +451,7 @@ class runValidation:
             vw.op("annot-wwpdb-validate-all-sf")
             # output log file
             if self.__keepLog:
-                vw.expLog(logPath)
-
+                vw.expLog(log_path)
 
             output_file_list = []
             # Keys needs to be in order of arguments
@@ -460,7 +461,6 @@ class runValidation:
 
             logger.info(output_file_list)
             logger.info(self.__output_file_dict)
-
 
             vw.expList(dstPathList=output_file_list)
 
@@ -487,8 +487,8 @@ class runValidation:
 
 
 def main():
-    FORMAT = "%(funcName)s (%(levelname)s) - %(message)s"
-    logging.basicConfig(format=FORMAT)
+    log_format = "%(funcName)s (%(levelname)s) - %(message)s"
+    logging.basicConfig(format=log_format)
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -535,6 +535,7 @@ def main():
     }
 
     runValidation().run_process(message=message)
+
 
 if "__main__" in __name__:
     main()
