@@ -182,7 +182,10 @@ class runValidation:
         )
         self.__entry_output_folder = of.get_entry_output_folder()
         logger.info("output folder: %s", self.__entry_output_folder)
-        self.__output_file_dict = of.get_all_validation_files()
+        if self.__emdbid and not self.__pdbid:
+            self.__output_file_dict = of.get_core_validation_files()
+        else:
+            self.__output_file_dict = of.get_all_validation_files()
         self.__pdb_output_folder = of.get_pdb_output_folder()
         self.__emdb_output_folder = of.get_emdb_output_folder()
         self.__statefolder = of.get_root_state_folder()
@@ -287,16 +290,19 @@ class runValidation:
                                 logger.info('report already run for %s', self.get_emdb_pdb_string())
 
         if self.__run_map_only:
-            # make map only validation report without models
+            logger.info('{} make map only validation report without models'.format(self.__emdbid))
             self.__pdbid = None
+            self.set_output_dir_and_files()
             self.__modelPath = os.path.join(
                 self.__tempDir, "{}_minimal.cif".format(self.__emdbid)
             )
+            logger.info('generating minimal cif: {}'.format(self.__modelPath))
             GenerateMinimalCif(emdb_xml=self.__emXmlPath).write_out(
                 output_cif=self.__modelPath
             )
             # run validation
             worked = self.run_validation()
+            logger.info('map only validation worked: {}'.format(worked))
             all_worked.append(worked)
 
         if list(set(all_worked)) == [True]:
