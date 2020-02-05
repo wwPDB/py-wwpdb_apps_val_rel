@@ -235,5 +235,6 @@ if "__main__" in __name__:
         keep_logs=args.keep_logs,
         always_recalculate=args.always_recalculate,
         skipGzip=args.skipGzip,
-        validation_sub_dir=args.validation_subdir
+        validation_sub_dir=args.validation_subdir,
+        output_root=args.output_root
     )
