@@ -468,7 +468,10 @@ class runValidation:
             logger.info(output_file_list)
             logger.info(self.__output_file_dict)
 
-            vw.expList(dstPathList=output_file_list)
+            ok = vw.expList(dstPathList=output_file_list)
+            if not ok:
+                logging.error('failed to copy files from {} to {}'.format(run_dir, self.__entry_output_folder))
+            logging.info('validation run finished')
 
             # clean up temp folder after run
             # vw.cleanup()
