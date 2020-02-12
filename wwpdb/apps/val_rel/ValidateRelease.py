@@ -370,6 +370,7 @@ class runValidation:
     @staticmethod
     def __gzip_output(filelist):
         """Compresses list of files"""
+        logger.debug('gzip files: {}'.format(filelist))
         for f in filelist:
             gzip_file(f)
 
@@ -470,8 +471,8 @@ class runValidation:
 
             ok = vw.expList(dstPathList=output_file_list)
             if not ok:
-                logging.error('failed to copy files from {} to {}'.format(run_dir, self.__entry_output_folder))
-            logging.info('validation run finished')
+                logger.error('failed to copy files from {} to {}'.format(run_dir, self.__entry_output_folder))
+            logger.info('validation run finished')
 
             # clean up temp folder after run
             # vw.cleanup()
@@ -490,7 +491,7 @@ class runValidation:
             return True
 
         except Exception as e:
-            logger.error(e)
+            logger.exception(e)
             self.__sds.setValidationRunning(False)
             return False
 
