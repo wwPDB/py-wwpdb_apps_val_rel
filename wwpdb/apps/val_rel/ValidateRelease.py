@@ -182,10 +182,7 @@ class runValidation:
         )
         self.__entry_output_folder = of.get_entry_output_folder()
         logger.info("output folder: %s", self.__entry_output_folder)
-        if self.__emdbid and not self.__pdbid:
-            self.__output_file_dict = of.get_core_validation_files()
-        else:
-            self.__output_file_dict = of.get_all_validation_files()
+        self.__output_file_dict = of.get_all_validation_files()
         self.__pdb_output_folder = of.get_pdb_output_folder()
         self.__emdb_output_folder = of.get_emdb_output_folder()
         self.__statefolder = of.get_root_state_folder()
