@@ -13,6 +13,7 @@ from wwpdb.apps.val_rel.utils.mmCIFInfo import mmCIFInfo
 from wwpdb.apps.val_rel.utils.XmlInfo import XmlInfo
 from wwpdb.apps.val_rel.utils.Files import gzip_file, remove_files
 from wwpdb.apps.val_rel.utils.ValDataStore import ValDataStore
+from wwpdb.apps.val_rel.utils.fileConversion import convert_star_to_cif
 
 # from wwpdb.apps.val_rel.daInternal import DaInternal
 
@@ -371,6 +372,23 @@ class runValidation:
         for f in filelist:
             gzip_file(f)
 
+    def convert_cs_file(self):
+        """convert star format CS file to CIF format for the validator"""
+        if self.__csPath:
+            if os.path.exists(self.__csPath):
+                temp_cif_cs_file = os.path.join(self.__tempDir, self.__pdbid + 'cs.cif')
+                ok = convert_star_to_cif(star_file=self.__csPath, cif_file=temp_cif_cs_file)
+                if ok and os.path.exists(temp_cif_cs_file):
+                    self.__csPath = temp_cif_cs_file
+                    logging.info('CS star to cif conversion worked - new cs file: {}'.format(self.__csPath))
+                    return True
+                else:
+                    logging.error('CS star to cif conversion failed')
+
+        return False
+
+
+
     def run_validation(self):
 
         self.__sds.setValidationRunning(True)
@@ -383,6 +401,12 @@ class runValidation:
             if self.__pdbid:
                 self.__sfPath = self.__rel_files.get_sf(self.__pdbid)
                 self.__csPath = self.__rel_files.get_cs(self.__pdbid)
+                if self.__csPath:
+                    ok = self.convert_cs_file()
+                    if not ok:
+                        logging.error('CS star to cif conversion failed')
+                        self.__sds.setValidationRunning(False)
+                        return False
 
             # check if any input files have changed and set output folders
             is_modified = self.check_modified()
