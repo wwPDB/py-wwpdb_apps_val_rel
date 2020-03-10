@@ -3,7 +3,7 @@ import logging
 from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
 from wwpdb.io.locator.ReleasePathInfo import ReleasePathInfo
 from wwpdb.io.locator.ReleaseFileNames import ReleaseFileNames
-from wwpdb.io.locator.LocalFTPPathInfo import LocalFTPPathInfo
+from wwpdb.io.locator.localFTPPathInfo import LocalFTPPathInfo
 
 logger = logging.getLogger(__name__)
 
