@@ -44,7 +44,7 @@ class getFilesRelease:
         return None
 
     def get_model(self, pdbid):
-        filename = self.__rf.get_model(pdbid)
+        filename = self.__rf.get_model(pdbid, for_release=True)
         file_path = self._check_onedep_pdb_file_paths(pdbid=pdbid, filename=filename)
         if file_path:
             return file_path
@@ -54,7 +54,7 @@ class getFilesRelease:
         return None
 
     def get_sf(self, pdbid):
-        filename = self.__rf.get_structure_factor(pdbid)
+        filename = self.__rf.get_structure_factor(pdbid, for_release=True)
         file_path = self._check_onedep_pdb_file_paths(pdbid=pdbid, filename=filename)
         if file_path:
             return file_path
@@ -64,7 +64,7 @@ class getFilesRelease:
         return None
 
     def get_cs(self, pdbid):
-        filename = self.__rf.get_chemical_shifts(pdbid)
+        filename = self.__rf.get_chemical_shifts(pdbid, for_release=True)
         file_path = self._check_onedep_pdb_file_paths(pdbid=pdbid, filename=filename)
         if file_path:
             return file_path
