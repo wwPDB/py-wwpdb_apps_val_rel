@@ -3,6 +3,7 @@ import logging
 from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
 from wwpdb.io.locator.ReleasePathInfo import ReleasePathInfo
 from wwpdb.io.locator.ReleaseFileNames import ReleaseFileNames
+from wwpdb.io.locator.LocalFTPPathInfo import LocalFTPPathInfo
 
 logger = logging.getLogger(__name__)
 
@@ -14,76 +15,62 @@ class getFilesRelease:
         self.__cI = ConfigInfo(self.__siteID)
         self.__rp = ReleasePathInfo(self.__siteID)
         self.__rf = ReleaseFileNames()
+        self.__lf = LocalFTPPathInfo()
+        self.__local_ftp_emdb_path = self.__lf.get_ftp_emdb()
 
-        self.__local_ftp_mmcif_path = self.__cI.get("SITE_MMCIF_DIR", "")
-        self.__local_ftp_sf_path = self.__cI.get("SITE_STRFACTORS_DIR", "")
-        self.__local_ftp_cs_path = self.__cI.get("CHEMICAL_SHIFTS_FTP", "")
-        self.__local_ftp_emdb_path = self.__cI.get("SITE_EMDB_FTP", "")
-
-    def _get_pdb_path_search_order(self, pdbid, coordinates=False, sf=False, cs=False):
+    def _get_onedep_pdb_folder_paths(self):
         ret_list = [
-            os.path.join(self.__rp.getForReleasePath("added"), pdbid),
-            os.path.join(self.__rp.getForReleasePath("modified"), pdbid),
-            os.path.join(self.__rp.getForReleasePath("added", version="previous"), pdbid),
-            os.path.join(
-                self.__rp.getForReleasePath("modified", version="previous"), pdbid
-            ),
+            self.__rp.getForReleasePath("added"),
+            self.__rp.getForReleasePath("modified"),
+            self.__rp.getForReleasePath("added", version="previous"),
+            self.__rp.getForReleasePath("modified", version="previous")
         ]
-        if coordinates:
-            ret_list.append(self.__local_ftp_mmcif_path)
-        if sf:
-            ret_list.append(self.__local_ftp_sf_path)
-        if cs:
-            ret_list.append(self.__local_ftp_cs_path)
         return ret_list
 
-    def _search_nfs_pdb(self, filename, pdbid, coordinates=False, sf=False, cs=False):
-        for path in self._get_pdb_path_search_order(
-            pdbid, coordinates=coordinates, sf=sf, cs=cs
-        ):
-            file_path = os.path.join(path, filename)
-            logger.debug("searching: %s", file_path)
-            if os.path.exists(file_path):
-                logging.debug("found: %s", file_path)
-                return file_path
+    def _get_onedep_pdb_file_paths(self, pdbid, filename):
+        ret_list = []
+        folder_list = self._get_onedep_pdb_folder_paths()
+        for folder in folder_list:
+            full_file_name = os.path.join(folder, pdbid, filename)
+            ret_list.append(full_file_name)
+        return ret_list
+
+    def _check_onedep_pdb_file_paths(self, pdbid, filename):
+        for onedep_file in self._get_onedep_pdb_file_paths(pdbid=pdbid, filename=filename):
+            logger.debug("searching: %s", onedep_file)
+            if os.path.exists(onedep_file):
+                logging.debug("found: %s", onedep_file)
+                return onedep_file
         return None
 
     def get_model(self, pdbid):
-        file_path = self._search_nfs_pdb(
-            filename=self.__rf.get_model(pdbid), pdbid=pdbid, coordinates=True
-        )
+        filename = self.__rf.get_model(pdbid)
+        file_path = self._check_onedep_pdb_file_paths(pdbid=pdbid, filename=filename)
         if file_path:
             return file_path
+        local_ftp_file_name = self.__lf.get_model_fname(accession=pdbid)
+        if os.path.exists(local_ftp_file_name):
+            return local_ftp_file_name
         return None
 
     def get_sf(self, pdbid):
-        file_path = self._search_nfs_pdb(
-            filename=self.__rf.get_structure_factor(pdbid, for_release=True),
-            pdbid=pdbid,
-            sf=True,
-        )
+        filename = self.__rf.get_structure_factor(pdbid)
+        file_path = self._check_onedep_pdb_file_paths(pdbid=pdbid, filename=filename)
         if file_path:
             return file_path
-        file_path = self._search_nfs_pdb(
-            filename=self.__rf.get_structure_factor(pdbid), pdbid=pdbid, sf=True
-        )
-        if file_path:
-            return file_path
+        local_ftp_file_name = self.__lf.get_structure_factors_fname(accession=pdbid)
+        if os.path.exists(local_ftp_file_name):
+            return local_ftp_file_name
         return None
 
     def get_cs(self, pdbid):
-        file_path = self._search_nfs_pdb(
-            filename=self.__rf.get_chemical_shifts(pdbid, for_release=True),
-            pdbid=pdbid,
-            cs=True,
-        )
+        filename = self.__rf.get_chemical_shifts(pdbid)
+        file_path = self._check_onedep_pdb_file_paths(pdbid=pdbid, filename=filename)
         if file_path:
             return file_path
-        file_path = self._search_nfs_pdb(
-            filename=self.__rf.get_chemical_shifts(pdbid), pdbid=pdbid, cs=True
-        )
-        if file_path:
-            return file_path
+        local_ftp_file_name = self.__lf.get_chemical_shifts_fname(accession=pdbid)
+        if os.path.exists(local_ftp_file_name):
+            return local_ftp_file_name
         return None
 
     def get_emdb_path_search_order(self, emdbid, subfolder):
