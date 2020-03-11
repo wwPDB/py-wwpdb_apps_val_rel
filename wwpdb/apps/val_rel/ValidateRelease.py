@@ -255,6 +255,8 @@ class runValidation:
             self.__modelPath = self.__rel_files.get_model(self.__pdbid)
             self.__sfPath = self.__rel_files.get_sf(self.__pdbid)
             self.__csPath = self.__rel_files.get_cs(self.__pdbid)
+            if not self.__csPath:
+                self.__csPath = self.__rel_files.get_nmr_data(self.__pdbid)
 
             cf = mmCIFInfo(self.__modelPath)
             exp_methods = cf.get_exp_methods()
