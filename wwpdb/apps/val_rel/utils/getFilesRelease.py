@@ -73,6 +73,16 @@ class getFilesRelease:
             return local_ftp_file_name
         return None
 
+    def get_nmr_data(self, pdbid):
+        filename = self.__rf.get_nmr_data(pdbid, for_release=True)
+        file_path = self._check_onedep_pdb_file_paths(pdbid=pdbid, filename=filename)
+        if file_path:
+            return file_path
+        local_ftp_file_name = self.__lf.get_nmr_data_path(accession=pdbid)
+        if os.path.exists(local_ftp_file_name):
+            return local_ftp_file_name
+        return None
+
     def get_emdb_path_search_order(self, emdbid, subfolder):
         ret_list = [
             self.__rp.getForReleasePath(subdir="emd", accession=emdbid, em_sub_path=subfolder),
