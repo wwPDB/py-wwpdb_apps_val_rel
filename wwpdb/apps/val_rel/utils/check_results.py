@@ -20,7 +20,7 @@ class checkResult:
     def __prepare_message(self):
         self.__message["pdbID"] = self.__pdbid
         self.__message["emdbID"] = self.__emdbid
-        self.__message['outputRoot'] = self.output_folder
+        self.__message['outputRoot'] = self.__output_folder
 
     def check_entry(self):
         self.rv = runValidation()
