@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 class checkResult:
 
-    def __init__(self, output_folder, pdbid=None, emdbid=None):
+    def __init__(self, output_folder=None, pdbid=None, emdbid=None):
         self.__output_folder = output_folder
         self.__pdbid = pdbid
         self.__emdbid = emdbid
@@ -77,7 +77,7 @@ def main():
         const=logging.DEBUG,
         default=logging.INFO,
     )
-    parser.add_argument("--output_root", help="root folder to output to", type=str)
+    parser.add_argument("--output_root", help="root folder to output check entries", type=str)
     parser.add_argument("--entries", help="list of entries", type=str)
     parser.add_argument(
         "--entry_file", help="site id to get python code from", type=str
