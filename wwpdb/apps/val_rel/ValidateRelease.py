@@ -231,7 +231,7 @@ class runValidation:
         """Process message and act on it"""
 
         self.process_message(message)
-        ret = self.set_entry_id(self)
+        ret = self.set_entry_id()
         if not ret:
             return False
         
