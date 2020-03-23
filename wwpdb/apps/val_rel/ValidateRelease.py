@@ -93,9 +93,11 @@ class runValidation:
         self.__pdb_output_folder = None
         self.__emdb_output_folder = None
         self.__output_file_dict = {}
+        self.__core_output_file_dict = {}
 
         self.__skip_gzip = False
         self.__always_recalculate = False
+        self.__remove_validation_files = False
 
         self.__rel_files = None
         self.__statefolder = None
@@ -128,6 +130,12 @@ class runValidation:
 
     def getEntryOutputFolder(self):
         return self.__entry_output_folder
+
+    def getCoreOutputFileDict(self):
+        return self.__core_output_file_dict
+
+    def getEntryId(self):
+        return self.__entry_id
 
     @staticmethod
     def exptl_is_em(exp_methods):
@@ -183,14 +191,13 @@ class runValidation:
         )
         self.__entry_output_folder = of.get_entry_output_folder()
         logger.info("output folder: %s", self.__entry_output_folder)
+        self.__core_output_file_dict = of.get_core_validation_files()
         self.__output_file_dict = of.get_all_validation_files()
         self.__pdb_output_folder = of.get_pdb_output_folder()
         self.__emdb_output_folder = of.get_emdb_output_folder()
         self.__statefolder = of.get_root_state_folder()
 
-    def run_process(self, message):
-        """Process message and act on it"""
-
+    def process_message(self, message):
         self.__pdbid = message.get("pdbID")
         if self.__pdbid:
             self.__pdbid = self.__pdbid.lower()
@@ -203,7 +210,18 @@ class runValidation:
         self.__always_recalculate = message.get("alwaysRecalculate", False)
         self.__keepLog = message.get("keepLog", False)
         self.__validation_sub_folder = message.get("subfolder", 'current')
-        remove_validation_files = message.get('removeValFiles', False)
+        self.__remove_validation_files = message.get('removeValFiles', False)
+        self.__pythonSiteID = message.get("python_site_id", self.siteID)
+        self.__cI = ConfigInfo(self.siteID)
+        self.__entry_output_folder = None
+        if not self.siteID:
+            self.siteID = getSiteId()
+
+    def run_process(self, message):
+        """Process message and act on it"""
+
+        self.process_message(message)
+        
         if self.__pdbid:
             self.__entry_id = self.__pdbid
         elif self.__emdbid:
@@ -211,15 +229,10 @@ class runValidation:
         else:
             logger.error("No PDB or EMDB provided")
             return False
-        if not self.siteID:
-            self.siteID = getSiteId()
-        self.__pythonSiteID = message.get("python_site_id", self.siteID)
-        self.__cI = ConfigInfo(self.siteID)
-        self.__entry_output_folder = None
-        # self.da_internal = DaInternal(self.siteID)
-
+        
+        
         self.set_output_dir_and_files()  # To get statefolder and prepare for removal
-        if remove_validation_files:
+        if self.__remove_validation_files:
             self.remove_existing_files()
             return True
 
