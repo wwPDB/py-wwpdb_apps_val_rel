@@ -78,7 +78,7 @@ class getFilesRelease:
         file_path = self._check_onedep_pdb_file_paths(pdbid=pdbid, filename=filename)
         if file_path:
             return file_path
-        local_ftp_file_name = self.__lf.get_nmr_data_path(accession=pdbid)
+        local_ftp_file_name = self.__lf.get_nmr_data_fname(accession=pdbid)
         if os.path.exists(local_ftp_file_name):
             return local_ftp_file_name
         return None
