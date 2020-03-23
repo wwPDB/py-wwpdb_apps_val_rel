@@ -92,7 +92,7 @@ def main():
 
     check_entries(output_folder=args.output_root, entry_file=args.entry_file, entry_list=args.entries, pdbids=args.pdbids, emdbids=args.emdbids)
 
-if __name == '__main__':
+if __name__ == '__main__':
     main()
 
 
