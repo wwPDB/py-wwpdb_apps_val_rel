@@ -25,6 +25,7 @@ class checkResult:
     def check_entry(self):
         self.rv = runValidation()
         self.rv.process_message(self.__message)
+        self.rv.set_entry_id()
         self.rv.set_output_dir_and_files()
         output_file_dict = self.rv.getCoreOutputFileDict()
     

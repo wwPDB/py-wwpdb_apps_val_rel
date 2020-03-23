@@ -217,11 +217,7 @@ class runValidation:
         if not self.siteID:
             self.siteID = getSiteId()
 
-    def run_process(self, message):
-        """Process message and act on it"""
-
-        self.process_message(message)
-        
+    def set_entry_id(self):
         if self.__pdbid:
             self.__entry_id = self.__pdbid
         elif self.__emdbid:
@@ -229,7 +225,15 @@ class runValidation:
         else:
             logger.error("No PDB or EMDB provided")
             return False
-        
+        return True
+
+    def run_process(self, message):
+        """Process message and act on it"""
+
+        self.process_message(message)
+        ret = self.set_entry_id(self)
+        if not ret:
+            return False
         
         self.set_output_dir_and_files()  # To get statefolder and prepare for removal
         if self.__remove_validation_files:
