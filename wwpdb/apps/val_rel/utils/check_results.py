@@ -41,10 +41,10 @@ class checkResult:
         return self.missing_files
 
 
-def run_check(entry_list, entry_type):
+def check_entries(entry_list, entry_type):
     missing_files = {}
     
-    for entry in entries_to_check:
+    for entry in entry_list:
         cr = None
         if entry_type == 'pdb':
             cr = checkResult(output_folder=output_folder, pdbid=entry)
@@ -61,7 +61,7 @@ def run_check(entry_list, entry_type):
     return missing_files
     
 
-def check_entries(output_folder, entry_file=None, entry_list=None, pdbids=True, emdbids=False, pdb_release=False, pdb_modified=False, emdb_release=False):
+def prepare_entries_and_check(output_folder, entry_file=None, entry_list=None, pdbids=True, emdbids=False, pdb_release=False, pdb_modified=False, emdb_release=False):
 
     entries_to_check = {}
     fe = FindEntries()
@@ -90,7 +90,7 @@ def check_entries(output_folder, entry_file=None, entry_list=None, pdbids=True, 
         entries_to_check.setdefault('emdb', []).extend(fe.get_emdb_entries())
 
     for entry_type in entries_to_check:
-        ret = run_check(entries_to_check[entry_type], entry_type)
+        ret = check_entries(entries_to_check[entry_type], entry_type)
         missing_files[entry_type] = ret
 
     pprint(missing_files)
@@ -137,7 +137,7 @@ def main():
     args = parser.parse_args()
     logger.setLevel(args.loglevel)
 
-    check_entries(output_folder=args.output_root, 
+    prepare_entries_and_check(output_folder=args.output_root, 
                   entry_file=args.entry_file, 
                   entry_list=args.entries, 
                   pdbids=args.pdbids, 
