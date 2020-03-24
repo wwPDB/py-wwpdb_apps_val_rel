@@ -33,8 +33,11 @@ class checkResult:
         self.rv.set_entry_id()
         self.rv.set_output_dir_and_files()
         self.validation_xml = self.rv.getValidationXml()
+        logging.debug('validation xml: {}'.format(self.validation_xml))
         output_file_dict = self.rv.getCoreOutputFileDict()
-    
+        logging.debug('output_file_dict')
+        logging.debug(output_file_dict)
+
         for output_file_type in output_file_dict:
             output_file = output_file_dict[output_file_type]
             gzipped_output_file = get_gzip_name(output_file)
