@@ -105,37 +105,37 @@ class outputFiles:
         return os.path.join(self.entry_output_folder, filename)
 
     def get_validation_xml(self):
-        self.add_output_folder_accession(
+        return self.add_output_folder_accession(
             self.rf.get_validation_xml(self.accession)
         )
 
     def get_validation_png(self):
-        self.add_output_folder_accession(
+        return self.add_output_folder_accession(
             self.rf.get_validation_png(self.accession)
         )
 
     def get_validation_svg(self):
-        self.add_output_folder_accession(
+        return self.add_output_folder_accession(
             self.rf.get_validation_svg(self.accession)
         )
 
     def get_validation_pdf(self):
-        self.add_output_folder_accession(
+        return self.add_output_folder_accession(
             self.rf.get_validation_pdf(self.accession)
         )
 
     def get_validation_full_pdf(self):
-        self.add_output_folder_accession(
+        return self.add_output_folder_accession(
             self.rf.get_validation_full_pdf(self.accession)
         )
 
     def get_validation_2fofc(self):
-        self.add_output_folder_accession(
+        return self.add_output_folder_accession(
             self.rf.get_validation_2fofc(self.accession)
         )
 
     def get_validation_fofc(self):
-        self.add_output_folder_accession(
+        return self.add_output_folder_accession(
             self.rf.get_validation_fofc(self.accession)
         )
 
@@ -152,6 +152,8 @@ class outputFiles:
         ret["xml"] = self.get_validation_xml()
         ret["png"] = self.get_validation_png()
         ret["svg"] = self.get_validation_svg()
+
+        logger.debug(ret)
 
         return ret
 
