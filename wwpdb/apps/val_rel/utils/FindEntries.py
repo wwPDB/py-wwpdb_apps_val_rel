@@ -1,3 +1,5 @@
+import glob
+import os
 from wwpdb.io.locator.ReleasePathInfo import ReleasePathInfo
 from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
 

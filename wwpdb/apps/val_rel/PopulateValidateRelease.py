@@ -1,9 +1,7 @@
 import argparse
 import logging
-import os
-import glob
-import shutil
 import json
+import os
 
 from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
 from wwpdb.utils.message_queue.MessagePublisher import MessagePublisher
