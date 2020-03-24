@@ -6,6 +6,7 @@ from pprint import pprint
 from wwpdb.apps.val_rel.ValidateRelease import runValidation
 from wwpdb.apps.val_rel.utils.Files import get_gzip_name
 from wwpdb.apps.val_rel.utils.FindEntries import FindEntries
+from wwpdb.apps.validation.src.utils.validation_xml_reader import ValidationXMLReader
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +19,8 @@ class checkResult:
         self.__message = {}
         self.__prepare_message()
         self.missing_files = {}
+        self.validation_xml = None
+        self.failed_programs = []
         
     def __prepare_message(self):
         self.__message["pdbID"] = self.__pdbid
@@ -29,6 +32,7 @@ class checkResult:
         self.rv.process_message(self.__message)
         self.rv.set_entry_id()
         self.rv.set_output_dir_and_files()
+        self.validation_xml = self.rv.get_validation_xml()
         output_file_dict = self.rv.getCoreOutputFileDict()
     
         for output_file_type in output_file_dict:
@@ -36,13 +40,22 @@ class checkResult:
             gzipped_output_file = get_gzip_name(output_file)
             if not os.path.exists(gzipped_output_file):
                 self.missing_files.setdefault(output_file_type, []).append({self.rv.getEntryId(): gzipped_output_file})
+        
+        self.check_failed_programs()
 
     def get_missing_files(self):
         return self.missing_files
 
+    def check_failed_programs(self):
+        if self.validation_xml:
+            vfx = ValidationXMLReader(self.validation_xml)
+            self.failed_programs = vfx.get_failed_programs()
+
+    def get_failed_programs(self):
+        return self.failed_programs
 
 def check_entries(entry_list, entry_type, output_folder=None):
-    missing_files = {}
+    ret = {}
     
     for entry in entry_list:
         cr = None
@@ -54,11 +67,15 @@ def check_entries(entry_list, entry_type, output_folder=None):
             logging.error('Unknown entry type')
             return {}
         cr.check_entry()
-        ret = cr.get_missing_files()
-        for missing_type in ret:
-            missing_files.setdefault(missing_type, []).append(ret[missing_type])
+        missing_ret = cr.get_missing_files()
+        for missing_type in missing_ret:
+            ret.setdefault(missing_type, []).append(missing_ret[missing_type])
+        ret_failed = cr.get_failed_programs()
+        if ret_failed:
+            for program in ret_failed:
+                ret.setdefault('failed_programs', {}).setdefault(program, []).append(entry)
 
-    return missing_files
+    return ret
     
 
 def prepare_entries_and_check(output_folder=None, entry_file=None, entry_list=None, pdbids=True, emdbids=False, pdb_release=False, pdb_modified=False, emdb_release=False):

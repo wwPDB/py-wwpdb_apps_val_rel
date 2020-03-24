@@ -104,6 +104,41 @@ class outputFiles:
     def add_output_folder_accession(self, filename):
         return os.path.join(self.entry_output_folder, filename)
 
+    def get_validation_xml(self):
+        self.add_output_folder_accession(
+            self.rf.get_validation_xml(self.accession)
+        )
+
+    def get_validation_png(self):
+        self.add_output_folder_accession(
+            self.rf.get_validation_png(self.accession)
+        )
+
+    def get_validation_svg(self):
+        self.add_output_folder_accession(
+            self.rf.get_validation_svg(self.accession)
+        )
+
+    def get_validation_pdf(self):
+        self.add_output_folder_accession(
+            self.rf.get_validation_pdf(self.accession)
+        )
+
+    def get_validation_full_pdf(self):
+        self.add_output_folder_accession(
+            self.rf.get_validation_full_pdf(self.accession)
+        )
+
+    def get_validation_2fofc(self):
+        self.add_output_folder_accession(
+            self.rf.get_validation_2fofc(self.accession)
+        )
+
+    def get_validation_fofc(self):
+        self.add_output_folder_accession(
+            self.rf.get_validation_fofc(self.accession)
+        )
+
     def get_core_validation_files(self):
         logger.debug("getting core files for: %s", self._entryID)
         logger.debug("path: %s", self.entry_output_folder)
@@ -112,33 +147,19 @@ class outputFiles:
         logger.debug("accession set to %s", self.accession)
 
         ret = {}
-        ret["pdf"] = self.add_output_folder_accession(
-            self.rf.get_validation_pdf(self.accession)
-        )
-        ret["full_pdf"] = self.add_output_folder_accession(
-            self.rf.get_validation_full_pdf(self.accession)
-        )
-        ret["xml"] = self.add_output_folder_accession(
-            self.rf.get_validation_xml(self.accession)
-        )
-        ret["png"] = self.add_output_folder_accession(
-            self.rf.get_validation_png(self.accession)
-        )
-        ret["svg"] = self.add_output_folder_accession(
-            self.rf.get_validation_svg(self.accession)
-        )
+        ret["pdf"] = self.get_validation_pdf()
+        ret["full_pdf"] = self.get_validation_full_pdf()
+        ret["xml"] = self.get_validation_xml()
+        ret["png"] = self.get_validation_png()
+        ret["svg"] = self.get_validation_svg()
 
         return ret
 
     def get_extra_validation_files(self):
 
         ret = {}
-        ret["2fofc"] = self.add_output_folder_accession(
-            self.rf.get_validation_2fofc(self.accession)
-        )
-        ret["fofc"] = self.add_output_folder_accession(
-            self.rf.get_validation_fofc(self.accession)
-        )
+        ret["2fofc"] = self.get_validation_2fofc()
+        ret["fofc"] = self.get_validation_fofc()
 
         return ret
 
