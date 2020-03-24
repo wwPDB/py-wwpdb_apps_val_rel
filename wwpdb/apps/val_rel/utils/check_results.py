@@ -4,6 +4,7 @@ import argparse
 import logging
 from pprint import pprint
 from wwpdb.apps.val_rel.ValidateRelease import runValidation
+from wwpdb.apps.val_rel.utils.Files import get_gzip_name
 
 logger = logging.getLogger(__name__)
 
@@ -31,8 +32,9 @@ class checkResult:
     
         for output_file_type in output_file_dict:
             output_file = output_file_dict[output_file_type]
-            print(output_file)
-            if not os.path.exists(output_file):
+            gzipped_output_file = get_gzip_name(output_file)
+            print(gzipped_output_file)
+            if not os.path.exists(gzipped_output_file):
                 self.missing_files.setdefault(output_file_type, []).append(self.rv.getEntryId())
 
     def get_missing_files(self):
