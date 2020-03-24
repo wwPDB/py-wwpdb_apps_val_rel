@@ -51,8 +51,9 @@ class checkResult:
 
     def check_failed_programs(self):
         if self.validation_xml:
-            vfx = ValidationXMLReader(self.validation_xml)
-            self.failed_programs = vfx.get_failed_programs()
+            if os.path.exists(self.validation_xml):
+                vfx = ValidationXMLReader(self.validation_xml)
+                self.failed_programs = vfx.get_failed_programs()
 
     def get_failed_programs(self):
         return self.failed_programs
