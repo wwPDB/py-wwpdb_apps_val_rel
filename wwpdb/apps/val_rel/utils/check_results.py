@@ -32,7 +32,7 @@ class checkResult:
         self.rv.process_message(self.__message)
         self.rv.set_entry_id()
         self.rv.set_output_dir_and_files()
-        self.validation_xml = self.rv.get_validation_xml()
+        self.validation_xml = self.rv.getValidationXml()
         output_file_dict = self.rv.getCoreOutputFileDict()
     
         for output_file_type in output_file_dict:

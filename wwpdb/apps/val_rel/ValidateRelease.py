@@ -94,6 +94,7 @@ class runValidation:
         self.__emdb_output_folder = None
         self.__output_file_dict = {}
         self.__core_output_file_dict = {}
+        self.__validation_xml = None
 
         self.__skip_gzip = False
         self.__always_recalculate = False
@@ -133,6 +134,9 @@ class runValidation:
 
     def getCoreOutputFileDict(self):
         return self.__core_output_file_dict
+
+    def getValidationXml(self):
+        return self.__validation_xml
 
     def getEntryId(self):
         return self.__entry_id
@@ -192,6 +196,7 @@ class runValidation:
         self.__entry_output_folder = of.get_entry_output_folder()
         logger.info("output folder: %s", self.__entry_output_folder)
         self.__core_output_file_dict = of.get_core_validation_files()
+        self.__validation_xml = of.get_validation_xml()
         self.__output_file_dict = of.get_all_validation_files()
         self.__pdb_output_folder = of.get_pdb_output_folder()
         self.__emdb_output_folder = of.get_emdb_output_folder()
