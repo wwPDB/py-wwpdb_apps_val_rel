@@ -41,7 +41,7 @@ class checkResult:
         return self.missing_files
 
 
-def check_entries(entry_list, entry_type):
+def check_entries(entry_list, entry_type, output_folder=None):
     missing_files = {}
     
     for entry in entry_list:
@@ -61,7 +61,7 @@ def check_entries(entry_list, entry_type):
     return missing_files
     
 
-def prepare_entries_and_check(output_folder, entry_file=None, entry_list=None, pdbids=True, emdbids=False, pdb_release=False, pdb_modified=False, emdb_release=False):
+def prepare_entries_and_check(output_folder=None, entry_file=None, entry_list=None, pdbids=True, emdbids=False, pdb_release=False, pdb_modified=False, emdb_release=False):
 
     entries_to_check = {}
     fe = FindEntries()
@@ -90,7 +90,7 @@ def prepare_entries_and_check(output_folder, entry_file=None, entry_list=None, p
         entries_to_check.setdefault('emdb', []).extend(fe.get_emdb_entries())
 
     for entry_type in entries_to_check:
-        ret = check_entries(entries_to_check[entry_type], entry_type)
+        ret = check_entries(entries_to_check[entry_type], entry_type, output_folder=output_folder)
         missing_files[entry_type] = ret
 
     pprint(missing_files)
