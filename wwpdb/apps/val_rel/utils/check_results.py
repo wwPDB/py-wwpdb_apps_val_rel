@@ -5,6 +5,7 @@ import logging
 from pprint import pprint
 from wwpdb.apps.val_rel.ValidateRelease import runValidation
 from wwpdb.apps.val_rel.utils.Files import get_gzip_name
+from wwpdb.apps.val_rel.utils.FindEntries import FindEntries
 
 logger = logging.getLogger(__name__)
 
