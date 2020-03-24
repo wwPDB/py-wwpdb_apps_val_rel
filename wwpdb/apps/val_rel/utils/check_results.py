@@ -40,26 +40,57 @@ class checkResult:
         return self.missing_files
 
 
-def check_entries(output_folder, entry_file=None, entry_list=None, pdbids=True, emdbids=False):
-    entries_to_check = []
+def run_check(entry_list, entry_type):
     missing_files = {}
-    if entry_file:
-        with open(entry_file) as entryFile:
-            for line in entryFile:
-                if line:
-                    entries_to_check.append(line.strip())
-    if entry_list:
-        entries_to_check.extend(entry_list)
-
+    
     for entry in entries_to_check:
-        if pdbids:
+        cr = None
+        if entry_type == 'pdb':
             cr = checkResult(output_folder=output_folder, pdbid=entry)
-        else:
+        elif entry_file == 'emdb':
             cr = checkResult(output_folder=output_folder, emdbid=entry)
+        else:
+            logging.error('Unknown entry type')
+            return {}
         cr.check_entry()
         ret = cr.get_missing_files()
         for missing_type in ret:
             missing_files.setdefault(missing_type, []).append(ret[missing_type])
+
+    return missing_files
+    
+
+def check_entries(output_folder, entry_file=None, entry_list=None, pdbids=True, emdbids=False, pdb_release=False, pdb_modified=False, emdb_release=False):
+
+    entries_to_check = {}
+    fe = FindEntries()
+    missing_files = {}
+    
+    if entry_file:
+        with open(entry_file) as entryFile:
+            for line in entryFile:
+                if line:
+                    entry = line.strip()
+                    if pdbids:
+                        entries_to_check.setdefault('pdb', []).append(entry)
+                    else:
+                        entries_to_check.setdefault('emdb', []).append(entry)
+    if entry_list:
+        if pdbids:
+            entries_to_check.setdefault('pdb', []).extend(entry_list)
+        else:
+            entries_to_check.setdefault('pdb', []).extend(entry_list)
+
+    if pdb_release:
+        entries_to_check.setdefault('pdb', []).extend(fe.get_added_pdb_entries())
+    if pdb_modified:
+        entries_to_check.setdefault('pdb', []).extend(fe.get_modified_pdb_entries())
+    if pdb_releemdb_releasease:
+        entries_to_check.setdefault('emdb', []).extend(fe.get_emdb_entries())
+
+    for entry_type in entries_to_check:
+        ret = run_check(entries_to_check[entry_type], entry_type)
+        missing_files[entry_type] = ret
 
     pprint(missing_files)
 
@@ -89,10 +120,31 @@ def main():
     parser.add_argument(
         "--emdbids", help="entries are emdbids", action="store_true"
     )
+    parser.add_argument(
+        "--pdb_release", help="find PDB entries scheduled for new release", action="store_true"
+    )
+    parser.add_argument(
+        "--pdb_modified",
+        help="find PDB entries scheduled for modified release",
+        action="store_true",
+    )
+    parser.add_argument(
+        "--emdb_release",
+        help="find EMDB entries scheduled for release",
+        action="store_true",
+    )
     args = parser.parse_args()
     logger.setLevel(args.loglevel)
 
-    check_entries(output_folder=args.output_root, entry_file=args.entry_file, entry_list=args.entries, pdbids=args.pdbids, emdbids=args.emdbids)
+    check_entries(output_folder=args.output_root, 
+                  entry_file=args.entry_file, 
+                  entry_list=args.entries, 
+                  pdbids=args.pdbids, 
+                  emdbids=args.emdbids,
+                  pdb_release=args.pdb_release,
+                  pdb_modified=args.pdb_modified,
+                  emdb_release=args.emdb_release
+                  )
 
 if __name__ == '__main__':
     main()
