@@ -32,7 +32,7 @@ class checkResult:
         self.rv.process_message(self.__message)
         self.rv.set_entry_id()
         self.rv.set_output_dir_and_files()
-        self.validation_xml = self.rv.getValidationXml()
+        self.validation_xml = get_gzip_name(self.rv.getValidationXml())
         logging.debug('validation xml: {}'.format(self.validation_xml))
         output_file_dict = self.rv.getCoreOutputFileDict()
         logging.debug('output_file_dict')
