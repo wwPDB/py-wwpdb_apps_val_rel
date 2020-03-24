@@ -86,7 +86,7 @@ def check_entries(output_folder, entry_file=None, entry_list=None, pdbids=True, 
         entries_to_check.setdefault('pdb', []).extend(fe.get_added_pdb_entries())
     if pdb_modified:
         entries_to_check.setdefault('pdb', []).extend(fe.get_modified_pdb_entries())
-    if pdb_releemdb_releasease:
+    if emdb_release:
         entries_to_check.setdefault('emdb', []).extend(fe.get_emdb_entries())
 
     for entry_type in entries_to_check:
