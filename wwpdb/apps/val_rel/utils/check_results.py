@@ -33,7 +33,6 @@ class checkResult:
         for output_file_type in output_file_dict:
             output_file = output_file_dict[output_file_type]
             gzipped_output_file = get_gzip_name(output_file)
-            print(gzipped_output_file)
             if not os.path.exists(gzipped_output_file):
                 self.missing_files.setdefault(output_file_type, []).append(self.rv.getEntryId())
 
