@@ -41,7 +41,7 @@ from wwpdb.apps.val_rel.ValidateRelease import (
 logger = logging.getLogger()
 logging.basicConfig(
     level=logging.INFO,
-    format="\n%(asctime)s [%(levelname)s]-%(module)s.%(funcName)s: %(message)s",
+    format="%(asctime)s [%(levelname)s]-%(module)s.%(funcName)s: %(message)s",
 )
 logging.getLogger("pika").setLevel(logging.INFO)
 
