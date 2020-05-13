@@ -477,6 +477,7 @@ class runValidation:
                 "emvol": self.__volPath,
                 "emxml" : self.__emXmlPath,
                 "pdb_id": self.__pdbid,
+                "entry_id": self.__entry_id,
                 "emdb_id": self.__emdbid,
                 "tempDir": self.__tempDir,
                 "rundir" : run_dir,
