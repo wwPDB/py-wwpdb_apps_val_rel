@@ -20,10 +20,10 @@ class getFilesRelease:
 
     def _get_onedep_pdb_folder_paths(self):
         ret_list = [
-            self.__rp.getForReleasePath("added"),
-            self.__rp.getForReleasePath("modified"),
-            self.__rp.getForReleasePath("added", version="previous"),
-            self.__rp.getForReleasePath("modified", version="previous")
+            self.__rp.get_added_path(),
+            self.__rp.get_modified_path(),
+            self.__rp.get_previous_added_path(),
+            self.__rp.get_previous_modified_path()
         ]
         return ret_list
 
@@ -85,9 +85,8 @@ class getFilesRelease:
 
     def get_emdb_path_search_order(self, emdbid, subfolder):
         ret_list = [
-            self.__rp.getForReleasePath(subdir="emd", accession=emdbid, em_sub_path=subfolder),
-            self.__rp.getForReleasePath(
-                subdir="emd", version="previous", accession=emdbid, em_sub_path=subfolder),
+            self.__rp.get_emd_subfolder_path(accession=emdbid, em_sub_path=subfolder),
+            self.__rp.get_previous_emd_subfolder_path(accession=emdbid, em_sub_path=subfolder),
             os.path.join(self.__local_ftp_emdb_path, emdbid, subfolder),
         ]
 
