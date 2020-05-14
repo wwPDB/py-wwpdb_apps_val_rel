@@ -10,7 +10,6 @@ from wwpdb.apps.val_rel.utils.getFilesRelease import getFilesRelease
 from wwpdb.apps.val_rel.utils.XmlInfo import XmlInfo
 from wwpdb.apps.val_rel.utils.mmCIFInfo import mmCIFInfo
 from wwpdb.apps.val_rel.utils.FindEntries import FindEntries
-from wwpdb.io.locator.ReleasePathInfo import ReleasePathInfo
 
 # Create logger -
 FORMAT = '[%(asctime)s %(levelname)s]-%(module)s.%(funcName)s: %(message)s'
