@@ -65,7 +65,7 @@ def check_entries(entry_list, entry_type, output_folder=None):
         cr = None
         if entry_type == 'pdb':
             cr = checkResult(output_folder=output_folder, pdbid=entry)
-        elif entry_file == 'emdb':
+        elif entry_type == 'emdb':
             cr = checkResult(output_folder=output_folder, emdbid=entry)
         else:
             logging.error('Unknown entry type')

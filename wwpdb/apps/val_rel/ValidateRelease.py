@@ -5,7 +5,6 @@ import sys
 import argparse
 import logging
 from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
-from wwpdb.utils.dp.ValidationWrapper import ValidationWrapper
 from wwpdb.apps.validation.src.utils.minimal_map_cif import GenerateMinimalCif
 from wwpdb.apps.val_rel.utils.outputFiles import outputFiles
 from wwpdb.apps.val_rel.utils.getFilesRelease import getFilesRelease
@@ -14,8 +13,7 @@ from wwpdb.apps.val_rel.utils.XmlInfo import XmlInfo
 from wwpdb.apps.val_rel.utils.Files import gzip_file, remove_files
 from wwpdb.apps.val_rel.utils.ValDataStore import ValDataStore
 from wwpdb.apps.val_rel.utils.fileConversion import convert_star_to_cif
-
-# from wwpdb.apps.val_rel.daInternal import DaInternal
+from wwpdb.apps.val_rel.utils.ValidationRun import ValidationRun
 
 logger = logging.getLogger(__name__)
 
@@ -203,6 +201,7 @@ class runValidation:
         self.__statefolder = of.get_root_state_folder()
 
     def process_message(self, message):
+        logger.info("Message received %s", message)
         self.__pdbid = message.get("pdbID")
         if self.__pdbid:
             self.__pdbid = self.__pdbid.lower()
@@ -210,6 +209,8 @@ class runValidation:
         if self.__emdbid:
             self.__emdbid = self.__emdbid.upper()
         self.siteID = message.get("siteID")
+        if not self.siteID:
+            self.siteID = getSiteId()
         self.__outputRoot = message.get("outputRoot")
         self.__skip_gzip = message.get("skipGzip", False)
         self.__always_recalculate = message.get("alwaysRecalculate", False)
@@ -219,8 +220,6 @@ class runValidation:
         self.__pythonSiteID = message.get("python_site_id", self.siteID)
         self.__cI = ConfigInfo(self.siteID)
         self.__entry_output_folder = None
-        if not self.siteID:
-            self.siteID = getSiteId()
 
     def set_entry_id(self):
         if self.__pdbid:
@@ -404,10 +403,10 @@ class runValidation:
                 ok = convert_star_to_cif(star_file=self.__csPath, cif_file=temp_cif_cs_file)
                 if ok and os.path.exists(temp_cif_cs_file):
                     self.__csPath = temp_cif_cs_file
-                    logging.info('CS star to cif conversion worked - new cs file: {}'.format(self.__csPath))
+                    logger.info('CS star to cif conversion worked - new cs file: {}'.format(self.__csPath))
                     return True
                 else:
-                    logging.error('CS star to cif conversion failed')
+                    logger.error('CS star to cif conversion failed')
 
         return False
 
@@ -428,7 +427,7 @@ class runValidation:
                 if self.__csPath:
                     ok = self.convert_cs_file()
                     if not ok:
-                        logging.error('CS star to cif conversion failed')
+                        logger.error('CS star to cif conversion failed')
                         self.__sds.setValidationRunning(False)
                         return False
 
@@ -460,6 +459,7 @@ class runValidation:
 
             log_path = os.path.join(self.__entry_output_folder, "validation.log")
 
+
             logger.info("input files")
             logger.info("model: %s", self.__modelPath)
             logger.info("SF: %s", self.__sfPath)
@@ -470,58 +470,29 @@ class runValidation:
             logger.info("pdb_id: %s", self.__pdbid)
             logger.info("emdb_id: %s", self.__emdbid)
 
-            vw = ValidationWrapper(
-                tmpPath=self.__tempDir,
-                siteId=self.__pythonSiteID,
-                verbose=False,
-                log=sys.stderr,
-            )
-            vw.imp(self.__modelPath)
-            vw.addInput(name="run_dir", value=run_dir)
-            vw.addInput(name="request_validation_mode", value="release")
-            if self.__pdbid:
-                vw.addInput(name="entry_id", value=self.__pdbid)
-            elif self.__emdbid:
-                vw.addInput(name="entry_id", value=self.__emdbid)
-                vw.addInput(name="emdb_id", value=self.__emdbid)
+            dD = {
+                "model": self.__modelPath,
+                "sf": self.__sfPath,
+                "cs": self.__csPath,
+                "emvol": self.__volPath,
+                "emxml" : self.__emXmlPath,
+                "pdb_id": self.__pdbid,
+                "entry_id": self.__entry_id,
+                "emdb_id": self.__emdbid,
+                "tempDir": self.__tempDir,
+                "rundir" : run_dir,
+                "fsc" : self.__fscPath,
+                "keeplog" : self.__keepLog,
+                "logpath" : log_path,
+                "outfiledict" : self.__output_file_dict,
+                "entry_output_folder" : self.__entry_output_folder,
+                }
 
-            if self.__sfPath is not None and os.access(self.__sfPath, os.R_OK):
-                vw.addInput(name="sf_file_path", value=self.__sfPath)
 
-            if self.__csPath is not None and os.access(self.__csPath, os.R_OK):
-                vw.addInput(name="cs_file_path", value=self.__csPath)
-
-            if self.__volPath is not None and os.access(self.__volPath, os.R_OK):
-                vw.addInput(name="vol_file_path", value=self.__volPath)
-
-            if self.__emXmlPath is not None and os.access(self.__emXmlPath, os.R_OK):
-                vw.addInput(name="emdb_xml_path", value=self.__emXmlPath)
-
-            if self.__fscPath is not None and os.access(self.__fscPath, os.R_OK):
-                vw.addInput(name="fsc_file_path", value=self.__fscPath)
-
-            vw.op("annot-wwpdb-validate-all-sf")
-            # output log file
-            if self.__keepLog:
-                vw.expLog(log_path)
-
-            output_file_list = []
-            # Keys needs to be in order of arguments
-            for key in ["pdf", "xml", "full_pdf", "png", "svg", "fofc", "2fofc"]:
-                if key in self.__output_file_dict:
-                    output_file_list.append(self.__output_file_dict[key])
-
-            logger.info(output_file_list)
-            logger.info(self.__output_file_dict)
-
-            ok = vw.expList(dstPathList=output_file_list)
-            if not ok:
-                logger.error('failed to copy files from {} to {}'.format(run_dir, self.__entry_output_folder))
-            logger.info('validation run finished')
-
-            # clean up temp folder after run
-            # vw.cleanup()
-
+            vr = ValidationRun(siteId=self.__pythonSiteID, verbose=False, log=sys.stderr)
+            output_file_list = vr.run(dD)
+            logger.info("Returning with %s", output_file_list)
+            
             if self.__pdbid and self.__emdbid:
                 ok = self.copy_to_emdb()
                 if not ok:
@@ -542,7 +513,7 @@ class runValidation:
 
 
 def main():
-    log_format = "%(funcName)s (%(levelname)s) - %(message)s"
+    log_format = "%(asctime)s [%(levelname)s]-%(module)s.%(funcName)s: %(message)s"
     logging.basicConfig(format=log_format)
 
     parser = argparse.ArgumentParser()
@@ -584,10 +555,13 @@ def main():
         "skipGzip": args.skip_gzip,
         "alwaysRecalculate": args.always_recalculate,
         "siteID": args.site_id,
-        "pythonSiteID": args.python_site_id,
         "keepLog": args.keep_log,
         "removeValFiles": args.remove_files,
     }
+
+    # If pass in None - overrides siteid
+    if args.python_site_id:
+        message["pythonSiteID"] = args.python_site_id,
 
     runValidation().run_process(message=message)
 
