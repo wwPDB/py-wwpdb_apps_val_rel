@@ -74,7 +74,7 @@ class outputFiles:
             return self._emdbID
         return ""
 
-    def get_emdb_lower_underscore(self):
+    def get_emdb_lower_hyphen(self):
         if self.get_emdb_id():
             return self.rf.get_lower_emdb_hyphen_format(self.get_emdb_id())
         return ""
@@ -91,13 +91,13 @@ class outputFiles:
     def set_accession(self):
         self.accession = "{}".format(self._entryID)
         if self._emdbID and not self._pdbID:
-            self.accession = self.get_emdb_lower_underscore()
+            self.accession = self.get_emdb_lower_hyphen()
         if self._pdbID and self._emdbID and self.with_emdb:
             self.accession = "{}_{}".format(
-                self.get_emdb_lower_underscore(), self._pdbID
+                self.get_emdb_lower_hyphen(), self._pdbID
             )
         if self._emdbID and self.copy_to_root_emdb:
-            self.accession = "{}".format(self.get_emdb_lower_underscore())
+            self.accession = "{}".format(self.get_emdb_lower_hyphen())
 
         return self.accession
 
