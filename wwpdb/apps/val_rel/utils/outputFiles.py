@@ -1,8 +1,10 @@
 import logging
 import os
+
 from wwpdb.utils.config.ConfigInfo import getSiteId
-from wwpdb.io.locator.ReleasePathInfo import ReleasePathInfo
+
 from wwpdb.io.locator.ReleaseFileNames import ReleaseFileNames
+from wwpdb.io.locator.ReleasePathInfo import ReleasePathInfo
 
 logger = logging.getLogger(__name__)
 
@@ -40,12 +42,17 @@ class outputFiles:
     def get_root_state_folder(self):
         # Place under pdb val-reports as extra director
         rp = ReleasePathInfo(self._siteID)
-        return os.path.join(rp.getForReleasePath("val_reports"), 
-                            self._validation_sub_directory + "_state")
+        return os.path.join(
+            rp.getForReleasePath("val_reports"),
+            self._validation_sub_directory + "_state",
+        )
 
     def get_emdb_root_folder(self):
         rp = ReleasePathInfo(self._siteID)
-        return os.path.join(rp.getForReleasePath("em_val_reports"), "emd")
+        return os.path.join(
+            rp.getForReleasePath("em_val_reports"),
+            self._validation_sub_directory + "_state",
+        )
 
     def set_validation_subdirectory(self, sub_dir):
         self._validation_sub_directory = sub_dir
@@ -93,9 +100,7 @@ class outputFiles:
         if self._emdbID and not self._pdbID:
             self.accession = self.get_emdb_lower_hyphen()
         if self._pdbID and self._emdbID and self.with_emdb:
-            self.accession = "{}_{}".format(
-                self.get_emdb_lower_hyphen(), self._pdbID
-            )
+            self.accession = "{}_{}".format(self.get_emdb_lower_hyphen(), self._pdbID)
         if self._emdbID and self.copy_to_root_emdb:
             self.accession = "{}".format(self.get_emdb_lower_hyphen())
 
