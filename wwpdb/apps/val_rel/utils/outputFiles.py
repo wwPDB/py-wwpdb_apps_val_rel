@@ -51,7 +51,7 @@ class outputFiles:
         rp = ReleasePathInfo(self._siteID)
         return os.path.join(
             rp.getForReleasePath("em_val_reports"),
-            self._validation_sub_directory + "_state",
+            self._validation_sub_directory
         )
 
     def set_validation_subdirectory(self, sub_dir):
