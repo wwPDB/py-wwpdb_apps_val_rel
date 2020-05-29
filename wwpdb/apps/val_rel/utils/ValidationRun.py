@@ -82,7 +82,7 @@ class ValidationRun(object):
         output_file_list = []
         # Keys needs to be in order of arguments - and must have something
         for key in ["pdf", "xml", "full_pdf", "png", "svg", "fofc", "2fofc"]:
-            output_file_list.append(os.path.join(entry_output_folder, output_file_dict.get(key)) if output_file_dict.get(key, None) else None)
+            output_file_list.append(output_file_dict.get(key, None))
 
         logger.info(output_file_list)
         logger.info(output_file_dict)
