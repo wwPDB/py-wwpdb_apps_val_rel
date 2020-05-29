@@ -8,7 +8,7 @@ import tempfile
 from wwpdb.apps.validation.src.utils.minimal_map_cif import GenerateMinimalCif
 from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
 
-from wwpdb.apps.val_rel.utils.Files import gzip_file, remove_files
+from wwpdb.apps.val_rel.utils.Files import gzip_file, remove_files, copy_file
 from wwpdb.apps.val_rel.utils.ValDataStore import ValDataStore
 from wwpdb.apps.val_rel.utils.ValidationRun import ValidationRun
 from wwpdb.apps.val_rel.utils.XmlInfo import XmlInfo
@@ -89,6 +89,7 @@ class runValidation:
         self.__sessionPath = None
         # self.contour_level = None # not needed as its in the xml
         self.__entry_output_folder = None
+        self.__temp_output_dir = None
         self.__validation_sub_folder = 'current'
         self.__pdb_output_folder = None
         self.__emdb_output_folder = None
@@ -376,14 +377,19 @@ class runValidation:
 
                     for k in self.__output_file_dict:
                         if k in emdb_output_file_dict:
-                            in_file = self.__output_file_dict[k]
+                            in_file = os.path.join(self.__temp_output_dir, self.__output_file_dict[k])
+                            em_in_file = os.path.join(self.__temp_output_dir, emdb_output_file_dict[k])
                             if os.path.exists(in_file):
-                                shutil.copy(
-                                    self.__output_file_dict[k], emdb_output_file_dict[k]
-                                )
-                    if not self.__skip_gzip:
+                                shutil.copy(in_file, em_in_file)
+                    if self.__skip_gzip:
                         for f in emdb_output_file_dict.values():
-                            gzip_file(f)
+                            copy_file(in_file=f, input_folder=self.__temp_output_dir,
+                                      output_folder=self.__entry_output_folder)
+
+                    else:
+                        for f in emdb_output_file_dict.values():
+                            gzip_file(in_file=f, input_folder=self.__temp_output_dir,
+                                      output_folder=self.__entry_output_folder)
                 else:
                     logger.error("EMDB output folder %s does not exist", __emdb_output_folder)
                     return False
@@ -391,11 +397,18 @@ class runValidation:
         return True
 
     @staticmethod
-    def __gzip_output(filelist):
+    def __gzip_output(filelist, input_folder, output_folder):
         """Compresses list of files"""
         logger.debug('gzip files: {}'.format(filelist))
         for f in filelist:
-            gzip_file(f)
+            gzip_file(in_file=f, input_folder=input_folder, output_folder=output_folder)
+
+    @staticmethod
+    def __copy_output(filelist, input_folder, output_folder):
+        """Compresses list of files"""
+        logger.debug('copy files: {}'.format(filelist))
+        for f in filelist:
+            copy_file(in_file=f, input_folder=input_folder, output_folder=output_folder)
 
     def convert_cs_file(self):
         """convert star format CS file to CIF format for the validator"""
@@ -440,13 +453,6 @@ class runValidation:
                 self.__sds.setValidationRunning(False)
                 return True
 
-            # make output directory if it doesn't exist
-            if not os.path.exists(self.__entry_output_folder):
-                os.makedirs(self.__entry_output_folder)
-            else:
-                # Set the time on output_folder to now
-                os.utime(self.__entry_output_folder, None)
-
             logger.info("Entry output folder: %s", self.__entry_output_folder)
 
             # clearing existing reports before making new ones
@@ -457,7 +463,12 @@ class runValidation:
                 prefix="%s_validation_release_rundir_" % self.__entry_id
             )
 
-            log_path = os.path.join(self.__entry_output_folder, "validation.log")
+            self.__temp_output_dir = tempfile.mkdtemp(
+                dir=self.__sessionPath,
+                prefix="%s_validation_release_temp_output_dir_" % self.__entry_id
+            )
+
+            log_path = os.path.join(self.__temp_output_dir, "validation.log")
 
             logger.info("input files")
             logger.info("model: %s", self.__modelPath)
@@ -484,12 +495,20 @@ class runValidation:
                 "keeplog": self.__keepLog,
                 "logpath": log_path,
                 "outfiledict": self.__output_file_dict,
-                "entry_output_folder": self.__entry_output_folder,
+                # "entry_output_folder": self.__entry_output_folder,
+                "entry_output_folder": self.__temp_output_dir,
             }
 
             vr = ValidationRun(siteId=self.__pythonSiteID, verbose=False, log=sys.stderr)
             output_file_list = vr.run(dD)
             logger.info("Returning with %s", output_file_list)
+
+            # make output directory if it doesn't exist
+            if not os.path.exists(self.__entry_output_folder):
+                os.makedirs(self.__entry_output_folder)
+            else:
+                # Set the time on output_folder to now
+                os.utime(self.__entry_output_folder, None)
 
             if self.__pdbid and self.__emdbid:
                 ok = self.copy_to_emdb()
@@ -498,8 +517,15 @@ class runValidation:
                     self.__sds.setValidationRunning(False)
                     return False
 
-            if not self.__skip_gzip:
-                self.__gzip_output(output_file_list)
+            if self.__skip_gzip:
+                self.__copy_output(filelist=output_file_list,
+                                   input_folder=self.__temp_output_dir,
+                                   output_folder=self.__entry_output_folder)
+
+            else:
+                self.__gzip_output(filelist=output_file_list,
+                                   input_folder=self.__temp_output_dir,
+                                   output_folder=self.__entry_output_folder)
 
             self.__sds.setValidationRunning(False)
             return True

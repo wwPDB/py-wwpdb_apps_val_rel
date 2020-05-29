@@ -11,13 +11,13 @@ logger = logging.getLogger(__name__)
 
 class outputFiles:
     def __init__(
-        self,
-        pdbID=None,
-        emdbID=None,
-        outputRoot="",
-        siteID=getSiteId(),
-        skip_pdb_hash=False,
-        validation_sub_directory="current",
+            self,
+            pdbID=None,
+            emdbID=None,
+            outputRoot="",
+            siteID=getSiteId(),
+            skip_pdb_hash=False,
+            validation_sub_directory="current",
     ):
         self._pdbID = pdbID
         self._emdbID = emdbID
@@ -112,7 +112,8 @@ class outputFiles:
         return self.accession
 
     def add_output_folder_accession(self, filename):
-        return os.path.join(self.entry_output_folder, filename)
+        return filename
+        # return os.path.join(self.entry_output_folder, filename)
 
     def get_validation_xml(self):
         return self.add_output_folder_accession(
