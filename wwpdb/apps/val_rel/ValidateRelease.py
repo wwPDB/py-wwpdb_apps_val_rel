@@ -1,19 +1,21 @@
-import shutil
-import tempfile
-import os
-import sys
 import argparse
 import logging
-from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
+import os
+import shutil
+import sys
+import tempfile
+
 from wwpdb.apps.validation.src.utils.minimal_map_cif import GenerateMinimalCif
-from wwpdb.apps.val_rel.utils.outputFiles import outputFiles
-from wwpdb.apps.val_rel.utils.getFilesRelease import getFilesRelease
-from wwpdb.apps.val_rel.utils.mmCIFInfo import mmCIFInfo
-from wwpdb.apps.val_rel.utils.XmlInfo import XmlInfo
+from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
+
 from wwpdb.apps.val_rel.utils.Files import gzip_file, remove_files
 from wwpdb.apps.val_rel.utils.ValDataStore import ValDataStore
-from wwpdb.apps.val_rel.utils.fileConversion import convert_star_to_cif
 from wwpdb.apps.val_rel.utils.ValidationRun import ValidationRun
+from wwpdb.apps.val_rel.utils.XmlInfo import XmlInfo
+from wwpdb.apps.val_rel.utils.fileConversion import convert_star_to_cif
+from wwpdb.apps.val_rel.utils.getFilesRelease import getFilesRelease
+from wwpdb.apps.val_rel.utils.mmCIFInfo import mmCIFInfo
+from wwpdb.apps.val_rel.utils.outputFiles import outputFiles
 
 logger = logging.getLogger(__name__)
 
@@ -238,7 +240,7 @@ class runValidation:
         ret = self.set_entry_id()
         if not ret:
             return False
-        
+
         self.set_output_dir_and_files()  # To get statefolder and prepare for removal
         if self.__remove_validation_files:
             self.remove_existing_files()
@@ -410,8 +412,6 @@ class runValidation:
 
         return False
 
-
-
     def run_validation(self):
 
         self.__sds.setValidationRunning(True)
@@ -459,7 +459,6 @@ class runValidation:
 
             log_path = os.path.join(self.__entry_output_folder, "validation.log")
 
-
             logger.info("input files")
             logger.info("model: %s", self.__modelPath)
             logger.info("SF: %s", self.__sfPath)
@@ -475,24 +474,23 @@ class runValidation:
                 "sf": self.__sfPath,
                 "cs": self.__csPath,
                 "emvol": self.__volPath,
-                "emxml" : self.__emXmlPath,
+                "emxml": self.__emXmlPath,
                 "pdb_id": self.__pdbid,
                 "entry_id": self.__entry_id,
                 "emdb_id": self.__emdbid,
                 "tempDir": self.__tempDir,
-                "rundir" : run_dir,
-                "fsc" : self.__fscPath,
-                "keeplog" : self.__keepLog,
-                "logpath" : log_path,
-                "outfiledict" : self.__output_file_dict,
-                "entry_output_folder" : self.__entry_output_folder,
-                }
-
+                "rundir": run_dir,
+                "fsc": self.__fscPath,
+                "keeplog": self.__keepLog,
+                "logpath": log_path,
+                "outfiledict": self.__output_file_dict,
+                "entry_output_folder": self.__entry_output_folder,
+            }
 
             vr = ValidationRun(siteId=self.__pythonSiteID, verbose=False, log=sys.stderr)
             output_file_list = vr.run(dD)
             logger.info("Returning with %s", output_file_list)
-            
+
             if self.__pdbid and self.__emdbid:
                 ok = self.copy_to_emdb()
                 if not ok:
