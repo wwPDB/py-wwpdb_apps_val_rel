@@ -261,6 +261,8 @@ class runValidation:
 
         # worked = False
         self.__sessionPath = self.__cI.get("SITE_WEB_APPS_SESSIONS_PATH")
+        if not os.path.exists(self.__sessionPath):
+            os.makedirs(self.__sessionPath)
         self.__tempDir = tempfile.mkdtemp(
             dir=self.__sessionPath,
             prefix="{}_validation_release_temp_".format(self.__entry_id),
