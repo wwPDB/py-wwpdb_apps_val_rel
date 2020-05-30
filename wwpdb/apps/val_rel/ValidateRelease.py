@@ -243,6 +243,7 @@ class runValidation:
         if not ret:
             return False
 
+        self.__temp_output_dir = None
         self.set_output_dir_and_files()  # To get statefolder and prepare for removal
         if self.__remove_validation_files:
             self.remove_existing_files()
@@ -264,6 +265,11 @@ class runValidation:
             dir=self.__sessionPath,
             prefix="{}_validation_release_temp_".format(self.__entry_id),
         )
+        self.__temp_output_dir = tempfile.mkdtemp(
+            dir=self.__sessionPath,
+            prefix="%s_validation_release_temp_output_dir_" % self.__entry_id
+        )
+        self.set_output_dir_and_files()
 
         all_worked = []
         run_pdb = []
@@ -338,6 +344,7 @@ class runValidation:
 
     def remove_existing_files(self):
         """Removes existing validation files"""
+        self.set_output_dir_and_files()
         remove_files(list(self.__output_file_dict.values()))
         if self.__emdbid:
             em_of = outputFiles(
@@ -464,10 +471,7 @@ class runValidation:
                 prefix="%s_validation_release_rundir_" % self.__entry_id
             )
 
-            self.__temp_output_dir = tempfile.mkdtemp(
-                dir=self.__sessionPath,
-                prefix="%s_validation_release_temp_output_dir_" % self.__entry_id
-            )
+
 
             log_path = os.path.join(self.__temp_output_dir, "validation.log")
 
