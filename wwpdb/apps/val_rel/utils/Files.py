@@ -13,9 +13,9 @@ def get_gzip_name(f):
     return f + ".gz"
 
 
-def gzip_file(in_file, input_folder, output_folder):
+def gzip_file(in_file, output_folder):
     """Compresses file in_file to in_file.gz.  Not be memory efficient as reads in file at one"""
-    input_file = os.path.join(input_folder, in_file)
+    input_file = os.path.basename(in_file)
     output_file = os.path.join(output_folder, in_file)
     if os.path.exists(input_file):
         if not os.path.exists(output_folder):
@@ -25,8 +25,8 @@ def gzip_file(in_file, input_folder, output_folder):
         # os.unlink(input_file)
 
 
-def copy_file(in_file, input_folder, output_folder):
-    input_file = os.path.join(input_folder, in_file)
+def copy_file(in_file, output_folder):
+    input_file = os.path.basename(in_file)
     output_file = os.path.join(output_folder, in_file)
     if os.path.exists(input_file):
         if not os.path.exists(output_folder):

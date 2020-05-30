@@ -192,7 +192,8 @@ class runValidation:
             emdbID=self.__emdbid,
             siteID=self.siteID,
             outputRoot=self.__outputRoot,
-            validation_sub_directory=self.__validation_sub_folder
+            validation_sub_directory=self.__validation_sub_folder,
+            temp_output_folder=self.__temp_output_dir
         )
         self.__entry_output_folder = of.get_entry_output_folder()
         logger.info("output folder: %s", self.__entry_output_folder)
@@ -383,12 +384,12 @@ class runValidation:
                                 shutil.copy(in_file, em_in_file)
                     if self.__skip_gzip:
                         for f in emdb_output_file_dict.values():
-                            copy_file(in_file=f, input_folder=self.__temp_output_dir,
+                            copy_file(in_file=f,
                                       output_folder=self.__entry_output_folder)
 
                     else:
                         for f in emdb_output_file_dict.values():
-                            gzip_file(in_file=f, input_folder=self.__temp_output_dir,
+                            gzip_file(in_file=f,
                                       output_folder=self.__entry_output_folder)
                 else:
                     logger.error("EMDB output folder %s does not exist", __emdb_output_folder)
@@ -401,14 +402,14 @@ class runValidation:
         """Compresses list of files"""
         logger.debug('gzip files: {}'.format(filelist))
         for f in filelist:
-            gzip_file(in_file=f, input_folder=input_folder, output_folder=output_folder)
+            gzip_file(in_file=f, output_folder=output_folder)
 
     @staticmethod
     def __copy_output(filelist, input_folder, output_folder):
         """Compresses list of files"""
         logger.debug('copy files: {}'.format(filelist))
         for f in filelist:
-            copy_file(in_file=f, input_folder=input_folder, output_folder=output_folder)
+            copy_file(in_file=f, output_folder=output_folder)
 
     def convert_cs_file(self):
         """convert star format CS file to CIF format for the validator"""

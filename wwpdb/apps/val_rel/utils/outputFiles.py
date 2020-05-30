@@ -18,12 +18,14 @@ class outputFiles:
             siteID=getSiteId(),
             skip_pdb_hash=False,
             validation_sub_directory="current",
+            temp_output_folder=None
     ):
         self._pdbID = pdbID
         self._emdbID = emdbID
         self._siteID = siteID
         self._output_root = outputRoot
         self._validation_sub_directory = validation_sub_directory
+        self._temp_output_folder = temp_output_folder
         self._entryID = None
         self.skip_pdb_hash = skip_pdb_hash
         self.entry_output_folder = self.get_entry_output_folder()
@@ -112,8 +114,9 @@ class outputFiles:
         return self.accession
 
     def add_output_folder_accession(self, filename):
-        return filename
-        # return os.path.join(self.entry_output_folder, filename)
+        if self._temp_output_folder:
+            return os.path.join(self._temp_output_folder, filename)
+        return os.path.join(self.entry_output_folder, filename)
 
     def get_validation_xml(self):
         return self.add_output_folder_accession(

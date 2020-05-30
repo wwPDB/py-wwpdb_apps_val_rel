@@ -80,17 +80,14 @@ class ValidationRun(object):
             vw.expLog(logPath)
 
         output_file_list = []
-        output_file_and_folder_list = []
         # Keys needs to be in order of arguments - and must have something
         for key in ["pdf", "xml", "full_pdf", "png", "svg", "fofc", "2fofc"]:
-            output_file_and_folder_list.append(os.path.join(entry_output_folder, output_file_dict.get(key)) if output_file_dict.get(key, None) else None)
             output_file_list.append(output_file_dict.get(key, None))
 
-        logger.info(output_file_and_folder_list)
         logger.info(output_file_list)
         logger.info(output_file_dict)
 
-        ok = vw.expList(dstPathList=output_file_and_folder_list)
+        ok = vw.expList(dstPathList=output_file_list)
         if not ok:
             logger.error('failed to copy files from {} to {}'.format(run_dir, entry_output_folder))
 
