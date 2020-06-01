@@ -1,6 +1,6 @@
+import logging
 import os
 import sys
-import logging
 
 from wwpdb.utils.dp.ValidationWrapper import ValidationWrapper
 
@@ -41,16 +41,14 @@ class ValidationRun(object):
         logger.info("FSC: %s", fscPath)
         logger.info("entry_id: %s", entry_id)
         logger.info("pdb_id: %s", pdbid)
-        logger.info("emdb_id: %s",emdbid)
-
+        logger.info("emdb_id: %s", emdbid)
 
         vw = ValidationWrapper(
-            tmpPath= tempDir,
+            tmpPath=tempDir,
             siteId=self.__siteid,
             verbose=False,
             log=sys.stderr,
         )
-
 
         vw.imp(model)
         vw.addInput(name="run_dir", value=run_dir)
@@ -99,4 +97,3 @@ class ValidationRun(object):
         # vw.cleanup()
 
         return output_file_list
-        

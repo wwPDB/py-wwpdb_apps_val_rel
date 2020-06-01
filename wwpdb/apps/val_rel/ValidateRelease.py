@@ -8,7 +8,7 @@ import tempfile
 from wwpdb.apps.validation.src.utils.minimal_map_cif import GenerateMinimalCif
 from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
 
-from wwpdb.apps.val_rel.utils.Files import gzip_file, remove_files
+from wwpdb.apps.val_rel.utils.Files import gzip_file, remove_files, copy_file
 from wwpdb.apps.val_rel.utils.ValDataStore import ValDataStore
 from wwpdb.apps.val_rel.utils.ValidationRun import ValidationRun
 from wwpdb.apps.val_rel.utils.XmlInfo import XmlInfo
@@ -89,6 +89,7 @@ class runValidation:
         self.__sessionPath = None
         # self.contour_level = None # not needed as its in the xml
         self.__entry_output_folder = None
+        self.__temp_output_dir = None
         self.__validation_sub_folder = 'current'
         self.__pdb_output_folder = None
         self.__emdb_output_folder = None
@@ -144,6 +145,7 @@ class runValidation:
     @staticmethod
     def exptl_is_em(exp_methods):
         if "ELECTRON MICROSCOPY" in exp_methods or 'ELECTRON CRYSTALLOGRAPHY' in exp_methods:
+            logger.info('is EM')
             return True
         return False
 
@@ -191,7 +193,8 @@ class runValidation:
             emdbID=self.__emdbid,
             siteID=self.siteID,
             outputRoot=self.__outputRoot,
-            validation_sub_directory=self.__validation_sub_folder
+            validation_sub_directory=self.__validation_sub_folder,
+            temp_output_folder=self.__temp_output_dir
         )
         self.__entry_output_folder = of.get_entry_output_folder()
         logger.info("output folder: %s", self.__entry_output_folder)
@@ -241,6 +244,7 @@ class runValidation:
         if not ret:
             return False
 
+        self.__temp_output_dir = None
         self.set_output_dir_and_files()  # To get statefolder and prepare for removal
         if self.__remove_validation_files:
             self.remove_existing_files()
@@ -258,10 +262,17 @@ class runValidation:
 
         # worked = False
         self.__sessionPath = self.__cI.get("SITE_WEB_APPS_SESSIONS_PATH")
+        if not os.path.exists(self.__sessionPath):
+            os.makedirs(self.__sessionPath)
         self.__tempDir = tempfile.mkdtemp(
             dir=self.__sessionPath,
             prefix="{}_validation_release_temp_".format(self.__entry_id),
         )
+        self.__temp_output_dir = tempfile.mkdtemp(
+            dir=self.__sessionPath,
+            prefix="%s_validation_release_temp_output_dir_" % self.__entry_id
+        )
+        self.set_output_dir_and_files()
 
         all_worked = []
         run_pdb = []
@@ -336,6 +347,7 @@ class runValidation:
 
     def remove_existing_files(self):
         """Removes existing validation files"""
+        self.set_output_dir_and_files()
         remove_files(list(self.__output_file_dict.values()))
         if self.__emdbid:
             em_of = outputFiles(
@@ -345,57 +357,65 @@ class runValidation:
                 outputRoot=self.__outputRoot,
                 validation_sub_directory=self.__validation_sub_folder
             )
-            # make emdb output folder if it doesn't exist
-            emdb_output_folder = em_of.get_emdb_output_folder()
-            if emdb_output_folder != self.__entry_output_folder:
-                if not os.path.exists(emdb_output_folder):
-                    os.makedirs(emdb_output_folder)
             em_of.set_accession_variables(with_emdb=True)
             emdb_output_file_dict = em_of.get_core_validation_files()
             remove_files(emdb_output_file_dict.values())
 
     def copy_to_emdb(self, copy_to_root_emdb=False):
         if self.__emdbid:
+            temp_output_dir = tempfile.mkdtemp(
+                dir=self.__sessionPath,
+                prefix="%s_validation_release_emdb_temp_output_dir_" % self.__entry_id
+            )
             of = outputFiles(
                 pdbID=self.__pdbid,
                 emdbID=self.__emdbid,
                 siteID=self.siteID,
                 outputRoot=self.__outputRoot,
+                temp_output_folder=temp_output_dir,
                 validation_sub_directory=self.__validation_sub_folder
             )
             logger.info("EMDB ID: %s", self.__emdbid)
             __emdb_output_folder = of.get_emdb_output_folder()
             if __emdb_output_folder != self.__entry_output_folder:
-                if os.path.exists(__emdb_output_folder):
-                    logger.info("EMDB output folder: %s", __emdb_output_folder)
-                    of.set_accession_variables(
-                        with_emdb=True, copy_to_root_emdb=copy_to_root_emdb
-                    )
-                    emdb_output_file_dict = of.get_core_validation_files()
-                    logger.info("EMDB output file dict: %s", emdb_output_file_dict)
+                logger.info("EMDB output folder: %s", __emdb_output_folder)
+                of.set_accession_variables(
+                    with_emdb=True, copy_to_root_emdb=copy_to_root_emdb
+                )
+                emdb_output_file_dict = of.get_core_validation_files()
+                logger.info("EMDB output file dict: %s", emdb_output_file_dict)
 
-                    for k in self.__output_file_dict:
-                        if k in emdb_output_file_dict:
-                            in_file = self.__output_file_dict[k]
-                            if os.path.exists(in_file):
-                                shutil.copy(
-                                    self.__output_file_dict[k], emdb_output_file_dict[k]
-                                )
-                    if not self.__skip_gzip:
-                        for f in emdb_output_file_dict.values():
-                            gzip_file(f)
+                for k in self.__output_file_dict:
+                    if k in emdb_output_file_dict:
+                        in_file = self.__output_file_dict[k]
+                        em_in_file = emdb_output_file_dict[k]
+                        if os.path.exists(in_file):
+                            shutil.copy(in_file, em_in_file)
+                if self.__skip_gzip:
+                    for f in emdb_output_file_dict.values():
+                        copy_file(in_file=f,
+                                  output_folder=__emdb_output_folder)
+
                 else:
-                    logger.error("EMDB output folder %s does not exist", __emdb_output_folder)
-                    return False
+                    for f in emdb_output_file_dict.values():
+                        gzip_file(in_file=f,
+                                  output_folder=__emdb_output_folder)
 
         return True
 
     @staticmethod
-    def __gzip_output(filelist):
+    def __gzip_output(filelist, output_folder):
         """Compresses list of files"""
         logger.debug('gzip files: {}'.format(filelist))
         for f in filelist:
-            gzip_file(f)
+            gzip_file(in_file=f, output_folder=output_folder)
+
+    @staticmethod
+    def __copy_output(filelist, output_folder):
+        """Compresses list of files"""
+        logger.debug('copy files: {}'.format(filelist))
+        for f in filelist:
+            copy_file(in_file=f, output_folder=output_folder)
 
     def convert_cs_file(self):
         """convert star format CS file to CIF format for the validator"""
@@ -440,13 +460,6 @@ class runValidation:
                 self.__sds.setValidationRunning(False)
                 return True
 
-            # make output directory if it doesn't exist
-            if not os.path.exists(self.__entry_output_folder):
-                os.makedirs(self.__entry_output_folder)
-            else:
-                # Set the time on output_folder to now
-                os.utime(self.__entry_output_folder, None)
-
             logger.info("Entry output folder: %s", self.__entry_output_folder)
 
             # clearing existing reports before making new ones
@@ -457,7 +470,7 @@ class runValidation:
                 prefix="%s_validation_release_rundir_" % self.__entry_id
             )
 
-            log_path = os.path.join(self.__entry_output_folder, "validation.log")
+            log_path = os.path.join(self.__temp_output_dir, "validation.log")
 
             logger.info("input files")
             logger.info("model: %s", self.__modelPath)
@@ -484,12 +497,20 @@ class runValidation:
                 "keeplog": self.__keepLog,
                 "logpath": log_path,
                 "outfiledict": self.__output_file_dict,
-                "entry_output_folder": self.__entry_output_folder,
+                # "entry_output_folder": self.__entry_output_folder,
+                "entry_output_folder": self.__temp_output_dir,
             }
 
             vr = ValidationRun(siteId=self.__pythonSiteID, verbose=False, log=sys.stderr)
             output_file_list = vr.run(dD)
             logger.info("Returning with %s", output_file_list)
+
+            # make output directory if it doesn't exist
+            if not os.path.exists(self.__entry_output_folder):
+                os.makedirs(self.__entry_output_folder)
+            else:
+                # Set the time on output_folder to now
+                os.utime(self.__entry_output_folder, None)
 
             if self.__pdbid and self.__emdbid:
                 ok = self.copy_to_emdb()
@@ -498,8 +519,13 @@ class runValidation:
                     self.__sds.setValidationRunning(False)
                     return False
 
-            if not self.__skip_gzip:
-                self.__gzip_output(output_file_list)
+            if self.__skip_gzip:
+                self.__copy_output(filelist=output_file_list,
+                                   output_folder=self.__entry_output_folder)
+
+            else:
+                self.__gzip_output(filelist=output_file_list,
+                                   output_folder=self.__entry_output_folder)
 
             self.__sds.setValidationRunning(False)
             return True
