@@ -474,8 +474,6 @@ class runValidation:
                 prefix="%s_validation_release_rundir_" % self.__entry_id
             )
 
-
-
             log_path = os.path.join(self.__temp_output_dir, "validation.log")
 
             logger.info("input files")
