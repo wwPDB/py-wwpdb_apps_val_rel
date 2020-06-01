@@ -157,11 +157,13 @@ class runValidation:
             if not is_simple_modification(self.__modelPath):
                 modified = True
         if self.__sfPath:
-            if not already_run(self.__sfPath, self.__pdb_output_folder):
-                modified = True
+            if self.__rel_files.is_sf_current():
+                if not already_run(self.__sfPath, self.__pdb_output_folder):
+                    modified = True
         if self.__csPath:
-            if not already_run(self.__csPath, self.__pdb_output_folder):
-                modified = True
+            if self.__rel_files.is_cs_current():
+                if not already_run(self.__csPath, self.__pdb_output_folder):
+                    modified = True
         return modified
 
     def check_emdb_already_run(self):

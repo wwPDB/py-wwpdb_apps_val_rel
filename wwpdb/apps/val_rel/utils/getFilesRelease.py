@@ -17,11 +17,19 @@ class getFilesRelease:
         self.__rf = ReleaseFileNames()
         self.__lf = LocalFTPPathInfo()
         self.__local_ftp_emdb_path = self.__lf.get_ftp_emdb()
+        self.sf_current = False
+        self.cs_current = False
+        self.mr_current = False
 
     def _get_onedep_pdb_folder_paths(self):
         ret_list = [
             self.__rp.get_added_path(),
             self.__rp.get_modified_path(),
+        ]
+        return ret_list
+
+    def _get_previous_onedep_pdb_folder_paths(self):
+        ret_list = [
             self.__rp.get_previous_added_path(),
             self.__rp.get_previous_modified_path()
         ]
@@ -35,8 +43,24 @@ class getFilesRelease:
             ret_list.append(full_file_name)
         return ret_list
 
+    def _get_onedep_previous_pdb_file_paths(self, pdbid, filename):
+        ret_list = []
+        folder_list = self._get_previous_onedep_pdb_folder_paths()
+        for folder in folder_list:
+            full_file_name = os.path.join(folder, pdbid, filename)
+            ret_list.append(full_file_name)
+        return ret_list
+
     def _check_onedep_pdb_file_paths(self, pdbid, filename):
         for onedep_file in self._get_onedep_pdb_file_paths(pdbid=pdbid, filename=filename):
+            logger.debug("searching: %s", onedep_file)
+            if os.path.exists(onedep_file):
+                logging.debug("found: %s", onedep_file)
+                return onedep_file
+        return None
+
+    def _check_onedep_previous_pdb_file_paths(self, pdbid, filename):
+        for onedep_file in self._get_onedep_previous_pdb_file_paths(pdbid=pdbid, filename=filename):
             logger.debug("searching: %s", onedep_file)
             if os.path.exists(onedep_file):
                 logging.debug("found: %s", onedep_file)
@@ -48,6 +72,9 @@ class getFilesRelease:
         file_path = self._check_onedep_pdb_file_paths(pdbid=pdbid, filename=filename)
         if file_path:
             return file_path
+        file_path = self._check_onedep_previous_pdb_file_paths(pdbid=pdbid, filename=filename)
+        if file_path:
+            return file_path
         local_ftp_file_name = self.__lf.get_model_fname(accession=pdbid)
         if os.path.exists(local_ftp_file_name):
             return local_ftp_file_name
@@ -56,6 +83,10 @@ class getFilesRelease:
     def get_sf(self, pdbid):
         filename = self.__rf.get_structure_factor(pdbid, for_release=True)
         file_path = self._check_onedep_pdb_file_paths(pdbid=pdbid, filename=filename)
+        if file_path:
+            self.sf_current = True
+            return file_path
+        file_path = self._check_onedep_previous_pdb_file_paths(pdbid=pdbid, filename=filename)
         if file_path:
             return file_path
         local_ftp_file_name = self.__lf.get_structure_factors_fname(accession=pdbid)
@@ -67,6 +98,10 @@ class getFilesRelease:
         filename = self.__rf.get_chemical_shifts(pdbid, for_release=True)
         file_path = self._check_onedep_pdb_file_paths(pdbid=pdbid, filename=filename)
         if file_path:
+            self.cs_current = True
+            return file_path
+        file_path = self._check_onedep_previous_pdb_file_paths(pdbid=pdbid, filename=filename)
+        if file_path:
             return file_path
         local_ftp_file_name = self.__lf.get_chemical_shifts_fname(accession=pdbid)
         if os.path.exists(local_ftp_file_name):
@@ -76,6 +111,10 @@ class getFilesRelease:
     def get_nmr_data(self, pdbid):
         filename = self.__rf.get_nmr_data(pdbid, for_release=True)
         file_path = self._check_onedep_pdb_file_paths(pdbid=pdbid, filename=filename)
+        if file_path:
+            self.cs_current = True
+            return file_path
+        file_path = self._check_onedep_previous_pdb_file_paths(pdbid=pdbid, filename=filename)
         if file_path:
             return file_path
         local_ftp_file_name = self.__lf.get_nmr_data_fname(accession=pdbid)
@@ -124,3 +163,9 @@ class getFilesRelease:
         return self.return_emdb_path(
             filename=self.__rf.get_emdb_fsc(emdbid), subfolder="fsc", emdbid=emdbid
         )
+
+    def is_sf_current(self):
+        return self.sf_current
+
+    def is_cs_current(self):
+        return self.cs_current
