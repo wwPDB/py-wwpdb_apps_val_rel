@@ -357,11 +357,6 @@ class runValidation:
                 outputRoot=self.__outputRoot,
                 validation_sub_directory=self.__validation_sub_folder
             )
-            # make emdb output folder if it doesn't exist
-            emdb_output_folder = em_of.get_emdb_output_folder()
-            if emdb_output_folder != self.__entry_output_folder:
-                if not os.path.exists(emdb_output_folder):
-                    os.makedirs(emdb_output_folder)
             em_of.set_accession_variables(with_emdb=True)
             emdb_output_file_dict = em_of.get_core_validation_files()
             remove_files(emdb_output_file_dict.values())
