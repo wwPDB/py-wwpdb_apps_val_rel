@@ -196,7 +196,7 @@ class outputFiles:
             pdb_hash = self.get_pdb_id_hash()
         if self._output_root:
             self.entry_output_folder = os.path.join(
-                self._output_root, pdb_hash, self.get_pdb_id()
+                self._output_root, 'pdb', pdb_hash, self.get_pdb_id()
             )
         else:
             self.entry_output_folder = os.path.join(
@@ -208,7 +208,7 @@ class outputFiles:
         self.set_entry_id(self.get_emdb_id())
         if self._output_root:
             self.entry_output_folder = os.path.join(
-                self._output_root, self.get_emdb_id()
+                self._output_root, 'emd', self.get_emdb_id(), "validation"
             )
         else:
             self.entry_output_folder = os.path.join(
