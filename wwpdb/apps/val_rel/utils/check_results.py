@@ -140,41 +140,10 @@ def main():
         default=logging.INFO,
     )
     parser.add_argument("--output_root", help="root folder to output check entries", type=str)
-    parser.add_argument("--entries", help="list of entries", type=str)
-    parser.add_argument(
-        "--entry_file", help="site id to get python code from", type=str
-    )
-    parser.add_argument(
-        "--pdbids", help="entries are pdbids", action="store_true"
-    )
-    parser.add_argument(
-        "--emdbids", help="entries are emdbids", action="store_true"
-    )
-    parser.add_argument(
-        "--pdb_release", help="find PDB entries scheduled for new release", action="store_true"
-    )
-    parser.add_argument(
-        "--pdb_modified",
-        help="find PDB entries scheduled for modified release",
-        action="store_true",
-    )
-    parser.add_argument(
-        "--emdb_release",
-        help="find EMDB entries scheduled for release",
-        action="store_true",
-    )
     args = parser.parse_args()
     logger.setLevel(args.loglevel)
 
-    prepare_entries_and_check(output_folder=args.output_root,
-                              entry_file=args.entry_file,
-                              entry_list=args.entries,
-                              pdbids=args.pdbids,
-                              emdbids=args.emdbids,
-                              pdb_release=args.pdb_release,
-                              pdb_modified=args.pdb_modified,
-                              emdb_release=args.emdb_release
-                              )
+    prepare_entries_and_check(output_folder=args.output_root)
 
 
 if __name__ == '__main__':
