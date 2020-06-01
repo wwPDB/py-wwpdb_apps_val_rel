@@ -15,23 +15,21 @@ def get_gzip_name(f):
 
 def gzip_file(in_file, output_folder):
     """Compresses file in_file to in_file.gz.  Not be memory efficient as reads in file at one"""
-    input_file = os.path.basename(in_file)
-    output_file = os.path.join(output_folder, in_file)
-    if os.path.exists(input_file):
-        if not os.path.exists(output_folder):
-            os.makedirs(output_folder)
-        with open(input_file, 'r') as f_in, gzip.open(get_gzip_name(output_file), "wb") as f_out:
+    output_gzipped_file = get_gzip_name(in_file)
+    if os.path.exists(in_file):
+        with open(in_file, 'r') as f_in, gzip.open(get_gzip_name(output_gzipped_file), "wb") as f_out:
             f_out.writelines(f_in)
-        # os.unlink(input_file)
+        if os.path.exists(output_gzipped_file):
+            copy_file(in_file=output_gzipped_file, output_folder=output_folder)
 
 
 def copy_file(in_file, output_folder):
-    input_file = os.path.basename(in_file)
-    output_file = os.path.join(output_folder, in_file)
-    if os.path.exists(input_file):
+    input_filename = os.path.basename(in_file)
+    output_file = os.path.join(output_folder, input_filename)
+    if os.path.exists(in_file):
         if not os.path.exists(output_folder):
             os.makedirs(output_folder)
-        shutil.copy(input_file, output_file)
+        shutil.copy(in_file, output_file)
 
 
 def remove_files(file_list):

@@ -387,8 +387,8 @@ class runValidation:
 
                     for k in self.__output_file_dict:
                         if k in emdb_output_file_dict:
-                            in_file = os.path.join(self.__temp_output_dir, self.__output_file_dict[k])
-                            em_in_file = os.path.join(self.__temp_output_dir, emdb_output_file_dict[k])
+                            in_file = self.__output_file_dict[k]
+                            em_in_file = emdb_output_file_dict[k]
                             if os.path.exists(in_file):
                                 shutil.copy(in_file, em_in_file)
                     if self.__skip_gzip:
@@ -407,14 +407,14 @@ class runValidation:
         return True
 
     @staticmethod
-    def __gzip_output(filelist, input_folder, output_folder):
+    def __gzip_output(filelist, output_folder):
         """Compresses list of files"""
         logger.debug('gzip files: {}'.format(filelist))
         for f in filelist:
             gzip_file(in_file=f, output_folder=output_folder)
 
     @staticmethod
-    def __copy_output(filelist, input_folder, output_folder):
+    def __copy_output(filelist, output_folder):
         """Compresses list of files"""
         logger.debug('copy files: {}'.format(filelist))
         for f in filelist:
@@ -526,12 +526,10 @@ class runValidation:
 
             if self.__skip_gzip:
                 self.__copy_output(filelist=output_file_list,
-                                   input_folder=self.__temp_output_dir,
                                    output_folder=self.__entry_output_folder)
 
             else:
                 self.__gzip_output(filelist=output_file_list,
-                                   input_folder=self.__temp_output_dir,
                                    output_folder=self.__entry_output_folder)
 
             self.__sds.setValidationRunning(False)
