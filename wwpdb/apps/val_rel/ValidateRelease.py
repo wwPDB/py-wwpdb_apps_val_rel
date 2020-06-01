@@ -363,42 +363,43 @@ class runValidation:
 
     def copy_to_emdb(self, copy_to_root_emdb=False):
         if self.__emdbid:
+            temp_output_dir = tempfile.mkdtemp(
+                dir=self.__sessionPath,
+                prefix="%s_validation_release_emdb_temp_output_dir_" % self.__entry_id
+            )
             of = outputFiles(
                 pdbID=self.__pdbid,
                 emdbID=self.__emdbid,
                 siteID=self.siteID,
                 outputRoot=self.__outputRoot,
+                temp_output_folder=temp_output_dir,
                 validation_sub_directory=self.__validation_sub_folder
             )
             logger.info("EMDB ID: %s", self.__emdbid)
             __emdb_output_folder = of.get_emdb_output_folder()
             if __emdb_output_folder != self.__entry_output_folder:
-                if os.path.exists(__emdb_output_folder):
-                    logger.info("EMDB output folder: %s", __emdb_output_folder)
-                    of.set_accession_variables(
-                        with_emdb=True, copy_to_root_emdb=copy_to_root_emdb
-                    )
-                    emdb_output_file_dict = of.get_core_validation_files()
-                    logger.info("EMDB output file dict: %s", emdb_output_file_dict)
+                logger.info("EMDB output folder: %s", __emdb_output_folder)
+                of.set_accession_variables(
+                    with_emdb=True, copy_to_root_emdb=copy_to_root_emdb
+                )
+                emdb_output_file_dict = of.get_core_validation_files()
+                logger.info("EMDB output file dict: %s", emdb_output_file_dict)
 
-                    for k in self.__output_file_dict:
-                        if k in emdb_output_file_dict:
-                            in_file = self.__output_file_dict[k]
-                            em_in_file = emdb_output_file_dict[k]
-                            if os.path.exists(in_file):
-                                shutil.copy(in_file, em_in_file)
-                    if self.__skip_gzip:
-                        for f in emdb_output_file_dict.values():
-                            copy_file(in_file=f,
-                                      output_folder=self.__entry_output_folder)
+                for k in self.__output_file_dict:
+                    if k in emdb_output_file_dict:
+                        in_file = self.__output_file_dict[k]
+                        em_in_file = emdb_output_file_dict[k]
+                        if os.path.exists(in_file):
+                            shutil.copy(in_file, em_in_file)
+                if self.__skip_gzip:
+                    for f in emdb_output_file_dict.values():
+                        copy_file(in_file=f,
+                                  output_folder=__emdb_output_folder)
 
-                    else:
-                        for f in emdb_output_file_dict.values():
-                            gzip_file(in_file=f,
-                                      output_folder=self.__entry_output_folder)
                 else:
-                    logger.error("EMDB output folder %s does not exist", __emdb_output_folder)
-                    return False
+                    for f in emdb_output_file_dict.values():
+                        gzip_file(in_file=f,
+                                  output_folder=__emdb_output_folder)
 
         return True
 
