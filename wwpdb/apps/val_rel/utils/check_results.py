@@ -69,16 +69,13 @@ class CheckEntries:
         self.failed_entries = []
         self.entries_with_failed_programs = []
 
-    def get_entries(self, pdb_added=False, pdb_modified=False, emdb_release=False):
+    def get_entries(self):
         fe = FindEntries()
         pdb_entries = []
         emdb_entries = []
-        if pdb_added:
-            pdb_entries.extend(fe.get_added_pdb_entries())
-        if pdb_modified:
-            pdb_entries.extend(fe.get_modified_pdb_entries())
-        if emdb_release:
-            emdb_entries.extend(fe.get_emdb_entries())
+        pdb_entries.extend(fe.get_added_pdb_entries())
+        pdb_entries.extend(fe.get_modified_pdb_entries())
+        emdb_entries.extend(fe.get_emdb_entries())
         for pdb_entry in pdb_entries:
             self.entry_list.append((pdb_entry, 'pdb'))
         for emdb_entry in emdb_entries:
