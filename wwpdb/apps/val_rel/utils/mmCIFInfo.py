@@ -84,7 +84,9 @@ class mmCIFInfo:
                 if content_type == "associated EM volume":
                     emdb_ids.append(db_id)
         if emdb_ids:
-            return emdb_ids[0]
+            emdb_id = emdb_ids[0]
+            logger.info('found EMDB ID: {}'.format(emdb_id))
+            return emdb_id
         return None
 
     def get_em_map_contour_level(self):

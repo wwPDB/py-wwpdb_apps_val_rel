@@ -145,6 +145,7 @@ class runValidation:
     @staticmethod
     def exptl_is_em(exp_methods):
         if "ELECTRON MICROSCOPY" in exp_methods or 'ELECTRON CRYSTALLOGRAPHY' in exp_methods:
+            logger.info('is EM')
             return True
         return False
 
