@@ -2,6 +2,7 @@ import argparse
 import logging
 import json
 import os
+import shutil
 
 from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
 from wwpdb.utils.message_queue.MessagePublisher import MessagePublisher
@@ -10,6 +11,7 @@ from wwpdb.apps.val_rel.utils.getFilesRelease import getFilesRelease
 from wwpdb.apps.val_rel.utils.XmlInfo import XmlInfo
 from wwpdb.apps.val_rel.utils.mmCIFInfo import mmCIFInfo
 from wwpdb.apps.val_rel.utils.FindEntries import FindEntries
+from wwpdb.apps.val_rel.utils.outputFiles import outputFiles
 
 # Create logger -
 FORMAT = '[%(asctime)s %(levelname)s]-%(module)s.%(funcName)s: %(message)s'
@@ -18,14 +20,21 @@ logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
 
+def remove_unwanted_folders(pdb_entries):
+    pdb_val_report_dir = outputFiles().get_pdb_root_folder()
+    val_pdbids = set()
+    for pdbid in [d for d in os.listdir(pdb_val_report_dir) if os.path.isdir(d)]:
+        if pdbid not in pdb_entries:
+            full_dir = os.path.join(pdb_val_report_dir, pdbid)
+            logging.error('will remove {}'.format(full_dir))
+            # shutil.rmtree(full_dir)
 
+    
 
 def main(
     entry_list=None,
     entry_file=None,
     release=False,
-    modified=False,
-    emdb_release=False,
     siteID=getSiteId(),
     python_siteID=None,
     keep_logs=False,
@@ -34,6 +43,7 @@ def main(
     skipGzip=False,
     validation_sub_dir='current'
 ):
+    all_pdb_entries = set()
     pdb_entries = []
     emdb_entries = []
     entries = []
@@ -43,10 +53,7 @@ def main(
 
     if release:
         pdb_entries.extend(fe.get_added_pdb_entries())
-    if modified:
         pdb_entries.extend(fe.get_modified_pdb_entries())
-
-    if emdb_release:
         emdb_entries.extend(fe.get_emdb_entries())
 
     if entry_list:
@@ -66,6 +73,8 @@ def main(
             pdb_entries.append(entry)
 
     added_entries = []
+    for pdbid in pdb_entries:
+        all_pdb_entries.add(pdbid)
 
     for emdb_entry in emdb_entries:
         if emdb_entry not in added_entries:
@@ -95,6 +104,8 @@ def main(
                                         pdbid
                                     )
                                     pdb_entries.remove(pdbid)
+                                else:
+                                    all_pdb_entries.add(pdbid)
                             # what if its not? should it be added to the queue?
                         else:
                             if pdbid in pdb_entries:
@@ -135,6 +146,9 @@ def main(
                 )
             logger.info('MESSAGE {}'.format(ok))
 
+    if release:
+        remove_unwanted_folders(pdb_entries=all_pdb_entries)
+
 
 if "__main__" in __name__:
     parser = argparse.ArgumentParser()
@@ -154,17 +168,7 @@ if "__main__" in __name__:
         "--entry_file", help="file containing list of entries - one per line", type=str
     )
     parser.add_argument(
-        "--release", help="run entries scheduled for new release", action="store_true"
-    )
-    parser.add_argument(
-        "--modified",
-        help="run entries scheduled for modified release",
-        action="store_true",
-    )
-    parser.add_argument(
-        "--emdb_release",
-        help="run entries scheduled for emdb release",
-        action="store_true",
+        "--release", help="run entries scheduled for release", action="store_true"
     )
     parser.add_argument("--keep_logs", help="Keep the log files", action="store_true")
     parser.add_argument(
@@ -191,9 +195,7 @@ if "__main__" in __name__:
     main(
         entry_list=args.entry_list,
         entry_file=args.entry_file,
-        modified=args.modified,
         release=args.release,
-        emdb_release=args.emdb_release,
         siteID=args.siteID,
         python_siteID=args.python_siteID,
         keep_logs=args.keep_logs,
