@@ -170,8 +170,9 @@ class runValidation:
         if self.__always_recalculate:
             return True
         modified = False
-        if not already_run(self.__emXmlPath, self.__emdb_output_folder):
-            modified = True
+        if self.__rel_files.em_xml_current():
+            if not already_run(self.__emXmlPath, self.__emdb_output_folder):
+                modified = True
         return modified
 
     def check_modified(self):
