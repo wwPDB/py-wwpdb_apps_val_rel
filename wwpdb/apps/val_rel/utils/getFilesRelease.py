@@ -178,3 +178,6 @@ class getFilesRelease:
 
     def is_cs_current(self):
         return self.cs_current
+
+    def is_em_xml_current(self):
+        return self.em_xml_current
