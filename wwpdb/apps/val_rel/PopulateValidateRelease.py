@@ -23,11 +23,12 @@ logger.setLevel(logging.DEBUG)
 def remove_unwanted_folders(pdb_entries):
     pdb_val_report_dir = outputFiles().get_pdb_root_folder()
     val_pdbids = set()
-    for pdbid in [d for d in os.listdir(pdb_val_report_dir) if os.path.isdir(d)]:
-        if pdbid not in pdb_entries:
-            full_dir = os.path.join(pdb_val_report_dir, pdbid)
-            logging.error('will remove {}'.format(full_dir))
-            # shutil.rmtree(full_dir)
+    if os.path.exists(pdb_val_report_dir):
+        for pdbid in [d for d in os.listdir(pdb_val_report_dir) if os.path.isdir(d)]:
+            if pdbid not in pdb_entries:
+                full_dir = os.path.join(pdb_val_report_dir, pdbid)
+                logging.error('will remove {}'.format(full_dir))
+                # shutil.rmtree(full_dir)
 
     
 
