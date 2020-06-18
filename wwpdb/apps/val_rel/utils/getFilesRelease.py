@@ -20,6 +20,7 @@ class getFilesRelease:
         self.sf_current = False
         self.cs_current = False
         self.mr_current = False
+        self.em_xml_current = False
 
     def _get_onedep_pdb_folder_paths(self):
         ret_list = [
@@ -122,9 +123,11 @@ class getFilesRelease:
             return local_ftp_file_name
         return None
 
+    def get_current_emdb_search_path(self, emdbid, subfolder):
+        return self.__rp.get_emd_subfolder_path(accession=emdbid, subfolder=subfolder)
+
     def get_emdb_path_search_order(self, emdbid, subfolder):
         ret_list = [
-            self.__rp.get_emd_subfolder_path(accession=emdbid, subfolder=subfolder),
             self.__rp.get_previous_emd_subfolder_path(accession=emdbid, subfolder=subfolder),
             os.path.join(self.__local_ftp_emdb_path, emdbid, subfolder),
         ]
@@ -132,6 +135,12 @@ class getFilesRelease:
         return ret_list
 
     def return_emdb_path(self, filename, subfolder, emdbid):
+        for_release_current_path = self.get_current_emdb_search_path(emdbid=emdbid, subfolder=subfolder)
+        file_path = os.path.join(for_release_current_path, filename)
+        if os.path.exists(file_path):
+            self.em_xml_current = True
+            return file_path
+
         for path in self.get_emdb_path_search_order(emdbid=emdbid, subfolder=subfolder):
             file_path = os.path.join(path, filename)
             logging.debug(file_path)
@@ -169,3 +178,6 @@ class getFilesRelease:
 
     def is_cs_current(self):
         return self.cs_current
+
+    def is_em_xml_current(self):
+        return self.em_xml_current
