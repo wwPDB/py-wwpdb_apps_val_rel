@@ -126,8 +126,7 @@ def prepare_entries_and_check(output_folder=None, failed_entries_file=None):
 
     if failed_entries_file:
         with open(failed_entries_file, 'w') as out_file:
-            for row in ce.get_failed_entries():
-                out_file.write(row)
+            out_file.write('\n'.join(ce.get_failed_entries()))
 
 
 def main():
