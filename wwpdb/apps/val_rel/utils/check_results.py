@@ -66,7 +66,7 @@ class CheckEntries:
     def __init__(self):
         self.entry_list = []
         self.return_dictionary = {}
-        self.failed_entries = []
+        self.failed_entries = set()
         self.entries_with_failed_programs = []
 
     def get_entries(self):
@@ -98,7 +98,7 @@ class CheckEntries:
             for missing_type in missing_ret:
                 self.return_dictionary.setdefault(entry_type, {}).setdefault(missing_type, []).append(
                     missing_ret[missing_type])
-                self.failed_entries.append(entry_id)
+                self.failed_entries.add(entry_id)
             ret_failed = cr.get_failed_programs()
             if ret_failed:
                 self.entries_with_failed_programs.append(entry_id)
@@ -112,10 +112,10 @@ class CheckEntries:
         return self.entries_with_failed_programs
 
     def get_failed_entries(self):
-        return self.failed_entries
+        return list(self.failed_entries)
 
 
-def prepare_entries_and_check(output_folder=None):
+def prepare_entries_and_check(output_folder=None, failed_entries_file=None):
     ce = CheckEntries()
     ce.get_entries()
     ce.check_entries(output_folder=output_folder)
@@ -123,6 +123,10 @@ def prepare_entries_and_check(output_folder=None):
     pprint(ce.get_full_details())
     print('entries with missing output: {}'.format(','.join(ce.get_failed_entries())))
     print('entries with failed programs: {}'.format(','.join(ce.get_entries_with_failed_programs())))
+
+    if failed_entries_file:
+        with open(failed_entries_file, 'w') as out_file:
+            out_file.writelines(ce.get_failed_entries())
 
 
 def main():
@@ -140,10 +144,11 @@ def main():
         default=logging.INFO,
     )
     parser.add_argument("--output_root", help="root folder to output check entries", type=str)
+    parser.add_argument("--failed_entries_file", help="file to output failed entries", type=str)
     args = parser.parse_args()
     logger.setLevel(args.loglevel)
 
-    prepare_entries_and_check(output_folder=args.output_root)
+    prepare_entries_and_check(output_folder=args.output_root, failed_entries_file=args.failed_entries_file)
 
 
 if __name__ == '__main__':
