@@ -203,7 +203,7 @@ class runValidation:
         )
         self.__entry_output_folder = of.get_entry_output_folder()
         logger.info("output folder: %s", self.__entry_output_folder)
-        self.__entry_image_output_folder = of.get_entry_output_folder()
+        self.__entry_image_output_folder = of.get_validation_images_root_folder()
         self.__core_output_file_dict = of.get_core_validation_files()
         self.__validation_files_alternative_location = of.get_validation_files_for_separate_location()
         self.__validation_xml = of.get_validation_xml()
@@ -533,8 +533,8 @@ class runValidation:
 
             output_file_list_to_alternative_location = self.__validation_files_alternative_location.values()
 
-            logging.info('files to copy to {}: {}'.format(self.__entry_output_folder, ','.join(output_file_list)))
-            logging.info('files to copy to {}: {}'.format(self.__entry_image_output_folder,
+            logger.info('files to copy to {}: {}'.format(self.__entry_output_folder, ','.join(output_file_list)))
+            logger.info('files to copy to {}: {}'.format(self.__entry_image_output_folder,
                                                           ','.join(output_file_list_to_alternative_location)))
 
             if self.__skip_gzip:
