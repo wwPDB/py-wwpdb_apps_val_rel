@@ -41,6 +41,10 @@ class outputFiles:
             rp.getForReleasePath("val_reports"), self._validation_sub_directory
         )
 
+    def get_validation_images_root_folder(self):
+        rp = ReleasePathInfo(self._siteID)
+        return rp.getForReleasePath("val_images")
+
     def get_root_state_folder(self):
         # Place under pdb val-reports as extra director
         rp = ReleasePathInfo(self._siteID)
@@ -153,6 +157,11 @@ class outputFiles:
             self.rf.get_validation_fofc(self.accession)
         )
 
+    def get_validation_image_tar(self):
+        return self.add_output_folder_accession(
+            self.rf.get_validation_image_tar(self.accession)
+        )
+
     def get_core_validation_files(self):
         logger.debug("getting core files for: %s", self._entryID)
         logger.debug("path: %s", self.entry_output_folder)
@@ -160,12 +169,8 @@ class outputFiles:
         self.set_accession()
         logger.debug("accession set to %s", self.accession)
 
-        ret = {}
-        ret["pdf"] = self.get_validation_pdf()
-        ret["full_pdf"] = self.get_validation_full_pdf()
-        ret["xml"] = self.get_validation_xml()
-        ret["png"] = self.get_validation_png()
-        ret["svg"] = self.get_validation_svg()
+        ret = {"pdf": self.get_validation_pdf(), "full_pdf": self.get_validation_full_pdf(),
+               "xml": self.get_validation_xml(), "png": self.get_validation_png(), "svg": self.get_validation_svg()}
 
         logger.debug(ret)
 
@@ -173,20 +178,27 @@ class outputFiles:
 
     def get_extra_validation_files(self):
 
-        ret = {}
-        ret["2fofc"] = self.get_validation_2fofc()
-        ret["fofc"] = self.get_validation_fofc()
+        ret = {"2fofc": self.get_validation_2fofc(),
+               "fofc": self.get_validation_fofc(),
+               }
+
+        return ret
+
+    def get_validation_files_for_separate_location(self):
+
+        ret = {"image_tar": self.get_validation_image_tar()}
 
         return ret
 
     def get_all_validation_files(self):
-        core_file_dict = self.get_core_validation_files()
-        extra_file_dict = self.get_extra_validation_files()
-
-        all_file_dict = core_file_dict.copy()
-        all_file_dict.update(extra_file_dict)
+        all_file_dict = self.get_core_validation_files().copy()
+        all_file_dict.update(self.get_extra_validation_files())
+        all_file_dict.update(self.get_validation_files_for_separate_location())
 
         return all_file_dict
+
+    def get_pdb_validation_images_output_folder(self):
+        return os.path.join(self.get_validation_images_root_folder(), self.get_pdb_id())
 
     def get_pdb_output_folder(self):
         self.set_entry_id(self.get_pdb_id())

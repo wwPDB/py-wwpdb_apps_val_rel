@@ -93,6 +93,8 @@ class runValidation:
         self.__validation_sub_folder = 'current'
         self.__pdb_output_folder = None
         self.__emdb_output_folder = None
+        self.__entry_image_output_folder = None
+        self.__validation_files_alternative_location = None
         self.__output_file_dict = {}
         self.__core_output_file_dict = {}
         self.__validation_xml = None
@@ -201,7 +203,9 @@ class runValidation:
         )
         self.__entry_output_folder = of.get_entry_output_folder()
         logger.info("output folder: %s", self.__entry_output_folder)
+        self.__entry_image_output_folder = of.get_entry_output_folder()
         self.__core_output_file_dict = of.get_core_validation_files()
+        self.__validation_files_alternative_location = of.get_validation_files_for_separate_location()
         self.__validation_xml = of.get_validation_xml()
         self.__output_file_dict = of.get_all_validation_files()
         self.__pdb_output_folder = of.get_pdb_output_folder()
@@ -522,13 +526,24 @@ class runValidation:
                     self.__sds.setValidationRunning(False)
                     return False
 
+            output_file_list = []
+            for key in self.__output_file_dict:
+                if key not in self.__validation_files_alternative_location:
+                    output_file_list.append(self.__output_file_dict.get(key, None))
+
             if self.__skip_gzip:
                 self.__copy_output(filelist=output_file_list,
                                    output_folder=self.__entry_output_folder)
+                self.__copy_output(filelist=self.__validation_files_alternative_location.values(),
+                                   output_folder=self.__entry_image_output_folder)
 
             else:
                 self.__gzip_output(filelist=output_file_list,
                                    output_folder=self.__entry_output_folder)
+                self.__gzip_output(filelist=self.__validation_files_alternative_location.values(),
+                                   output_folder=self.__entry_image_output_folder)
+
+
 
             self.__sds.setValidationRunning(False)
             return True
