@@ -135,6 +135,9 @@ class runValidation:
     def getEntryOutputFolder(self):
         return self.__entry_output_folder
 
+    def getEntryImageOutputFolder(self):
+        return self.__entry_image_output_folder
+
     def getCoreOutputFileDict(self):
         return self.__core_output_file_dict
 
