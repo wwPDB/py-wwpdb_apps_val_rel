@@ -531,16 +531,22 @@ class runValidation:
                 if key not in self.__validation_files_alternative_location:
                     output_file_list.append(self.__output_file_dict.get(key, None))
 
+            output_file_list_to_alternative_location = self.__validation_files_alternative_location.values()
+
+            logging.info('files to copy to {}: {}'.format(self.__entry_output_folder, ','.join(output_file_list)))
+            logging.info('files to copy to {}: {}'.format(self.__entry_image_output_folder,
+                                                          ','.join(output_file_list_to_alternative_location)))
+
             if self.__skip_gzip:
                 self.__copy_output(filelist=output_file_list,
                                    output_folder=self.__entry_output_folder)
-                self.__copy_output(filelist=self.__validation_files_alternative_location.values(),
+                self.__copy_output(filelist=output_file_list_to_alternative_location,
                                    output_folder=self.__entry_image_output_folder)
 
             else:
                 self.__gzip_output(filelist=output_file_list,
                                    output_folder=self.__entry_output_folder)
-                self.__gzip_output(filelist=self.__validation_files_alternative_location.values(),
+                self.__gzip_output(filelist=output_file_list_to_alternative_location,
                                    output_folder=self.__entry_image_output_folder)
 
 
