@@ -206,7 +206,7 @@ class runValidation:
         )
         self.__entry_output_folder = of.get_entry_output_folder()
         logger.info("output folder: %s", self.__entry_output_folder)
-        self.__entry_image_output_folder = of.get_validation_images_root_folder()
+        self.__entry_image_output_folder = of.get_pdb_validation_images_output_folder()
         self.__core_output_file_dict = of.get_core_validation_files()
         self.__validation_files_alternative_location = of.get_validation_files_for_separate_location()
         self.__validation_xml = of.get_validation_xml()

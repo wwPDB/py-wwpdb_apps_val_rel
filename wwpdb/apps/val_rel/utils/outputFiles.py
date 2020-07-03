@@ -198,7 +198,10 @@ class outputFiles:
         return all_file_dict
 
     def get_pdb_validation_images_output_folder(self):
-        return os.path.join(self.get_validation_images_root_folder(), self.get_pdb_id())
+        if self._output_root:
+            return os.path.join(self._output_root, 'val_images', self.get_pdb_id())
+        else:
+            return os.path.join(self.get_validation_images_root_folder(), self.get_pdb_id())
 
     def get_pdb_output_folder(self):
         self.set_entry_id(self.get_pdb_id())
