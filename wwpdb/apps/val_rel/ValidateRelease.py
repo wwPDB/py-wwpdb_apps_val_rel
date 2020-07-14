@@ -273,24 +273,6 @@ class runValidation:
 
         self.__rel_files = getFilesRelease(siteID=self.siteID)
 
-        # worked = False
-        self.__sessionPath = self.__cI.get("SITE_WEB_APPS_SESSIONS_PATH")
-        if not os.path.exists(self.__sessionPath):
-            os.makedirs(self.__sessionPath)
-        self.__runDir = tempfile.mkdtemp(
-            dir=self.__sessionPath,
-            prefix="{}_validation_release_".format(self.__entry_id),
-        )
-        self.__tempDir = tempfile.mkdtemp(
-            dir=self.__runDir,
-            prefix="{}_validation_release_temp_dir_".format(self.__entry_id),
-        )
-        self.__temp_output_dir = tempfile.mkdtemp(
-            dir=self.__runDir,
-            prefix="%s_validation_release_output_dir_" % self.__entry_id
-        )
-        self.set_output_dir_and_files()
-
         all_worked = []
         run_pdb = []
         run_emdb = []
@@ -342,15 +324,7 @@ class runValidation:
 
         if self.__run_map_only:
             logger.info('{} make map only validation report without models'.format(self.__emdbid))
-            self.__pdbid = None
-            self.set_output_dir_and_files()
-            self.__modelPath = os.path.join(
-                self.__tempDir, "{}_minimal.cif".format(self.__emdbid)
-            )
-            logger.info('generating minimal cif: {}'.format(self.__modelPath))
-            GenerateMinimalCif(emdb_xml=self.__emXmlPath).write_out(
-                output_cif=self.__modelPath
-            )
+            self.__pdbid = None            
             # run validation
             worked = self.run_validation()
             logger.info('map only validation worked: {}'.format(worked))
@@ -461,12 +435,6 @@ class runValidation:
             if self.__pdbid:
                 self.__sfPath = self.__rel_files.get_sf(self.__pdbid)
                 self.__csPath = self.__rel_files.get_cs(self.__pdbid)
-                if self.__csPath:
-                    ok = self.convert_cs_file()
-                    if not ok:
-                        logger.error('CS star to cif conversion failed')
-                        self.__sds.setValidationRunning(False)
-                        return False
 
             # check if any input files have changed and set output folders
             is_modified = self.check_modified()
@@ -476,6 +444,31 @@ class runValidation:
 
                 self.__sds.setValidationRunning(False)
                 return True
+            
+            if self.__csPath:
+                ok = self.convert_cs_file()
+                if not ok:
+                    logger.error('CS star to cif conversion failed')
+                    self.__sds.setValidationRunning(False)
+                    return False
+
+            # worked = False
+            self.__sessionPath = self.__cI.get("SITE_WEB_APPS_SESSIONS_PATH")
+            if not os.path.exists(self.__sessionPath):
+                os.makedirs(self.__sessionPath)
+            self.__runDir = tempfile.mkdtemp(
+                dir=self.__sessionPath,
+                prefix="{}_validation_release_".format(self.__entry_id),
+            )
+            self.__tempDir = tempfile.mkdtemp(
+                dir=self.__runDir,
+                prefix="{}_validation_release_temp_dir_".format(self.__entry_id),
+            )
+            self.__temp_output_dir = tempfile.mkdtemp(
+                dir=self.__runDir,
+                prefix="%s_validation_release_output_dir_" % self.__entry_id
+            )
+            self.set_output_dir_and_files()
 
             logger.info("Entry output folder: %s", self.__entry_output_folder)
 
@@ -486,6 +479,17 @@ class runValidation:
                 dir=self.__runDir,
                 prefix="%s_validation_release_rundir_" % self.__entry_id
             )
+
+            # map only generation
+            if not self.__pdbid:
+                self.__modelPath = os.path.join(
+                    self.__tempDir, "{}_minimal.cif".format(self.__emdbid)
+                )
+                logger.info('generating minimal cif: {}'.format(self.__modelPath))
+                GenerateMinimalCif(emdb_xml=self.__emXmlPath).write_out(
+                    output_cif=self.__modelPath
+                )
+
 
             log_path = os.path.join(self.__temp_output_dir, "validation.log")
 
