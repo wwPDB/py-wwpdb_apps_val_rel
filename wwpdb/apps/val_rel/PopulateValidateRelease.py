@@ -35,13 +35,15 @@ def remove_unwanted_folders(pdb_entries):
 def main(
     entry_list=None,
     entry_file=None,
-    release=False,
+    pdb_release=False,
+    emdb_release=False,
     siteID=getSiteId(),
     python_siteID=None,
     keep_logs=False,
     output_root=None,
     always_recalculate=False,
     skipGzip=False,
+    skip_emdb=False,
     validation_sub_dir='current'
 ):
     all_pdb_entries = set()
@@ -52,9 +54,10 @@ def main(
 
     fe = FindEntries(siteID=siteID)
 
-    if release:
+    if pdb_release:
         pdb_entries.extend(fe.get_added_pdb_entries())
         pdb_entries.extend(fe.get_modified_pdb_entries())
+    if emdb_release:
         emdb_entries.extend(fe.get_emdb_entries())
 
     if entry_list:
@@ -137,6 +140,8 @@ def main(
                 message["alwaysRecalculate"] = always_recalculate
             if skipGzip:
                 message["skipGzip"] = skipGzip
+            if skip_emdb:
+                message['skip_emdb'] = skip_emdb
             logger.info('MESSAGE req %s', message)
             vc = ValConfig(siteID)
             ok = MessagePublisher().publish(
@@ -147,7 +152,7 @@ def main(
                 )
             logger.info('MESSAGE {}'.format(ok))
 
-    if release:
+    if pdb_release:
         remove_unwanted_folders(pdb_entries=all_pdb_entries)
 
 
@@ -169,7 +174,10 @@ if "__main__" in __name__:
         "--entry_file", help="file containing list of entries - one per line", type=str
     )
     parser.add_argument(
-        "--release", help="run entries scheduled for release", action="store_true"
+        "--pdb_release", help="run PDB entries scheduled for release", action="store_true"
+    )
+    parser.add_argument(
+        "--emdb_release", help="run EMDB entries scheduled for release", action="store_true"
     )
     parser.add_argument("--keep_logs", help="Keep the log files", action="store_true")
     parser.add_argument(
@@ -177,6 +185,9 @@ if "__main__" in __name__:
     )
     parser.add_argument(
         "--skipGzip", help="skip gizpping output files", action="store_true"
+    )
+    parser.add_argument(
+        "--skip_emdb", help="skip emdb validation report calculation", action="store_true"
     )
     parser.add_argument("--siteID", help="siteID", type=str, default=getSiteId())
     parser.add_argument("--python_siteID", help="siteID for the OneDep code", type=str)
@@ -196,12 +207,14 @@ if "__main__" in __name__:
     main(
         entry_list=args.entry_list,
         entry_file=args.entry_file,
-        release=args.release,
+        pdb_release=args.pdb_release,
+        emdb_release=args.emdb_release,
         siteID=args.siteID,
         python_siteID=args.python_siteID,
         keep_logs=args.keep_logs,
         always_recalculate=args.always_recalculate,
         skipGzip=args.skipGzip,
+        skip_emdb=args.skip_emdb,
         validation_sub_dir=args.validation_subdir,
         output_root=args.output_root
     )

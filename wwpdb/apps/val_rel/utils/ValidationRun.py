@@ -94,6 +94,6 @@ class ValidationRun(object):
         logger.info('validation run finished')
 
         # clean up temp folder after run
-        # vw.cleanup()
+        vw.cleanup()
 
         return output_file_list

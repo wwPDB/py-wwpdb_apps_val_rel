@@ -86,6 +86,7 @@ class runValidation:
         self.__volPath = None
         self.__fscPath = None
         self.__tempDir = None
+        self.__runDir = None
         self.__sessionPath = None
         # self.contour_level = None # not needed as its in the xml
         self.__entry_output_folder = None
@@ -100,6 +101,7 @@ class runValidation:
         self.__validation_xml = None
 
         self.__skip_gzip = False
+        self.__skip_emdb = False
         self.__always_recalculate = False
         self.__remove_validation_files = False
 
@@ -228,6 +230,7 @@ class runValidation:
             self.siteID = getSiteId()
         self.__outputRoot = message.get("outputRoot")
         self.__skip_gzip = message.get("skipGzip", False)
+        self.__skip_emdb = message.get('skip_emdb', False)
         self.__always_recalculate = message.get("alwaysRecalculate", False)
         self.__keepLog = message.get("keepLog", False)
         self.__validation_sub_folder = message.get("subfolder", 'current')
@@ -274,13 +277,17 @@ class runValidation:
         self.__sessionPath = self.__cI.get("SITE_WEB_APPS_SESSIONS_PATH")
         if not os.path.exists(self.__sessionPath):
             os.makedirs(self.__sessionPath)
-        self.__tempDir = tempfile.mkdtemp(
+        self.__runDir = tempfile.mkdtemp(
             dir=self.__sessionPath,
-            prefix="{}_validation_release_temp_".format(self.__entry_id),
+            prefix="{}_validation_release_".format(self.__entry_id),
+        )
+        self.__tempDir = tempfile.mkdtemp(
+            dir=self.__runDir,
+            prefix="{}_validation_release_temp_dir_".format(self.__entry_id),
         )
         self.__temp_output_dir = tempfile.mkdtemp(
-            dir=self.__sessionPath,
-            prefix="%s_validation_release_temp_output_dir_" % self.__entry_id
+            dir=self.__runDir,
+            prefix="%s_validation_release_output_dir_" % self.__entry_id
         )
         self.set_output_dir_and_files()
 
@@ -304,7 +311,7 @@ class runValidation:
 
             cf = mmCIFInfo(self.__modelPath)
             exp_methods = cf.get_exp_methods()
-            if self.exptl_is_em(exp_methods):
+            if self.exptl_is_em(exp_methods) and not self.__skip_emdb:
                 if not self.__emdbid:
                     self.__emdbid = cf.get_associated_emdb()
                     run_emdb.append(self.__emdbid)
@@ -476,7 +483,7 @@ class runValidation:
             self.remove_existing_files()
 
             run_dir = tempfile.mkdtemp(
-                dir=self.__sessionPath,
+                dir=self.__runDir,
                 prefix="%s_validation_release_rundir_" % self.__entry_id
             )
 
