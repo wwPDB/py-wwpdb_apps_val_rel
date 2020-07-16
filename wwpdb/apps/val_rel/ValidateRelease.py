@@ -105,7 +105,7 @@ class runValidation:
         self.__always_recalculate = False
         self.__remove_validation_files = False
 
-        self.__rel_files = None
+        self.__rel_files = getFilesRelease(siteID=self.siteID)
         self.__statefolder = None
         self.__vds = None
         self.__sds = None
@@ -148,6 +148,12 @@ class runValidation:
 
     def getEntryId(self):
         return self.__entry_id
+
+    def getModelPath(self):
+        return self.__modelPath
+
+    def getEMXMLPath(self):
+        return self.__emXmlPath
 
     @staticmethod
     def exptl_is_em(exp_methods):
@@ -239,6 +245,17 @@ class runValidation:
         self.__cI = ConfigInfo(self.siteID)
         self.__entry_output_folder = None
 
+    def set_pdb_files(self):
+        self.__modelPath = self.__rel_files.get_model(self.__pdbid)
+        self.__sfPath = self.__rel_files.get_sf(self.__pdbid)
+        self.__csPath = self.__rel_files.get_cs(self.__pdbid)
+        if not self.__csPath:
+            self.__csPath = self.__rel_files.get_nmr_data(self.__pdbid)
+
+    def set_emdb_files(self):
+        self.__emXmlPath = self.__rel_files.get_emdb_xml(self.__emdbid)
+        self.__volPath = self.__rel_files.get_emdb_volume(self.__emdbid)
+
     def set_entry_id(self):
         if self.__pdbid:
             self.__entry_id = self.__pdbid
@@ -271,25 +288,18 @@ class runValidation:
 
         logger.info("running validation for %s, %s", self.__pdbid, self.__emdbid)
 
-        self.__rel_files = getFilesRelease(siteID=self.siteID)
-
         all_worked = []
         run_pdb = []
         run_emdb = []
         run_emdb_and_pdbid = []
 
         if self.__emdbid:
-            self.__emXmlPath = self.__rel_files.get_emdb_xml(self.__emdbid)
-            self.__volPath = self.__rel_files.get_emdb_volume(self.__emdbid)
+            self.set_emdb_files()
             if self.__volPath:
                 self.__run_map_only = True
 
         if self.__pdbid:
-            self.__modelPath = self.__rel_files.get_model(self.__pdbid)
-            self.__sfPath = self.__rel_files.get_sf(self.__pdbid)
-            self.__csPath = self.__rel_files.get_cs(self.__pdbid)
-            if not self.__csPath:
-                self.__csPath = self.__rel_files.get_nmr_data(self.__pdbid)
+            self.set_pdb_files()
 
             cf = mmCIFInfo(self.__modelPath)
             exp_methods = cf.get_exp_methods()

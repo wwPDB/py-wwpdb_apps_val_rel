@@ -5,7 +5,7 @@ from pprint import pprint
 
 from wwpdb.apps.validation.src.utils.validation_xml_reader import ValidationXMLReader
 
-from wwpdb.apps.val_rel.ValidateRelease import runValidation
+from wwpdb.apps.val_rel.ValidateRelease import runValidation, is_simple_modification
 from wwpdb.apps.val_rel.utils.Files import get_gzip_name
 from wwpdb.apps.val_rel.utils.FindEntries import FindEntries
 
@@ -34,19 +34,27 @@ class CheckResult:
         self.rv.process_message(self.__message)
         self.rv.set_entry_id()
         self.rv.set_output_dir_and_files()
+        self.rv.set_pdb_files()
+        self.rv.set_emdb_files()
+        model_file = self.rv.getModelPath()
+        em_xml_file = self.rv.getEMXMLPath()
+        simple_modification = False
+        if model_file and not em_xml_file:
+            simple_modification = is_simple_modification(model_path=model_file)
         self.validation_xml = get_gzip_name(self.rv.getValidationXml())
         logging.debug('validation xml: {}'.format(self.validation_xml))
         output_file_dict = self.rv.getCoreOutputFileDict()
         logging.debug('output_file_dict')
         logging.debug(output_file_dict)
 
-        for output_file_type in output_file_dict:
-            output_file = output_file_dict[output_file_type]
-            gzipped_output_file = get_gzip_name(output_file)
-            if not os.path.exists(gzipped_output_file):
-                self.missing_files.setdefault(output_file_type, []).append({self.rv.getEntryId(): gzipped_output_file})
+        if not simple_modification:
+            for output_file_type in output_file_dict:
+                output_file = output_file_dict[output_file_type]
+                gzipped_output_file = get_gzip_name(output_file)
+                if not os.path.exists(gzipped_output_file):
+                    self.missing_files.setdefault(output_file_type, []).append({self.rv.getEntryId(): gzipped_output_file})
 
-        self.check_failed_programs()
+            self.check_failed_programs()
 
     def get_missing_files(self):
         return self.missing_files
