@@ -445,12 +445,7 @@ class runValidation:
                 self.__sds.setValidationRunning(False)
                 return True
             
-            if self.__csPath:
-                ok = self.convert_cs_file()
-                if not ok:
-                    logger.error('CS star to cif conversion failed')
-                    self.__sds.setValidationRunning(False)
-                    return False
+
 
             # worked = False
             self.__sessionPath = self.__cI.get("SITE_WEB_APPS_SESSIONS_PATH")
@@ -469,6 +464,13 @@ class runValidation:
                 prefix="%s_validation_release_output_dir_" % self.__entry_id
             )
             self.set_output_dir_and_files()
+
+            if self.__csPath:
+                ok = self.convert_cs_file()
+                if not ok:
+                    logger.error('CS star to cif conversion failed')
+                    self.__sds.setValidationRunning(False)
+                    return False
 
             logger.info("Entry output folder: %s", self.__entry_output_folder)
 
