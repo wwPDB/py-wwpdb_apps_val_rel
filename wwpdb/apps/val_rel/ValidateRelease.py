@@ -149,6 +149,12 @@ class runValidation:
     def getEntryId(self):
         return self.__entry_id
 
+    def getEMDBId(self):
+        return self.__emdbid
+
+    def getPDBId(self):
+        return self.__pdbid
+
     def getModelPath(self):
         return self.__modelPath
 

@@ -34,10 +34,16 @@ class CheckResult:
         self.rv.process_message(self.__message)
         self.rv.set_entry_id()
         self.rv.set_output_dir_and_files()
-        self.rv.set_pdb_files()
-        self.rv.set_emdb_files()
-        model_file = self.rv.getModelPath()
-        em_xml_file = self.rv.getEMXMLPath()
+
+        model_file = None
+        if self.__pdbid:
+            self.rv.set_pdb_files()
+            model_file = self.rv.getModelPath()
+        em_xml_file = None
+        if self.__emdbid:
+            self.rv.set_emdb_files()
+            em_xml_file = self.rv.getEMXMLPath()
+
         simple_modification = False
         if model_file and not em_xml_file:
             simple_modification = is_simple_modification(model_path=model_file)
