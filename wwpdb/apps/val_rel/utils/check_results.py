@@ -69,13 +69,14 @@ class CheckEntries:
         self.failed_entries = set()
         self.entries_with_failed_programs = []
 
-    def get_entries(self):
+    def get_entries(self, skip_emdb=False):
         fe = FindEntries()
         pdb_entries = []
         emdb_entries = []
         pdb_entries.extend(fe.get_added_pdb_entries())
         pdb_entries.extend(fe.get_modified_pdb_entries())
-        emdb_entries.extend(fe.get_emdb_entries())
+        if not skip_emdb:
+            emdb_entries.extend(fe.get_emdb_entries())
         for pdb_entry in pdb_entries:
             self.entry_list.append((pdb_entry, 'pdb'))
         for emdb_entry in emdb_entries:
@@ -115,9 +116,9 @@ class CheckEntries:
         return list(self.failed_entries)
 
 
-def prepare_entries_and_check(output_folder=None, failed_entries_file=None):
+def prepare_entries_and_check(output_folder=None, failed_entries_file=None, skip_emdb=False):
     ce = CheckEntries()
-    ce.get_entries()
+    ce.get_entries(skip_emdb=skip_emdb)
     ce.check_entries(output_folder=output_folder)
     print('full details of missing entries')
     pprint(ce.get_full_details())
@@ -145,10 +146,12 @@ def main():
     )
     parser.add_argument("--output_root", help="root folder to output check entries", type=str)
     parser.add_argument("--failed_entries_file", help="file to output failed entries", type=str)
+    parser.add_argument('--skip_emdb', action="store_true")
     args = parser.parse_args()
     logger.setLevel(args.loglevel)
 
-    prepare_entries_and_check(output_folder=args.output_root, failed_entries_file=args.failed_entries_file)
+    prepare_entries_and_check(output_folder=args.output_root, failed_entries_file=args.failed_entries_file,
+                              skip_emdb=args.skip_emdb)
 
 
 if __name__ == '__main__':
