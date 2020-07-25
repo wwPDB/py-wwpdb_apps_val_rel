@@ -4,6 +4,7 @@ import os
 import shutil
 import sys
 import tempfile
+from datetime import datetime
 
 from wwpdb.apps.validation.src.utils.minimal_map_cif import GenerateMinimalCif
 from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
@@ -398,31 +399,48 @@ class runValidation:
                         em_in_file = emdb_output_file_dict[k]
                         if os.path.exists(in_file):
                             shutil.copy(in_file, em_in_file)
+                files_to_copy = emdb_output_file_dict.values()
                 if self.__skip_gzip:
-                    for f in emdb_output_file_dict.values():
-                        copy_file(in_file=f,
-                                  output_folder=__emdb_output_folder)
-
+                    self.__copy_output(filelist=files_to_copy, output_folder=__emdb_output_folder)
                 else:
-                    for f in emdb_output_file_dict.values():
-                        gzip_file(in_file=f,
-                                  output_folder=__emdb_output_folder)
+                    self.__gzip_output(filelist=files_to_copy, output_folder=__emdb_output_folder)
 
         return True
 
-    @staticmethod
-    def __gzip_output(filelist, output_folder):
-        """Compresses list of files"""
-        logger.debug('gzip files: {}'.format(filelist))
-        for f in filelist:
-            gzip_file(in_file=f, output_folder=output_folder)
+    def _parseTime(self, timestr):
+        weeknum = datetime.today().strftime("%U")
+        this_year = datetime.today().strftime("%G")
+        mytime = "{}:{}:{}".format(this_year, weeknum, timestr)
+        time_t = datetime.strptime(mytime, "%Y:%U:%a:%H:%M:%S")
+        return time_t
 
-    @staticmethod
-    def __copy_output(filelist, output_folder):
+    def get_start_end_cut_off(self):
+        cut_off_times = self.__cI.get("PROJECT_VAL_REL_CUTOFF")
+        start_cut_off_time = self._parseTime(cut_off_times.get('start'))
+        end_cut_off_time = self._parseTime(cut_off_times.get('end'))
+        return start_cut_off_time, end_cut_off_time
+
+    def is_ok_to_copy(self, now=datetime.now()):
+        start_cut_off_time, end_cut_off_time = self.get_start_end_cut_off()
+        if start_cut_off_time < now < end_cut_off_time:
+            logging.error('Do Not copy files - after cut off time point')
+            return False
+        logging.info('ok to copy files')
+        return True
+
+    def __gzip_output(self, filelist, output_folder):
         """Compresses list of files"""
-        logger.debug('copy files: {}'.format(filelist))
-        for f in filelist:
-            copy_file(in_file=f, output_folder=output_folder)
+        if self.is_ok_to_copy():
+            logger.debug('gzip files: {}'.format(filelist))
+            for f in filelist:
+                gzip_file(in_file=f, output_folder=output_folder)
+
+    def __copy_output(self, filelist, output_folder):
+        """Compresses list of files"""
+        if self.is_ok_to_copy():
+            logger.debug('copy files: {}'.format(filelist))
+            for f in filelist:
+                copy_file(in_file=f, output_folder=output_folder)
 
     def convert_cs_file(self):
         """convert star format CS file to CIF format for the validator"""
