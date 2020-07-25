@@ -26,7 +26,7 @@ class TestingTimeCutoff(unittest.TestCase):
     def test_incorrect_time(self):
         weeknum = datetime.today().strftime("%U")
         this_year = datetime.today().strftime("%G")
-        timestr = 'Thr:20:00:00'
+        timestr = 'Thu:20:00:00'
         mytime = "{}:{}:{}".format(this_year, weeknum, timestr)
         time_t = datetime.strptime(mytime, "%Y:%U:%a:%H:%M:%S")
         self.assertFalse(self.rv.is_ok_to_copy(now=time_t))
