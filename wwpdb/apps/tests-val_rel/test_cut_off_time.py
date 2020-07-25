@@ -47,10 +47,10 @@ class TestingTimeCutoff(unittest.TestCase):
         time_t = datetime.strptime(mytime, "%Y:%U:%a:%H:%M:%S")
         self.assertTrue(self.rv.is_ok_to_copy(now=time_t))
 
-    def test_now(self):
-        # this test will be disabled - just for testing development
-        time_t = datetime.now()
-        self.assertTrue(self.rv.is_ok_to_copy(now=time_t))
+    # def test_now(self):
+    #    # this test will be disabled - just for testing development
+    #    time_t = datetime.now()
+    #    self.assertTrue(self.rv.is_ok_to_copy(now=time_t))
 
 if __name__ == '__main__':
     unittest.main()

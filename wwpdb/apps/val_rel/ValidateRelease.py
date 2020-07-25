@@ -430,15 +430,17 @@ class runValidation:
 
     def __gzip_output(self, filelist, output_folder):
         """Compresses list of files"""
-        logger.debug('gzip files: {}'.format(filelist))
-        for f in filelist:
-            gzip_file(in_file=f, output_folder=output_folder)
+        if self.is_ok_to_copy():
+            logger.debug('gzip files: {}'.format(filelist))
+            for f in filelist:
+                gzip_file(in_file=f, output_folder=output_folder)
 
     def __copy_output(self, filelist, output_folder):
         """Compresses list of files"""
-        logger.debug('copy files: {}'.format(filelist))
-        for f in filelist:
-            copy_file(in_file=f, output_folder=output_folder)
+        if self.is_ok_to_copy():
+            logger.debug('copy files: {}'.format(filelist))
+            for f in filelist:
+                copy_file(in_file=f, output_folder=output_folder)
 
     def convert_cs_file(self):
         """convert star format CS file to CIF format for the validator"""
