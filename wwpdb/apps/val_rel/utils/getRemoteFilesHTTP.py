@@ -1,3 +1,4 @@
+import os
 import wget
 
 
@@ -7,5 +8,6 @@ class GetRemoteFiles:
         self.output_path = output_path
 
     def get_url(self, url):
-        ret = wget.download(url, out=self.output_path)
-
+        if not os.path.exists(self.output_path):
+            os.makedirs(self.output_path)
+        return wget.download(url, out=self.output_path)
