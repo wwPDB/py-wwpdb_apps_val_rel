@@ -24,7 +24,7 @@ class OuputFolderTests(unittest.TestCase):
         self.assertTrue(self.rv.getEntryOutputFolder() == output_dir)
 
     def test_emdbid(self):
-        output_dir = os.path.join(self.output_folder, 'emdb', self.emdb)
+        output_dir = os.path.join(self.output_folder, 'emd', self.emdb, 'validation')
         self.rv.setEmdbId(self.emdb)
         self.rv.setOutputRoot(self.output_folder)
         self.rv.set_output_dir_and_files()
