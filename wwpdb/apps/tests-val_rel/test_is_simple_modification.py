@@ -2,7 +2,7 @@ import unittest
 import os
 import tempfile
 import shutil
-from wwpdb.apps.val_rel.ValidateRelease import is_simple_modification
+from wwpdb.apps.val_rel.utils.mmCIFInfo import is_simple_modification
 
 
 class mmCIFInfoTests(unittest.TestCase):
