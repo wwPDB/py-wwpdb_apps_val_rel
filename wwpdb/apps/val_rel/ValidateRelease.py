@@ -364,12 +364,16 @@ class runValidation:
 
         return True
 
-    def is_ok_to_copy(self):
+    def get_start_end_cut_off(self):
         cut_off_times = self.__cI.get("PROJECT_VAL_REL_CUTOFF")
         start_cut_off_time, end_cut_off_time = get_start_end_cut_off(cut_off_times=cut_off_times)
+        return start_cut_off_time, end_cut_off_time
+
+    def is_ok_to_copy(self, now=datetime.now()):
+        start_cut_off_time, end_cut_off_time = self.get_start_end_cut_off()
         return ok_to_copy(start_cut_off_time=start_cut_off_time,
                           end_cut_off_time=end_cut_off_time,
-                          check_time=datetime.now()
+                          check_time=now
                           )
 
     def __gzip_output(self, filelist, output_folder):
