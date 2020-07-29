@@ -1,10 +1,14 @@
+import logging
 import os
 import shutil
 import tempfile
-import unittest
 import time
+import unittest
 
 from wwpdb.apps.val_rel.utils.checkModifications import already_run
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 def touch(fname, times=None):
