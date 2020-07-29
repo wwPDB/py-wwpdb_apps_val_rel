@@ -71,6 +71,7 @@ class ModifiedFolderTests(unittest.TestCase):
         self.rv.setEmdbId(self.emdb)
         self.rv.setEmXmlPath(self.emdb_file)
         self.rv.setEmdbOutputFolder(self.emdb_output_folder)
+        time.sleep(1)
         touch(self.emdb_file)
         ret = self.rv.check_emdb_already_run()
         # expected True - modified - do run validation
@@ -91,6 +92,7 @@ class ModifiedFolderTests(unittest.TestCase):
         self.rv.setEmdbId(self.emdb)
         self.rv.setEmXmlPath(self.emdb_file)
         self.rv.setEmdbOutputFolder(self.emdb_output_folder)
+        time.sleep(1)
         touch(self.emdb_file)
         ret = self.rv.check_emdb_already_run()
         # expected True - modified - do run validation
