@@ -2,6 +2,7 @@ import os
 import shutil
 import tempfile
 import unittest
+import time
 
 from wwpdb.apps.val_rel.utils.checkModifications import already_run
 
@@ -17,6 +18,7 @@ class TestModification(unittest.TestCase):
         self.input_folder = tempfile.mkdtemp()
         self.input_file = os.path.join(self.input_folder, 'test.file')
         touch(self.input_file)
+        time.sleep(1)
         self.output_folder = tempfile.mkdtemp()
 
     def tearDown(self):
