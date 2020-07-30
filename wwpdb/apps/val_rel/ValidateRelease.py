@@ -210,15 +210,17 @@ class runValidation:
         self.__entry_output_folder = None
 
     def set_pdb_files(self):
-        self.__modelPath = self.__rel_files.get_model(self.__pdbid)
-        self.__sfPath = self.__rel_files.get_sf(self.__pdbid)
-        self.__csPath = self.__rel_files.get_cs(self.__pdbid)
+        self.__rel_files.set_pdb_id(self.__pdbid)
+        self.__modelPath = self.__rel_files.get_model()
+        self.__sfPath = self.__rel_files.get_sf()
+        self.__csPath = self.__rel_files.get_cs()
         if not self.__csPath:
-            self.__csPath = self.__rel_files.get_nmr_data(self.__pdbid)
+            self.__csPath = self.__rel_files.get_nmr_data()
 
     def set_emdb_files(self):
-        self.__emXmlPath = self.__rel_files.get_emdb_xml(self.__emdbid)
-        self.__volPath = self.__rel_files.get_emdb_volume(self.__emdbid)
+        self.__rel_files.set_emdb_id(self.__emdbid)
+        self.__emXmlPath = self.__rel_files.get_emdb_xml()
+        self.__volPath = self.__rel_files.get_emdb_volume()
 
     def set_entry_id(self):
         if self.__pdbid:
