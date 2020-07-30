@@ -290,7 +290,8 @@ class runValidation:
                         for self.__pdbid in self.__pdbids:
                             self.__pdbid = self.__pdbid.lower()
                             if self.get_emdb_pdb_string() not in run_emdb_and_pdbid:
-                                self.__modelPath = self.__rel_files.get_model(self.__pdbid)
+                                self.__rel_files.set_pdb_id(pdb_id=self.__pdbid)
+                                self.__modelPath = self.__rel_files.get_model()
                                 if self.__modelPath:
                                     # run validation
                                     worked = self.run_validation()
@@ -397,13 +398,15 @@ class runValidation:
         self.__sds.setValidationRunning(True)
         try:
             if self.__emdbid:
+                self.__rel_files.set_emdb_id(self.__emdbid)
                 if not self.__emXmlPath:
-                    self.__emXmlPath = self.__rel_files.get_emdb_xml(self.__emdbid)
-                self.__volPath = self.__rel_files.get_emdb_volume(self.__emdbid)
-                self.__fscPath = self.__rel_files.get_emdb_fsc(self.__emdbid)
+                    self.__emXmlPath = self.__rel_files.get_emdb_xml()
+                self.__volPath = self.__rel_files.get_emdb_volume()
+                self.__fscPath = self.__rel_files.get_emdb_fsc()
             if self.__pdbid:
-                self.__sfPath = self.__rel_files.get_sf(self.__pdbid)
-                self.__csPath = self.__rel_files.get_cs(self.__pdbid)
+                self.__rel_files.set_pdb_id(self.__pdbid)
+                self.__sfPath = self.__rel_files.get_sf()
+                self.__csPath = self.__rel_files.get_cs()
 
             # check if any input files have changed and set output folders
             is_modified = self.check_modified()
