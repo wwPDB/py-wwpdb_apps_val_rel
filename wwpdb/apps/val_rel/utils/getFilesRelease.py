@@ -1,10 +1,9 @@
 import logging
-import os
 
-from wwpdb.io.locator.localFTPPathInfo import LocalFTPPathInfo
 from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
 
 from wwpdb.apps.val_rel.utils.getFilesReleaseFTP_EMDB import getFilesReleaseFtpEMDB
+from wwpdb.apps.val_rel.utils.getFilesReleaseFTP_PDB import getFilesReleaseFtpPDB
 from wwpdb.apps.val_rel.utils.getFilesReleaseOneDep import getFilesReleaseOneDep
 
 logger = logging.getLogger(__name__)
@@ -19,8 +18,8 @@ class getFilesRelease:
         self.emdb_id = emdb_id
         self.__cI = ConfigInfo(self.__siteID)
         self.__release_file_from_onedep = getFilesReleaseOneDep(siteID=self.__siteID, pdb_id=pdb_id, emdb_id=emdb_id)
-        self.__local_ftp = LocalFTPPathInfo()
         self.__release_file_from_ftp_emdb = getFilesReleaseFtpEMDB(site_id=self.__siteID, emdbid=emdb_id)
+        self.__release_file_from_ftp_pdb = getFilesReleaseFtpPDB(site_id=self.__siteID, pdbid=pdb_id)
         self.model_current = False
         self.sf_current = False
         self.cs_current = False
@@ -40,18 +39,6 @@ class getFilesRelease:
                                                                 pdb_id=self.pdb_id,
                                                                 emdb_id=emdb_id)
 
-    @staticmethod
-    def check_filename(file_name):
-        """
-        check that a file name actually exists
-        :param file_name: file name
-        :return: file name if present, None if not
-        """
-        if file_name:
-            if os.path.exists(file_name):
-                return file_name
-        return None
-
     def get_model(self):
         """
         get the PDB model file - from OneDep then local FTP
@@ -60,7 +47,7 @@ class getFilesRelease:
         """
         file_name, self.model_current = self.__release_file_from_onedep.get_model()
         if not file_name:
-            file_name = self.check_filename(self.__local_ftp.get_model_fname(accession=self.pdb_id))
+            file_name = self.__release_file_from_ftp_pdb.get_model()
         return file_name
 
     def get_sf(self):
@@ -71,7 +58,7 @@ class getFilesRelease:
         """
         file_name, self.sf_current = self.__release_file_from_onedep.get_sf()
         if not file_name:
-            file_name = self.check_filename(self.__local_ftp.get_structure_factors_fname(accession=self.pdb_id))
+            file_name = self.__release_file_from_ftp_pdb.get_sf()
         return file_name
 
     def get_cs(self):
@@ -82,7 +69,7 @@ class getFilesRelease:
         """
         file_name, self.cs_current = self.__release_file_from_onedep.get_cs()
         if not file_name:
-            file_name = self.check_filename(self.__local_ftp.get_chemical_shifts_fname(accession=self.pdb_id))
+            file_name = self.__release_file_from_ftp_pdb.get_cs()
         return file_name
 
     def get_nmr_data(self):
@@ -93,7 +80,7 @@ class getFilesRelease:
         """
         file_name, self.cs_current = self.__release_file_from_onedep.get_nmr_data()
         if not file_name:
-            file_name = self.check_filename(self.__local_ftp.get_nmr_data_fname(accession=self.pdb_id))
+            file_name = self.__release_file_from_ftp_pdb.get_nmr_data()
         return file_name
 
     def get_emdb_xml(self):
