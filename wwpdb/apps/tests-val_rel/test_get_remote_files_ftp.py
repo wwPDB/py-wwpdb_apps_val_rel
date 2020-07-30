@@ -25,7 +25,8 @@ class TestRemoteFiles(unittest.TestCase):
         self.assertTrue(os.path.exists(expected_file))
 
     def test_emdb_folder(self):
-        self.gfr.get_directory(directory='pub/databases/emdb/structures/EMD-0070/header')
+        ok = self.gfr.get_directory(directory='pub/databases/emdb/structures/EMD-0070/header')
+        self.assertTrue(ok)
         ret = glob.glob(os.path.join(self.output_dir, '*'))
         self.assertEqual(len(ret), 3)
         for f in ret:
@@ -33,11 +34,28 @@ class TestRemoteFiles(unittest.TestCase):
             self.assertTrue(os.path.exists(expected_file))
 
     def test_emdb_sub_folders(self):
-        self.gfr.get_directory(
+        ok = self.gfr.get_directory(
             directory='pub/databases/emdb/structures/EMD-0070',
         )
+        self.assertTrue(ok)
         ret = glob.glob(os.path.join(self.output_dir, '*'))
         self.assertEqual(len(ret), 3)
+
+    def test_emdb_header_missing_entry(self):
+        ret = self.gfr.get_url(
+            filename='pub/databases/emdb/structures/EMD-ABCD/header/emd-ABCD-v30.xml')
+        self.assertEqual(len(ret), 0)
+        for f in ret:
+            expected_file = os.path.join(self.output_dir, f)
+            self.assertFalse(os.path.exists(expected_file))
+
+    def test_emdb_missing_directory(self):
+        ok = self.gfr.get_directory(
+            directory='pub/databases/emdb/structures/EMD-ABCD',
+        )
+        self.assertFalse(ok)
+        ret = glob.glob(os.path.join(self.output_dir, '*'))
+        self.assertEqual(len(ret), 0)
 
 
 if __name__ == '__main__':

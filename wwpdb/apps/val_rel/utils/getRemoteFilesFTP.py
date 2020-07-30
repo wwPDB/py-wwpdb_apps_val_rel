@@ -1,5 +1,8 @@
 import ftplib
+import logging
 import os
+
+logger = logging.getLogger(__name__)
 
 
 class GetRemoteFiles:
@@ -37,9 +40,21 @@ class GetRemoteFiles:
             return True
         return False
 
-    def get_url(self, directory=None, filename=None):
+    def change_ftp_directory(self, directory):
         if directory:
-            self.ftp.cwd(directory)
+            try:
+                self.ftp.cwd(directory)
+                return True
+            except Exception as e:
+                logger.error(e)
+        return False
+
+    def get_url(self, directory=None, filename=None):
+        ret_files = []
+        if directory:
+            ok = self.change_ftp_directory(directory)
+            if not ok:
+                return []
         if filename:
             files = [filename]
         else:
@@ -47,18 +62,23 @@ class GetRemoteFiles:
         for filename in files:
             if self.is_file(filename):
                 self.get_file(filename)
-        return files
+                ret_files.append(filename)
+        return ret_files
 
     def get_directory(self, directory):
-        self.ftp.cwd(directory)
+        ok = self.change_ftp_directory(directory)
+        if not ok:
+            return False
         objects = self.ftp.nlst()
-        print(objects)
-        for obj in objects:
-            if self.is_file(obj):
-                self.get_file(obj)
-            else:
-                print('not a file: {}'.format(obj))
-                self.setup_output_directory(obj)
-                self.get_directory(obj)
-                self.ftp.cwd('..')
-                self.output_path = os.path.join(self.output_path, '..')
+        if objects:
+            for obj in objects:
+                if self.is_file(obj):
+                    self.get_file(obj)
+                else:
+                    print('not a file: {}'.format(obj))
+                    self.setup_output_directory(obj)
+                    self.get_directory(obj)
+                    self.ftp.cwd('..')
+                    self.output_path = os.path.join(self.output_path, '..')
+            return True
+        return False
