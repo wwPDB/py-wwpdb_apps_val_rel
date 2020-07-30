@@ -411,8 +411,8 @@ class runValidation:
             # check if any input files have changed and set output folders
             is_modified = self.check_modified()
             if not is_modified:
-                logger.info("skipping %s/%s as entry files have not changed",
-                            self.__pdbid, self.__emdbid)
+                logger.info("skipping {}/{} as entry files have not changed".format(
+                            self.__pdbid, self.__emdbid))
 
                 self.__sds.setValidationRunning(False)
                 return True
