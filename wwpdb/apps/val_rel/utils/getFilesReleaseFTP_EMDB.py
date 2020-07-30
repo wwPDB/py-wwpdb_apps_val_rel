@@ -19,8 +19,11 @@ class getFilesReleaseFtpEMDB:
         self.__local_ftp = LocalFTPPathInfo()
         self.__local_ftp_emdb_path = local_ftp_emdb_path if local_ftp_emdb_path else self.__local_ftp.get_ftp_emdb()
         self.__temp_local_ftp = None
-        self.server = 'ftp.ebi.ac.uk'
-        self.url_prefix = 'pub/databases/emdb/structures'
+        self.server = self.__cI.get('SITE_FTP_SERVER')
+        site_url_prefix = self.__cI.get('SITE_FTP_SERVER_PREFIX')
+        l_ftp = LocalFTPPathInfo()
+        l_ftp.set_ftp_emdb_root(site_url_prefix)
+        self.url_prefix = l_ftp.get_ftp_emdb()
         self.emdb_id = emdbid
 
     def get_emdb_subfolder(self, sub_folder):
