@@ -5,9 +5,10 @@ from pprint import pprint
 
 from wwpdb.apps.validation.src.utils.validation_xml_reader import ValidationXMLReader
 
-from wwpdb.apps.val_rel.ValidateRelease import runValidation, is_simple_modification
+from wwpdb.apps.val_rel.ValidateRelease import runValidation
 from wwpdb.apps.val_rel.utils.Files import get_gzip_name
 from wwpdb.apps.val_rel.utils.FindEntries import FindEntries
+from wwpdb.apps.val_rel.utils.mmCIFInfo import is_simple_modification
 
 logger = logging.getLogger(__name__)
 
