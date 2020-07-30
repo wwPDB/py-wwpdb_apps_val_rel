@@ -27,14 +27,17 @@ class outputFiles:
         self._temp_output_folder = temp_output_folder
         self._entryID = None
         self.skip_pdb_hash = skip_pdb_hash
-        self.pdb_output_folder = self.get_pdb_output_folder()
-        self.emdb_output_folder = self.get_emdb_output_folder()
-        self.entry_output_folder = self.get_entry_output_folder()
+        self.pdb_output_folder = None
+        self.emdb_output_folder = None
+        self.entry_output_folder = None
         self.with_emdb = False
         self.copy_to_root_emdb = False
         self.accession = ""
         self.rf = ReleaseFileNames()
         self.rp = ReleasePathInfo(self._siteID)
+        self.get_pdb_output_folder()
+        self.get_emdb_output_folder()
+        self.get_entry_output_folder()
 
     def get_pdb_root_folder(self):
         rp = ReleasePathInfo(self._siteID)
