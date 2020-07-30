@@ -1,16 +1,16 @@
 import argparse
-import logging
 import json
+import logging
 import os
-import shutil
 
-from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
+from wwpdb.utils.config.ConfigInfo import getSiteId
 from wwpdb.utils.message_queue.MessagePublisher import MessagePublisher
+
 from wwpdb.apps.val_rel.config.ValConfig import ValConfig
-from wwpdb.apps.val_rel.utils.getFilesRelease import getFilesRelease
-from wwpdb.apps.val_rel.utils.XmlInfo import XmlInfo
-from wwpdb.apps.val_rel.utils.mmCIFInfo import mmCIFInfo
 from wwpdb.apps.val_rel.utils.FindEntries import FindEntries
+from wwpdb.apps.val_rel.utils.XmlInfo import XmlInfo
+from wwpdb.apps.val_rel.utils.getFilesRelease import getFilesRelease
+from wwpdb.apps.val_rel.utils.mmCIFInfo import mmCIFInfo
 from wwpdb.apps.val_rel.utils.outputFiles import outputFiles
 
 # Create logger -
@@ -30,21 +30,20 @@ def remove_unwanted_folders(pdb_entries):
                 logging.error('will remove {}'.format(full_dir))
                 # shutil.rmtree(full_dir)
 
-    
 
 def main(
-    entry_list=None,
-    entry_file=None,
-    pdb_release=False,
-    emdb_release=False,
-    siteID=getSiteId(),
-    python_siteID=None,
-    keep_logs=False,
-    output_root=None,
-    always_recalculate=False,
-    skipGzip=False,
-    skip_emdb=False,
-    validation_sub_dir='current'
+        entry_list=None,
+        entry_file=None,
+        pdb_release=False,
+        emdb_release=False,
+        siteID=getSiteId(),
+        python_siteID=None,
+        keep_logs=False,
+        output_root=None,
+        always_recalculate=False,
+        skipGzip=False,
+        skip_emdb=False,
+        validation_sub_dir='current'
 ):
     all_pdb_entries = set()
     pdb_entries = []
@@ -84,10 +83,10 @@ def main(
         if emdb_entry not in added_entries:
             # stop duplication of making EM validation reports twice
             logger.debug(emdb_entry)
-            re = getFilesRelease(siteID=siteID)
-            em_xml = re.get_emdb_xml(emdb_entry)
+            re = getFilesRelease(siteID=siteID, emdb_id=emdb_entry, pdb_id=None)
+            em_xml = re.get_emdb_xml()
 
-            em_vol = re.get_emdb_volume(emdb_entry)
+            em_vol = re.get_emdb_volume()
             if em_vol:
                 logger.debug('using XML: %s', em_xml)
                 pdbids = XmlInfo(em_xml).get_pdbids_from_xml()
@@ -97,7 +96,8 @@ def main(
                     )
                     for pdbid in pdbids:
                         pdbid = pdbid.lower()
-                        pdb_file = re.get_model(pdbid)
+                        re.set_pdb_id(pdb_id=pdbid)
+                        pdb_file = re.get_model()
                         if pdb_file:
                             cf = mmCIFInfo(pdb_file)
                             associated_emdb = cf.get_associated_emdb()
@@ -128,7 +128,7 @@ def main(
 
     if messages:
         for message in messages:
-            
+
             message["siteID"] = siteID
             message["keepLog"] = keep_logs
             message['subfolder'] = validation_sub_dir
@@ -149,7 +149,7 @@ def main(
                 exchangeName=vc.exchange,
                 queueName=vc.queue_name,
                 routingKey=vc.routing_key,
-                )
+            )
             logger.info('MESSAGE {}'.format(ok))
 
     if pdb_release:

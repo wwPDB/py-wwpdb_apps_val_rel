@@ -75,7 +75,7 @@ class GetRemoteFiles:
                 if self.is_file(obj):
                     self.get_file(obj)
                 else:
-                    print('not a file: {}'.format(obj))
+                    logging.debug('not a file: {}'.format(obj))
                     self.setup_output_directory(obj)
                     self.get_directory(obj)
                     self.ftp.cwd('..')
