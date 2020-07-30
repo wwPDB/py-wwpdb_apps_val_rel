@@ -21,7 +21,7 @@ class getFilesReleaseFtpPDB:
         self.server = self.__cI.get('SITE_FTP_SERVER')
         site_url_prefix = self.__cI.get('SITE_FTP_SERVER_PREFIX')
         self.__remote_ftp = LocalFTPPathInfo()
-        self.__remote_ftp.set_ftp_emdb_root(site_url_prefix)
+        self.__remote_ftp.set_ftp_pdb_root(site_url_prefix)
         self.url_prefix = self.__remote_ftp.get_ftp_pdb()
         self.pdb_id = pdbid
         self.__local_ftp_path = None
@@ -75,7 +75,6 @@ class getFilesReleaseFtpPDB:
         url_directory = os.path.join(self.url_prefix, file_path)
         grf = GetRemoteFiles(server=self.server, output_path=self.get_temp_local_ftp_path())
         ret = grf.get_url(directory=url_directory, filename=filename)
-        print(ret)
         if ret:
             return True
         return False
