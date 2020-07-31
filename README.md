@@ -30,8 +30,7 @@ Entries are found by a script which searches the for_release folder
 
     python -m wwpdb.apps.val_rel.PopulateValidateRelease
     usage options are
-        --release - find PDB entries in the for_release/added folder  
-        --modified - find PDB entries in the for_release/modified folder
+        --pdb_release - find PDB entries in the for_release/{added/modified} folders  
         --emdb_release - find EMDB entries in the for_release/emd folder
         --skip_emdb - if only PDB entry reports with no visual analysis is required.
 
