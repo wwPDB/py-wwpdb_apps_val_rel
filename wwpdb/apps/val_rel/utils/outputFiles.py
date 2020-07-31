@@ -1,10 +1,9 @@
 import logging
 import os
 
-from wwpdb.utils.config.ConfigInfo import getSiteId
-
 from wwpdb.io.locator.ReleaseFileNames import ReleaseFileNames
 from wwpdb.io.locator.ReleasePathInfo import ReleasePathInfo
+from wwpdb.utils.config.ConfigInfo import getSiteId
 
 logger = logging.getLogger(__name__)
 
@@ -28,12 +27,17 @@ class outputFiles:
         self._temp_output_folder = temp_output_folder
         self._entryID = None
         self.skip_pdb_hash = skip_pdb_hash
-        self.entry_output_folder = self.get_entry_output_folder()
+        self.pdb_output_folder = None
+        self.emdb_output_folder = None
+        self.entry_output_folder = None
         self.with_emdb = False
         self.copy_to_root_emdb = False
         self.accession = ""
         self.rf = ReleaseFileNames()
         self.rp = ReleasePathInfo(self._siteID)
+        self.get_pdb_output_folder()
+        self.get_emdb_output_folder()
+        self.get_entry_output_folder()
 
     def get_pdb_root_folder(self):
         rp = ReleasePathInfo(self._siteID)
@@ -204,37 +208,46 @@ class outputFiles:
             return os.path.join(self.get_validation_images_root_folder(), self.get_pdb_id())
 
     def get_pdb_output_folder(self):
-        self.set_entry_id(self.get_pdb_id())
-        if self.skip_pdb_hash:
-            pdb_hash = ""
-        else:
-            pdb_hash = self.get_pdb_id_hash()
-        if self._output_root:
-            self.entry_output_folder = os.path.join(
-                self._output_root, 'pdb', pdb_hash, self.get_pdb_id()
-            )
-        else:
-            self.entry_output_folder = os.path.join(
-                self.get_pdb_root_folder(), self.get_pdb_id()
-            )
-        return self.entry_output_folder
+        """
+        Gets the PDB output folder
+        :return: PDB output folder
+        """
+        if self.get_pdb_id():
+            self.set_entry_id(self.get_pdb_id())
+            if self.skip_pdb_hash:
+                pdb_hash = ""
+            else:
+                pdb_hash = self.get_pdb_id_hash()
+            if self._output_root:
+                self.pdb_output_folder = os.path.join(
+                    self._output_root, 'pdb', pdb_hash, self.get_pdb_id()
+                )
+            else:
+                self.pdb_output_folder = os.path.join(
+                    self.get_pdb_root_folder(), self.get_pdb_id()
+                )
+        return self.pdb_output_folder
 
     def get_emdb_output_folder(self):
-        self.set_entry_id(self.get_emdb_id())
-        if self._output_root:
-            self.entry_output_folder = os.path.join(
-                self._output_root, 'emd', self.get_emdb_id(), "validation"
-            )
-        else:
-            self.entry_output_folder = os.path.join(
-                self.get_emdb_root_folder(), self.get_emdb_id(), "validation"
-            )
-        return self.entry_output_folder
+        """
+        gets the EMDB output folder
+        :return: EMDB output folder
+        """
+        if self.get_emdb_id():
+            self.set_entry_id(self.get_emdb_id())
+            if self._output_root:
+                self.emdb_output_folder = os.path.join(
+                    self._output_root, 'emd', self.get_emdb_id(), "validation"
+                )
+            else:
+                self.emdb_output_folder = os.path.join(
+                    self.get_emdb_root_folder(), self.get_emdb_id(), "validation"
+                )
+        return self.emdb_output_folder
 
     def get_entry_output_folder(self):
-
         if self.get_pdb_id():
-            return self.get_pdb_output_folder()
+            self.entry_output_folder = self.get_pdb_output_folder()
         elif self.get_emdb_id():
-            return self.get_emdb_output_folder()
-        return ""
+            self.entry_output_folder = self.get_emdb_output_folder()
+        return self.entry_output_folder

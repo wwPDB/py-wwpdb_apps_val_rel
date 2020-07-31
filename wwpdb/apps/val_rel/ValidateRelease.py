@@ -7,63 +7,21 @@ import tempfile
 from datetime import datetime
 
 from wwpdb.apps.validation.src.utils.minimal_map_cif import GenerateMinimalCif
-from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
+from wwpdb.utils.config.ConfigInfo import getSiteId
 
+from wwpdb.apps.val_rel.config.ValConfig import ValConfig
+from wwpdb.apps.val_rel.utils.CutOffUtils import ok_to_copy, get_start_end_cut_off
 from wwpdb.apps.val_rel.utils.Files import gzip_file, remove_files, copy_file
 from wwpdb.apps.val_rel.utils.ValDataStore import ValDataStore
 from wwpdb.apps.val_rel.utils.ValidationRun import ValidationRun
 from wwpdb.apps.val_rel.utils.XmlInfo import XmlInfo
-from wwpdb.apps.val_rel.utils.fileConversion import convert_star_to_cif
+from wwpdb.apps.val_rel.utils.checkModifications import already_run
+from wwpdb.apps.val_rel.utils.fileConversion import convert_cs_file
 from wwpdb.apps.val_rel.utils.getFilesRelease import getFilesRelease
-from wwpdb.apps.val_rel.utils.mmCIFInfo import mmCIFInfo
+from wwpdb.apps.val_rel.utils.mmCIFInfo import mmCIFInfo, is_simple_modification
 from wwpdb.apps.val_rel.utils.outputFiles import outputFiles
 
 logger = logging.getLogger(__name__)
-
-
-def is_simple_modification(model_path):
-    """if there are only simple changes based the audit - skip calculation of validation report
-    (currently, citation, citation_author and pdbx_audit_support)
-
-    returns True is only simple changes present
-    """
-
-    SKIP_LIST = ['citation', 'citation_author', 'pdbx_audit_support']
-
-    cf = mmCIFInfo(model_path)
-    modified_cats = cf.get_latest_modified_categories()
-    if modified_cats:
-        for item in modified_cats:
-            if item not in SKIP_LIST:
-                return False
-
-        logger.info('%s only a simple modification: %s', model_path, ','.join(modified_cats))
-        return True
-    return False
-
-
-def already_run(test_file, output_folder):
-    logging.info('checking for {}'.format(test_file))
-    if test_file:
-        if os.path.exists(test_file):
-            if os.path.exists(output_folder):
-                input_modification_time = os.path.getmtime(test_file)
-                output_modification_time = os.path.getmtime(output_folder)
-                if input_modification_time < output_modification_time:
-                    logger.info("already run validation")
-                    return True
-                else:
-                    logger.info("validation to be run")
-                    return False
-            else:
-                logger.info("validation to be run")
-                return False
-        else:
-            logger.info("missing input file - not running")
-            return True
-    else:
-        logger.info("missing input file - not running")
-        return True
 
 
 class runValidation:
@@ -74,11 +32,11 @@ class runValidation:
         self.__run_map_only = False
         self.__emdbids = []
         self.__pdbids = []
-        self.__cI = None
         self.__pythonSiteID = None
         self.siteID = None
         # self.__da_internal = None
         self.__outputRoot = None
+        self.__alternativeOutputFolder = False
         self.__entry_id = None
         self.__modelPath = None
         self.__csPath = None
@@ -249,19 +207,22 @@ class runValidation:
         self.__validation_sub_folder = message.get("subfolder", 'current')
         self.__remove_validation_files = message.get('removeValFiles', False)
         self.__pythonSiteID = message.get("python_site_id", self.siteID)
-        self.__cI = ConfigInfo(self.siteID)
         self.__entry_output_folder = None
+        if self.__outputRoot:
+            self.__alternativeOutputFolder = True
 
     def set_pdb_files(self):
-        self.__modelPath = self.__rel_files.get_model(self.__pdbid)
-        self.__sfPath = self.__rel_files.get_sf(self.__pdbid)
-        self.__csPath = self.__rel_files.get_cs(self.__pdbid)
+        self.__rel_files.set_pdb_id(self.__pdbid)
+        self.__modelPath = self.__rel_files.get_model()
+        self.__sfPath = self.__rel_files.get_sf()
+        self.__csPath = self.__rel_files.get_cs()
         if not self.__csPath:
-            self.__csPath = self.__rel_files.get_nmr_data(self.__pdbid)
+            self.__csPath = self.__rel_files.get_nmr_data()
 
     def set_emdb_files(self):
-        self.__emXmlPath = self.__rel_files.get_emdb_xml(self.__emdbid)
-        self.__volPath = self.__rel_files.get_emdb_volume(self.__emdbid)
+        self.__rel_files.set_emdb_id(self.__emdbid)
+        self.__emXmlPath = self.__rel_files.get_emdb_xml()
+        self.__volPath = self.__rel_files.get_emdb_volume()
 
     def set_entry_id(self):
         if self.__pdbid:
@@ -331,7 +292,8 @@ class runValidation:
                         for self.__pdbid in self.__pdbids:
                             self.__pdbid = self.__pdbid.lower()
                             if self.get_emdb_pdb_string() not in run_emdb_and_pdbid:
-                                self.__modelPath = self.__rel_files.get_model(self.__pdbid)
+                                self.__rel_files.set_pdb_id(pdb_id=self.__pdbid)
+                                self.__modelPath = self.__rel_files.get_model()
                                 if self.__modelPath:
                                     # run validation
                                     worked = self.run_validation()
@@ -341,7 +303,7 @@ class runValidation:
 
         if self.__run_map_only:
             logger.info('{} make map only validation report without models'.format(self.__emdbid))
-            self.__pdbid = None            
+            self.__pdbid = None
             # run validation
             worked = self.run_validation()
             logger.info('map only validation worked: {}'.format(worked))
@@ -407,26 +369,29 @@ class runValidation:
 
         return True
 
-    def _parseTime(self, timestr):
-        weeknum = datetime.today().strftime("%U")
-        this_year = datetime.today().strftime("%G")
-        mytime = "{}:{}:{}".format(this_year, weeknum, timestr)
-        time_t = datetime.strptime(mytime, "%Y:%U:%a:%H:%M:%S")
-        return time_t
-
     def get_start_end_cut_off(self):
-        cut_off_times = self.__cI.get("PROJECT_VAL_REL_CUTOFF")
-        start_cut_off_time = self._parseTime(cut_off_times.get('start'))
-        end_cut_off_time = self._parseTime(cut_off_times.get('end'))
+        """
+        Get start and end times from OneDep configuration and parse the values
+        :return: start and end cut off times for this week
+        """
+        cut_off_times = ValConfig(self.siteID).val_cut_off
+        start_cut_off_time, end_cut_off_time = get_start_end_cut_off(cut_off_times=cut_off_times)
         return start_cut_off_time, end_cut_off_time
 
     def is_ok_to_copy(self, now=datetime.now()):
+        """
+        Checks if its ok to copy the files to the Output folder.
+        If an alternative output folder has been given then its always ok to copy
+        :param now: time to check
+        :return: True if ok, False if not
+        """
+        if self.__alternativeOutputFolder:
+            return True
         start_cut_off_time, end_cut_off_time = self.get_start_end_cut_off()
-        if start_cut_off_time < now < end_cut_off_time:
-            logging.error('Do Not copy files - after cut off time point')
-            return False
-        logging.info('ok to copy files')
-        return True
+        return ok_to_copy(start_cut_off_time=start_cut_off_time,
+                          end_cut_off_time=end_cut_off_time,
+                          check_time=now
+                          )
 
     def __gzip_output(self, filelist, output_folder):
         """Compresses list of files"""
@@ -436,53 +401,43 @@ class runValidation:
                 gzip_file(in_file=f, output_folder=output_folder)
 
     def __copy_output(self, filelist, output_folder):
-        """Compresses list of files"""
+        """
+        Copy files in a list of an output folder
+        :param filelist: list of files
+        :param output_folder: folder to copy to
+        :return:
+        """
         if self.is_ok_to_copy():
             logger.debug('copy files: {}'.format(filelist))
             for f in filelist:
                 copy_file(in_file=f, output_folder=output_folder)
-
-    def convert_cs_file(self):
-        """convert star format CS file to CIF format for the validator"""
-        if self.__csPath:
-            if os.path.exists(self.__csPath):
-                temp_cif_cs_file = os.path.join(self.__tempDir, self.__pdbid + 'cs.cif')
-                ok = convert_star_to_cif(star_file=self.__csPath, cif_file=temp_cif_cs_file)
-                if ok and os.path.exists(temp_cif_cs_file):
-                    self.__csPath = temp_cif_cs_file
-                    logger.info('CS star to cif conversion worked - new cs file: {}'.format(self.__csPath))
-                    return True
-                else:
-                    logger.error('CS star to cif conversion failed')
-
-        return False
 
     def run_validation(self):
 
         self.__sds.setValidationRunning(True)
         try:
             if self.__emdbid:
+                self.__rel_files.set_emdb_id(self.__emdbid)
                 if not self.__emXmlPath:
-                    self.__emXmlPath = self.__rel_files.get_emdb_xml(self.__emdbid)
-                self.__volPath = self.__rel_files.get_emdb_volume(self.__emdbid)
-                self.__fscPath = self.__rel_files.get_emdb_fsc(self.__emdbid)
+                    self.__emXmlPath = self.__rel_files.get_emdb_xml()
+                self.__volPath = self.__rel_files.get_emdb_volume()
+                self.__fscPath = self.__rel_files.get_emdb_fsc()
             if self.__pdbid:
-                self.__sfPath = self.__rel_files.get_sf(self.__pdbid)
-                self.__csPath = self.__rel_files.get_cs(self.__pdbid)
+                self.__rel_files.set_pdb_id(self.__pdbid)
+                self.__sfPath = self.__rel_files.get_sf()
+                self.__csPath = self.__rel_files.get_cs()
 
             # check if any input files have changed and set output folders
             is_modified = self.check_modified()
             if not is_modified:
-                logger.info("skipping %s/%s as entry files have not changed",
-                            self.__pdbid, self.__emdbid)
+                logger.info("skipping {}/{} as entry files have not changed".format(
+                    self.__pdbid, self.__emdbid))
 
                 self.__sds.setValidationRunning(False)
                 return True
-            
-
 
             # worked = False
-            self.__sessionPath = self.__cI.get("SITE_WEB_APPS_SESSIONS_PATH")
+            self.__sessionPath = ValConfig(self.siteID).session_path
             if not os.path.exists(self.__sessionPath):
                 os.makedirs(self.__sessionPath)
             self.__runDir = tempfile.mkdtemp(
@@ -500,8 +455,8 @@ class runValidation:
             self.set_output_dir_and_files()
 
             if self.__csPath:
-                ok = self.convert_cs_file()
-                if not ok:
+                self.__csPath = convert_cs_file(cs_file=self.__csPath, working_dir=self.__tempDir)
+                if not self.__csPath:
                     logger.error('CS star to cif conversion failed')
                     self.__sds.setValidationRunning(False)
                     return False
@@ -526,7 +481,6 @@ class runValidation:
                     output_cif=self.__modelPath
                 )
 
-
             log_path = os.path.join(self.__temp_output_dir, "validation.log")
 
             logger.info("input files")
@@ -539,7 +493,7 @@ class runValidation:
             logger.info("pdb_id: %s", self.__pdbid)
             logger.info("emdb_id: %s", self.__emdbid)
 
-            dD = {
+            data_dict = {
                 "model": self.__modelPath,
                 "sf": self.__sfPath,
                 "cs": self.__csPath,
@@ -559,7 +513,7 @@ class runValidation:
             }
 
             vr = ValidationRun(siteId=self.__pythonSiteID, verbose=False, log=sys.stderr)
-            output_file_list = vr.run(dD)
+            output_file_list = vr.run(data_dict)
             logger.info("Returning with %s", output_file_list)
 
             # make output directory if it doesn't exist
@@ -585,7 +539,7 @@ class runValidation:
 
             logger.info('files to copy to {}: {}'.format(self.__entry_output_folder, ','.join(output_file_list)))
             logger.info('files to copy to {}: {}'.format(self.__entry_image_output_folder,
-                                                          ','.join(output_file_list_to_alternative_location)))
+                                                         ','.join(output_file_list_to_alternative_location)))
 
             if self.__skip_gzip:
                 self.__copy_output(filelist=output_file_list,
@@ -598,8 +552,6 @@ class runValidation:
                                    output_folder=self.__entry_output_folder)
                 self.__gzip_output(filelist=output_file_list_to_alternative_location,
                                    output_folder=self.__entry_image_output_folder)
-
-
 
             self.__sds.setValidationRunning(False)
             return True

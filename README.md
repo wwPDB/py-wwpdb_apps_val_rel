@@ -22,8 +22,7 @@ Entries are found by a script which searches the for_release folder
 
     python -m wwpdb.apps.val_rel.PopulateValidateRelease
     usage options are
-        --release - find PDB entries in the for_release/added folder  
-        --modified - find PDB entries in the for_release/modified folder
+        --pdb_release - find PDB entries in the for_release/{added/modified} folders  
         --emdb_release - find EMDB entries in the for_release/emd folder
 
 This should be run on a cron every few hours
