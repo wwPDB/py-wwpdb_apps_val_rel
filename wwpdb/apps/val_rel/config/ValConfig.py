@@ -31,11 +31,13 @@ class ValConfig(object):
 
     @property
     def ftp_server(self):
-        return self.__cI.get('SITE_FTP_SERVER')
+        server = self.__cI.get('SITE_FTP_SERVER') if self.__cI.get('SITE_FTP_SERVER') else 'ftp.wwpdb.org'
+        return server
 
     @property
     def ftp_prefix(self):
-        return self.__cI.get('SITE_FTP_SERVER_PREFIX')
+        prefix = self.__cI.get('SITE_FTP_SERVER_PREFIX') if self.__cI.get('SITE_FTP_SERVER_PREFIX') else 'pub'
+        return prefix
 
     @property
     def session_path(self):
