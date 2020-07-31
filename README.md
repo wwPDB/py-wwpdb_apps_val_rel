@@ -33,6 +33,10 @@ Entries are found by a script which searches the for_release folder
         --pdb_release - find PDB entries in the for_release/{added/modified} folders  
         --emdb_release - find EMDB entries in the for_release/emd folder
         --skip_emdb - if only PDB entry reports with no visual analysis is required.
+        --entry_list - comma separated list of entries
+        --entry_file - file containing entries, one per line
+        --output_root - to output to a path of your choice
+        --help for other options
 
 This should be run on a cron every few hours
 
@@ -56,3 +60,11 @@ To start several workers - below example starts 50 workers
     python -m wwpdb.apps.val_rel.service.ValidationReleaseServiceHandler --stop
     or
     python -m wwpdb.apps.val_rel.service.ValidationReleaseServiceHandler --stop --instance ${i}
+
+### to run on a single entry without the rabbitMQ queue
+
+    python -m wwpdb.apps.val_rel.ValidateRelease
+    usage options are
+        --pdbid - a single pdb id
+        --emdbid - a single emdb id
+        --output_root - to output to a path of your choice
