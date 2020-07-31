@@ -4,9 +4,17 @@ Service to prepare weekly validation reports
 ## requirements
 In site-config the following must be set
 
-    SITE_PDB_FTP_ROOT_DIR = the root of the PDB FTP tree (before pdb/data) 
-    SITE_EMDB_FTP_ROOT_DIR = the root of the EMDB FTP tree (before emdb/structures)
-    rabbitMQ server connection details
+    SITE_PDB_FTP_ROOT_DIR = the root of the PDB FTP tree (before pdb/data) - this can be not set if its not available at the local site 
+    SITE_EMDB_FTP_ROOT_DIR = the root of the EMDB FTP tree (before emdb/structures) - this can be not set if its not available at the local site
+    SITE_FTP_SERVER = this will default to ftp.wwpdb.org if not set
+    SITE_FTP_SERVER_PREFIX = this is the prefix in the URL at the FTP server until you get to the PDB or EMDB data - i.e. on ftp.wwpdb.org this is "pub"
+    SITE_RBMQ_SERVER_HOST = this is the host that runs the rabbitMQ server
+
+## to setup rabbitMQ
+
+See
+
+    https://github.com/wwPDB/onedep-maintenance/blob/master/pdbe_redhat7/server_scripts/setup_rabbitMQ.sh
     
 ## usage
 
@@ -25,6 +33,7 @@ Entries are found by a script which searches the for_release folder
         --release - find PDB entries in the for_release/added folder  
         --modified - find PDB entries in the for_release/modified folder
         --emdb_release - find EMDB entries in the for_release/emd folder
+        --skip_emdb - if only PDB entry reports with no visual analysis is required.
 
 This should be run on a cron every few hours
 
