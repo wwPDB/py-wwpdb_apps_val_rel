@@ -1,12 +1,12 @@
 import logging
 import os
-import tempfile
 
+from wwpdb.utils.config.ConfigInfo import getSiteId
+
+from wwpdb.apps.val_rel.config.ValConfig import ValConfig
+from wwpdb.apps.val_rel.utils.getRemoteFilesFTP import GetRemoteFiles, setup_local_temp_ftp
 from wwpdb.io.locator.ReleaseFileNames import ReleaseFileNames
 from wwpdb.io.locator.localFTPPathInfo import LocalFTPPathInfo
-from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
-
-from wwpdb.apps.val_rel.utils.getRemoteFilesFTP import GetRemoteFiles
 
 logger = logging.getLogger(__name__)
 
@@ -14,13 +14,14 @@ logger = logging.getLogger(__name__)
 class getFilesReleaseFtpEMDB:
     def __init__(self, emdbid, site_id=getSiteId(), local_ftp_emdb_path=None):
         self.__site_id = site_id
-        self.__cI = ConfigInfo(self.__site_id)
         self.__rf = ReleaseFileNames()
         self.__local_ftp = LocalFTPPathInfo()
         self.__local_ftp_emdb_path = local_ftp_emdb_path if local_ftp_emdb_path else self.__local_ftp.get_ftp_emdb()
         self.__temp_local_ftp = None
-        self.server = self.__cI.get('SITE_FTP_SERVER')
-        site_url_prefix = self.__cI.get('SITE_FTP_SERVER_PREFIX')
+        vc = ValConfig(self.__site_id)
+        self.server = vc.ftp_server
+        self.session_path = vc.session_path
+        site_url_prefix = vc.ftp_prefix
         l_ftp = LocalFTPPathInfo()
         l_ftp.set_ftp_emdb_root(site_url_prefix)
         self.url_prefix = l_ftp.get_ftp_emdb()
@@ -38,17 +39,11 @@ class getFilesReleaseFtpEMDB:
     def emdb_fsc_folder(self):
         return self.get_emdb_subfolder(sub_folder='fsc')
 
-    def setup_local_temp_ftp(self, session_path=None):
-        if not self.__temp_local_ftp:
-            if not session_path:
-                session_path = self.__cI.get("SITE_WEB_APPS_SESSIONS_PATH")
-            if not os.path.exists(session_path):
-                os.makedirs(session_path)
-            self.__temp_local_ftp = tempfile.mkdtemp(
-                dir=session_path,
-                prefix="ftp_{}".format(self.emdb_id)
-            )
-        return self.__temp_local_ftp
+    def setup_local_temp_ftp(self):
+        setup_local_temp_ftp(temp_dir=self.__temp_local_ftp,
+                             suffix=self.emdb_id,
+                             session_path=self.session_path
+                             )
 
     def set_temp_local_ftp_as_local_ftp_path(self):
         self.setup_local_temp_ftp()

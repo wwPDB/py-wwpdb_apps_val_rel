@@ -1,8 +1,20 @@
 import ftplib
 import logging
 import os
+import tempfile
 
 logger = logging.getLogger(__name__)
+
+
+def setup_local_temp_ftp(temp_dir, suffix, session_path):
+    if not temp_dir:
+        if not os.path.exists(session_path):
+            os.makedirs(session_path)
+        temp_dir = tempfile.mkdtemp(
+            dir=session_path,
+            prefix="ftp_{}".format(suffix)
+        )
+    return temp_dir
 
 
 class GetRemoteFiles:

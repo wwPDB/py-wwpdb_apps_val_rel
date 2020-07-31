@@ -7,7 +7,9 @@ import tempfile
 from datetime import datetime
 
 from wwpdb.apps.validation.src.utils.minimal_map_cif import GenerateMinimalCif
+from wwpdb.utils.config.ConfigInfo import getSiteId
 
+from wwpdb.apps.val_rel.config.ValConfig import ValConfig
 from wwpdb.apps.val_rel.utils.CutOffUtils import ok_to_copy, get_start_end_cut_off
 from wwpdb.apps.val_rel.utils.Files import gzip_file, remove_files, copy_file
 from wwpdb.apps.val_rel.utils.ValDataStore import ValDataStore
@@ -18,7 +20,6 @@ from wwpdb.apps.val_rel.utils.fileConversion import convert_cs_file
 from wwpdb.apps.val_rel.utils.getFilesRelease import getFilesRelease
 from wwpdb.apps.val_rel.utils.mmCIFInfo import mmCIFInfo, is_simple_modification
 from wwpdb.apps.val_rel.utils.outputFiles import outputFiles
-from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +32,6 @@ class runValidation:
         self.__run_map_only = False
         self.__emdbids = []
         self.__pdbids = []
-        self.__cI = None
         self.__pythonSiteID = None
         self.siteID = None
         # self.__da_internal = None
@@ -206,7 +206,6 @@ class runValidation:
         self.__validation_sub_folder = message.get("subfolder", 'current')
         self.__remove_validation_files = message.get('removeValFiles', False)
         self.__pythonSiteID = message.get("python_site_id", self.siteID)
-        self.__cI = ConfigInfo(self.siteID)
         self.__entry_output_folder = None
 
     def set_pdb_files(self):
@@ -368,7 +367,7 @@ class runValidation:
         return True
 
     def get_start_end_cut_off(self):
-        cut_off_times = self.__cI.get("PROJECT_VAL_REL_CUTOFF")
+        cut_off_times = ValConfig(self.siteID).val_cut_off
         start_cut_off_time, end_cut_off_time = get_start_end_cut_off(cut_off_times=cut_off_times)
         return start_cut_off_time, end_cut_off_time
 
@@ -412,13 +411,13 @@ class runValidation:
             is_modified = self.check_modified()
             if not is_modified:
                 logger.info("skipping {}/{} as entry files have not changed".format(
-                            self.__pdbid, self.__emdbid))
+                    self.__pdbid, self.__emdbid))
 
                 self.__sds.setValidationRunning(False)
                 return True
 
             # worked = False
-            self.__sessionPath = self.__cI.get("SITE_WEB_APPS_SESSIONS_PATH")
+            self.__sessionPath = ValConfig(self.siteID).session_path
             if not os.path.exists(self.__sessionPath):
                 os.makedirs(self.__sessionPath)
             self.__runDir = tempfile.mkdtemp(

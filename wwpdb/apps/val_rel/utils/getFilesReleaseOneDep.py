@@ -3,7 +3,7 @@ import os
 
 from wwpdb.io.locator.ReleaseFileNames import ReleaseFileNames
 from wwpdb.io.locator.ReleasePathInfo import ReleasePathInfo
-from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
+from wwpdb.utils.config.ConfigInfo import getSiteId
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +15,6 @@ class getFilesReleaseOneDep:
         self.__siteID = siteID
         self.pdb_id = pdb_id
         self.emdb_id = emdb_id
-        self.__cI = ConfigInfo(self.__siteID)
         self.__rp = ReleasePathInfo(self.__siteID)
         self.__rf = ReleaseFileNames()
         self.sf_current = False

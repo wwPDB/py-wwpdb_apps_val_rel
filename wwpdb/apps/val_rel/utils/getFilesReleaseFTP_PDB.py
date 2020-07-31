@@ -1,10 +1,10 @@
 import logging
 import os
-import tempfile
 
-from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
+from wwpdb.utils.config.ConfigInfo import getSiteId
 
-from wwpdb.apps.val_rel.utils.getRemoteFilesFTP import GetRemoteFiles
+from wwpdb.apps.val_rel.config.ValConfig import ValConfig
+from wwpdb.apps.val_rel.utils.getRemoteFilesFTP import GetRemoteFiles, setup_local_temp_ftp
 from wwpdb.io.locator.ReleaseFileNames import ReleaseFileNames
 from wwpdb.io.locator.localFTPPathInfo import LocalFTPPathInfo
 
@@ -14,12 +14,13 @@ logger = logging.getLogger(__name__)
 class getFilesReleaseFtpPDB:
     def __init__(self, pdbid, site_id=getSiteId(), local_ftp_pdb_path=None):
         self.__site_id = site_id
-        self.__cI = ConfigInfo(self.__site_id)
         self.__rf = ReleaseFileNames()
         self.__local_ftp = LocalFTPPathInfo()
         self.__temp_local_ftp = None
-        self.server = self.__cI.get('SITE_FTP_SERVER')
-        site_url_prefix = self.__cI.get('SITE_FTP_SERVER_PREFIX')
+        vc = ValConfig(self.__site_id)
+        self.server = vc.ftp_server
+        self.session_path = vc.session_path
+        site_url_prefix = vc.ftp_prefix
         self.__remote_ftp = LocalFTPPathInfo()
         self.__remote_ftp.set_ftp_pdb_root(site_url_prefix)
         self.url_prefix = self.__remote_ftp.get_ftp_pdb()
@@ -38,20 +39,11 @@ class getFilesReleaseFtpPDB:
                 return file_name
         return None
 
-    def setup_local_temp_ftp(self, session_path=None):
-        if not self.__temp_local_ftp:
-            if not session_path:
-                session_path = self.__cI.get("SITE_WEB_APPS_SESSIONS_PATH")
-            if not os.path.exists(session_path):
-                os.makedirs(session_path)
-            self.__temp_local_ftp = tempfile.mkdtemp(
-                dir=session_path,
-                prefix="ftp_{}".format(self.pdb_id)
-            )
-        return self.__temp_local_ftp
-
     def get_temp_local_ftp_path(self):
-        return os.path.join(self.setup_local_temp_ftp(), self.pdb_id)
+        return os.path.join(setup_local_temp_ftp(temp_dir=self.__temp_local_ftp,
+                                                 session_path=self.session_path,
+                                                 suffix=self.pdb_id),
+                            self.pdb_id)
 
     def get_remote_ftp_file(self, file_path, filename):
         """
