@@ -370,6 +370,10 @@ class runValidation:
         return True
 
     def get_start_end_cut_off(self):
+        """
+        Get start and end times from OneDep configuration and parse the values
+        :return: start and end cut off times for this week
+        """
         cut_off_times = ValConfig(self.siteID).val_cut_off
         start_cut_off_time, end_cut_off_time = get_start_end_cut_off(cut_off_times=cut_off_times)
         return start_cut_off_time, end_cut_off_time
@@ -397,7 +401,12 @@ class runValidation:
                 gzip_file(in_file=f, output_folder=output_folder)
 
     def __copy_output(self, filelist, output_folder):
-        """Compresses list of files"""
+        """
+        Copy files in a list of an output folder
+        :param filelist: list of files
+        :param output_folder: folder to copy to
+        :return:
+        """
         if self.is_ok_to_copy():
             logger.debug('copy files: {}'.format(filelist))
             for f in filelist:
