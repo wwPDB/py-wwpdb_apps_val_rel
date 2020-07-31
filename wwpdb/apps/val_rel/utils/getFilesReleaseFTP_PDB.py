@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 class getFilesReleaseFtpPDB:
-    def __init__(self, pdbid, site_id=getSiteId(), local_ftp_pdb_path=None):
+    def __init__(self, pdbid, site_id=getSiteId()):
         self.__site_id = site_id
         self.__rf = ReleaseFileNames()
         self.__local_ftp = LocalFTPPathInfo()
@@ -39,10 +39,17 @@ class getFilesReleaseFtpPDB:
                 return file_name
         return None
 
+    def setup_local_temp_ftp(self, session_path=None):
+        if not self.__local_ftp_path:
+            if not session_path:
+                session_path = self.session_path
+            self.__local_ftp_path = setup_local_temp_ftp(temp_dir=self.__temp_local_ftp,
+                                                         session_path=session_path,
+                                                         suffix=self.pdb_id)
+        return self.__local_ftp_path
+
     def get_temp_local_ftp_path(self):
-        return os.path.join(setup_local_temp_ftp(temp_dir=self.__temp_local_ftp,
-                                                 session_path=self.session_path,
-                                                 suffix=self.pdb_id),
+        return os.path.join(self.setup_local_temp_ftp(),
                             self.pdb_id)
 
     def get_remote_ftp_file(self, file_path, filename):

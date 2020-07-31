@@ -39,11 +39,15 @@ class getFilesReleaseFtpEMDB:
     def emdb_fsc_folder(self):
         return self.get_emdb_subfolder(sub_folder='fsc')
 
-    def setup_local_temp_ftp(self):
-        setup_local_temp_ftp(temp_dir=self.__temp_local_ftp,
-                             suffix=self.emdb_id,
-                             session_path=self.session_path
-                             )
+    def setup_local_temp_ftp(self, session_path=None):
+        if not self.__temp_local_ftp:
+            if not session_path:
+                session_path = self.session_path
+            self.__temp_local_ftp = setup_local_temp_ftp(temp_dir=self.__temp_local_ftp,
+                                                         suffix=self.emdb_id,
+                                                         session_path=session_path
+                                                         )
+        return self.__temp_local_ftp
 
     def set_temp_local_ftp_as_local_ftp_path(self):
         self.setup_local_temp_ftp()
