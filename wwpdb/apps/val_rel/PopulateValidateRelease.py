@@ -194,7 +194,7 @@ if "__main__" in __name__:
     parser.add_argument("--validation_subdir", help="validation sub directory", type=str, default='current')
     parser.add_argument(
         "--output_root",
-        help="folder to output the results to - overwrides default OneDep folder",
+        help="Folder to output the results to - overrides default OneDep folders",
         type=str,
     )
     args = parser.parse_args()

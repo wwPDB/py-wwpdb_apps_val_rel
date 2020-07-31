@@ -36,6 +36,7 @@ class runValidation:
         self.siteID = None
         # self.__da_internal = None
         self.__outputRoot = None
+        self.__alternativeOutputFolder = False
         self.__entry_id = None
         self.__modelPath = None
         self.__csPath = None
@@ -207,6 +208,8 @@ class runValidation:
         self.__remove_validation_files = message.get('removeValFiles', False)
         self.__pythonSiteID = message.get("python_site_id", self.siteID)
         self.__entry_output_folder = None
+        if self.__outputRoot:
+            self.__alternativeOutputFolder = True
 
     def set_pdb_files(self):
         self.__rel_files.set_pdb_id(self.__pdbid)
@@ -372,6 +375,14 @@ class runValidation:
         return start_cut_off_time, end_cut_off_time
 
     def is_ok_to_copy(self, now=datetime.now()):
+        """
+        Checks if its ok to copy the files to the Output folder.
+        If an alternative output folder has been given then its always ok to copy
+        :param now: time to check
+        :return: True if ok, False if not
+        """
+        if self.__alternativeOutputFolder:
+            return True
         start_cut_off_time, end_cut_off_time = self.get_start_end_cut_off()
         return ok_to_copy(start_cut_off_time=start_cut_off_time,
                           end_cut_off_time=end_cut_off_time,
