@@ -12,9 +12,9 @@ class OutputFilesTests(unittest.TestCase):
         self.emdb_accession_hyphen = "emd-1234"
         self.output_folder = os.path.join(os.sep, "nfs", "test")
         self.final_pdb_output_folder = os.path.join(
-            self.output_folder, self.pdbid_hash, self.pdbid
+            self.output_folder, 'pdb', self.pdbid_hash, self.pdbid
         )
-        self.final_emdb_output_folder = os.path.join(self.output_folder, self.emdbid)
+        self.final_emdb_output_folder = os.path.join(self.output_folder, 'emd', self.emdbid, 'validation')
         self.pdb_core_files = {
             "xml": os.path.join(
                 self.final_pdb_output_folder, self.pdbid + "_validation.xml"
@@ -66,7 +66,7 @@ class OutputFilesTests(unittest.TestCase):
         }
 
     def test_get_dir(self):
-        final_output_folder = ""
+        final_output_folder = None
         of = outputFiles(outputRoot=self.output_folder)
         ret = of.get_entry_output_folder()
         self.assertTrue(ret == final_output_folder)
@@ -87,7 +87,7 @@ class OutputFilesTests(unittest.TestCase):
         self.assertTrue(ret == self.final_pdb_output_folder)
 
     def test_get_pdbid_dir_skip_hash(self):
-        final_output_folder = os.path.join(self.output_folder, self.pdbid)
+        final_output_folder = os.path.join(self.output_folder, 'pdb', self.pdbid)
         of = outputFiles(
             pdbID=self.pdbid, outputRoot=self.output_folder, skip_pdb_hash=True
         )
