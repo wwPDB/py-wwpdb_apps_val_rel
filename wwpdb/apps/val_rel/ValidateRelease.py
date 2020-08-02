@@ -71,6 +71,7 @@ class runValidation:
 
     def setOutputRoot(self, outdir):
         self.__outputRoot = outdir
+        self.__alternativeOutputFolder = True
 
     def setPdbId(self, pdbid):
         self.__pdbid = pdbid
@@ -89,9 +90,11 @@ class runValidation:
 
     def setPdbOutputFolder(self, path):
         self.__pdb_output_folder = path
+        self.__alternativeOutputFolder = True
 
     def setEmdbOutputFolder(self, path):
         self.__emdb_output_folder = path
+        self.__alternativeOutputFolder = True
 
     def getEntryOutputFolder(self):
         return self.__entry_output_folder
@@ -148,7 +151,11 @@ class runValidation:
         if self.__always_recalculate:
             return True
         modified = False
-        if self.__rel_files.is_em_xml_current():
+        # check
+        #   if the output folder is not the default - i.e. this isn't the weekly release
+        #   or
+        #   if the EMDB XML is present in the for_release/emd folder - i.e. the XML is modified
+        if self.__alternativeOutputFolder or self.__rel_files.is_em_xml_current():
             if not already_run(self.__emXmlPath, self.__emdb_output_folder):
                 modified = True
         return modified
