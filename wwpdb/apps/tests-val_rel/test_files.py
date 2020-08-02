@@ -25,6 +25,16 @@ class TestFiles(unittest.TestCase):
         ret = get_gzip_name(fname)
         self.assertEqual(expected_name, ret)
 
+    def test_get_gzip_name_none(self):
+        fname = None
+        ret = get_gzip_name(fname)
+        self.assertIsNone(ret)
+
+    def test_get_gzip_name_empty(self):
+        fname = ''
+        ret = get_gzip_name(fname)
+        self.assertIsNone(ret)
+
     def test_gzip_file(self):
         input_folder = tempfile.mkdtemp()
         input_file = os.path.join(input_folder, 'test.file')

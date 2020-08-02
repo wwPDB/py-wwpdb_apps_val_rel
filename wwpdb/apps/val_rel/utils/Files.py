@@ -10,7 +10,9 @@ logger = logging.getLogger(__name__)
 
 def get_gzip_name(f):
     """Returns compressed filename"""
-    return f + ".gz"
+    if f:
+        return f + ".gz"
+    return None
 
 
 def gzip_file(in_file, output_folder):
@@ -44,8 +46,10 @@ def remove_files(file_list):
         logger.debug("removing existing files")
         logger.debug(file_list)
         for f in file_list:
-            if os.path.exists(f):
-                os.remove(f)
+            if f:
+                if os.path.exists(f):
+                    os.remove(f)
             gzip_f = get_gzip_name(f)
-            if os.path.exists(gzip_f):
-                os.remove(gzip_f)
+            if gzip_f:
+                if os.path.exists(gzip_f):
+                    os.remove(gzip_f)
