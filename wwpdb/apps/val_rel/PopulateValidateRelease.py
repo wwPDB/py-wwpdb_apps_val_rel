@@ -12,7 +12,11 @@ from wwpdb.apps.val_rel.utils.XmlInfo import XmlInfo
 from wwpdb.apps.val_rel.utils.getFilesRelease import getFilesRelease
 from wwpdb.apps.val_rel.utils.mmCIFInfo import mmCIFInfo
 
+# Create logger -
+FORMAT = '[%(asctime)s %(levelname)s]-%(module)s.%(funcName)s: %(message)s'
+logging.basicConfig(format=FORMAT)
 logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
 
 
 class PopulateValidateRelease:
@@ -32,11 +36,11 @@ class PopulateValidateRelease:
         self.messages = []
         self.pdb_release = pdb_release
         self.emdb_release = emdb_release
-        self.keep_logs = keep_logs,
-        self.output_root = output_root,
-        self.always_recalculate = always_recalculate,
-        self.skipGzip = skip_gzip,
-        self.skip_emdb = skip_emdb,
+        self.keep_logs = keep_logs
+        self.output_root = output_root
+        self.always_recalculate = always_recalculate
+        self.skipGzip = skip_gzip
+        self.skip_emdb = skip_emdb
         self.validation_sub_dir = validation_sub_dir
 
     def run_process(self):
