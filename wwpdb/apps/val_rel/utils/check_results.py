@@ -59,7 +59,8 @@ class CheckResult:
                 output_file = output_file_dict[output_file_type]
                 gzipped_output_file = get_gzip_name(output_file)
                 if not os.path.exists(gzipped_output_file):
-                    self.missing_files.setdefault(output_file_type, []).append({self.rv.getEntryId(): gzipped_output_file})
+                    self.missing_files.setdefault(output_file_type, []).append(
+                        {self.rv.getEntryId(): gzipped_output_file})
 
             self.check_failed_programs()
 
@@ -133,6 +134,7 @@ class CheckEntries:
     def write_missing(self, output_file):
         with open(output_file, 'w') as out_file:
             out_file.write('\n'.join(self.get_failed_entries()))
+
 
 def prepare_entries_and_check(output_folder=None, failed_entries_file=None, skip_emdb=False):
     ce = CheckEntries()

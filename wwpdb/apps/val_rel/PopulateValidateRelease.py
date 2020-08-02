@@ -14,6 +14,7 @@ from wwpdb.apps.val_rel.utils.mmCIFInfo import mmCIFInfo
 
 logger = logging.getLogger(__name__)
 
+
 class PopulateValidateRelease:
 
     def __init__(self, entry_list='', entry_file='', keep_logs=False, output_root=None,
@@ -198,16 +199,16 @@ def main():
     logger.setLevel(args.loglevel)
 
     pvr = PopulateValidateRelease(entry_list=args.entry_list,
-        entry_file=args.entry_file,
-        pdb_release=args.pdb_release,
-        emdb_release=args.emdb_release,
-        siteID=args.siteID,
-        keep_logs=args.keep_logs,
-        always_recalculate=args.always_recalculate,
-        skip_gzip=args.skipGzip,
-        skip_emdb=args.skip_emdb,
-        validation_sub_dir=args.validation_subdir,
-        output_root=args.output_root)
+                                  entry_file=args.entry_file,
+                                  pdb_release=args.pdb_release,
+                                  emdb_release=args.emdb_release,
+                                  siteID=args.siteID,
+                                  keep_logs=args.keep_logs,
+                                  always_recalculate=args.always_recalculate,
+                                  skip_gzip=args.skipGzip,
+                                  skip_emdb=args.skip_emdb,
+                                  validation_sub_dir=args.validation_subdir,
+                                  output_root=args.output_root)
 
     pvr.run_process()
 

@@ -1,10 +1,11 @@
 import argparse
 import logging
 
-from wwpdb.apps.val_rel.utils.check_results import CheckEntries
 from wwpdb.apps.val_rel.PopulateValidateRelease import PopulateValidateRelease
+from wwpdb.apps.val_rel.utils.check_results import CheckEntries
 
 logger = logging.getLogger(__name__)
+
 
 class FindAndRunMissing:
 
