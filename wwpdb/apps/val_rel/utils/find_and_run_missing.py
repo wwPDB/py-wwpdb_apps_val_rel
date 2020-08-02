@@ -16,6 +16,8 @@ class FindAndRunMissing:
         self.missing_ids = []
         self.missing_file = 'missing.ids'
         self.rpi = ReleasePathInfo()
+        self.write_missing = write_missing
+        self.read_missing = read_missing
 
     def find_missing(self):
         self.ce.get_entries()
@@ -44,8 +46,14 @@ class FindAndRunMissing:
             pvr.run_process()
 
     def run_process(self):
-        self.find_missing()
-        self.populate_queue()
+        if self.read_missing:
+            self.read_missing_file()
+        else:
+            self.find_missing()
+        if self.write_missing:
+            self.write_out_missing()
+        else:
+            self.populate_queue()
 
 
 def main():
