@@ -21,11 +21,12 @@ logger.setLevel(logging.DEBUG)
 
 class PopulateValidateRelease:
 
-    def __init__(self, entry_list='', entry_file='', keep_logs=False, output_root=None,
+    def __init__(self, entry_string='', entry_list=[], entry_file='', keep_logs=False, output_root=None,
                  always_recalculate=False, skip_gzip=False, skip_emdb=False, validation_sub_dir='current',
                  pdb_release=False, emdb_release=False,
                  site_id=getSiteId()):
         self.entry_list = entry_list
+        self.entry_string = entry_string
         self.entry_file = entry_file
         self.site_id = site_id
         self.entries = []
@@ -71,7 +72,11 @@ class PopulateValidateRelease:
 
     def process_entry_list(self):
         if self.entry_list:
-            self.entries.extend(self.entry_list.split(","))
+            self.entries.extend(self.entry_list)
+
+    def process_entry_string(self):
+        if self.entry_string:
+            self.entries.extend(self.entry_string.split(","))
 
     def categorise_entries(self):
         for entry in self.entries:
@@ -202,7 +207,7 @@ def main():
     args = parser.parse_args()
     logger.setLevel(args.loglevel)
 
-    pvr = PopulateValidateRelease(entry_list=args.entry_list,
+    pvr = PopulateValidateRelease(entry_string=args.entry_list,
                                   entry_file=args.entry_file,
                                   pdb_release=args.pdb_release,
                                   emdb_release=args.emdb_release,
