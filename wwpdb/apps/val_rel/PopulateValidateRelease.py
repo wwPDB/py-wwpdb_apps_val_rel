@@ -24,10 +24,10 @@ class PopulateValidateRelease:
     def __init__(self, entry_list='', entry_file='', keep_logs=False, output_root=None,
                  always_recalculate=False, skip_gzip=False, skip_emdb=False, validation_sub_dir='current',
                  pdb_release=False, emdb_release=False,
-                 siteID=getSiteId()):
+                 site_id=getSiteId()):
         self.entry_list = entry_list
         self.entry_file = entry_file
-        self.site_id = siteID
+        self.site_id = site_id
         self.entries = []
         self.pdb_entries = []
         self.emdb_entries = []
@@ -64,8 +64,8 @@ class PopulateValidateRelease:
         if self.entry_file:
             if os.path.exists(self.entry_file):
                 with open(self.entry_file) as inFile:
-                    for l in inFile:
-                        self.entries.append(l.strip())
+                    for file_line in inFile:
+                        self.entries.append(file_line.strip())
             else:
                 logger.error("file: %s not found", self.entry_file)
 
@@ -206,7 +206,7 @@ def main():
                                   entry_file=args.entry_file,
                                   pdb_release=args.pdb_release,
                                   emdb_release=args.emdb_release,
-                                  siteID=args.siteID,
+                                  site_id=args.siteID,
                                   keep_logs=args.keep_logs,
                                   always_recalculate=args.always_recalculate,
                                   skip_gzip=args.skipGzip,
