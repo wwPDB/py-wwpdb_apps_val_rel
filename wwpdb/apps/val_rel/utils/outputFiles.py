@@ -201,9 +201,16 @@ class outputFiles:
 
         return all_file_dict
 
+    def ret_pdb_hash(self):
+        if self.skip_pdb_hash:
+            pdb_hash = ""
+        else:
+            pdb_hash = self.get_pdb_id_hash()
+        return pdb_hash
+
     def get_pdb_validation_images_output_folder(self):
         if self._output_root:
-            return os.path.join(self._output_root, 'val_images', self.get_pdb_id())
+            return os.path.join(self._output_root, 'val_images', self.ret_pdb_hash(), self.get_pdb_id())
         else:
             return os.path.join(self.get_validation_images_root_folder(), self.get_pdb_id())
 
@@ -214,13 +221,9 @@ class outputFiles:
         """
         if self.get_pdb_id():
             self.set_entry_id(self.get_pdb_id())
-            if self.skip_pdb_hash:
-                pdb_hash = ""
-            else:
-                pdb_hash = self.get_pdb_id_hash()
             if self._output_root:
                 self.pdb_output_folder = os.path.join(
-                    self._output_root, 'pdb', pdb_hash, self.get_pdb_id()
+                    self._output_root, 'pdb', self.ret_pdb_hash(), self.get_pdb_id()
                 )
             else:
                 self.pdb_output_folder = os.path.join(

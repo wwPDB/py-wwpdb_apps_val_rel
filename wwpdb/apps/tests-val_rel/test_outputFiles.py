@@ -140,6 +140,17 @@ class OutputFilesTests(unittest.TestCase):
         ret = of.get_core_validation_files()
         self.assertEqual(ret, self.emdb_core_files)
 
+    def test_ret_pdb_hash_skip_hash(self):
+        of = outputFiles(pdbID=self.pdbid, outputRoot=self.output_folder,
+                         skip_pdb_hash=True)
+        ret = of.ret_pdb_hash()
+        self.assertEqual(ret, '')
+
+    def test_ret_pdb_hash(self):
+        of = outputFiles(pdbID=self.pdbid, outputRoot=self.output_folder)
+        ret = of.ret_pdb_hash()
+        self.assertEqual(ret, self.pdbid_hash)
+
 
 if __name__ == "__main__":
     unittest.main()
