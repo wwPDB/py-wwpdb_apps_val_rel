@@ -61,6 +61,16 @@ To start several workers - below example starts 50 workers
     or
     python -m wwpdb.apps.val_rel.service.ValidationReleaseServiceHandler --stop --instance ${i}
 
+### 3) To find missing entries and queue for the following week
+    
+To find missing entries and write them out to a temporary file 
+
+    python -m wwpdb.apps.val_rel.utils.find_and_run_missing --write_missing
+    
+then to read the temporary file and load the entries into the missing queue
+    
+    python -m wwpdb.apps.val_rel.utils.find_and_run_missing --read_missing
+
 ### to run on a single entry without the rabbitMQ queue
 
     python -m wwpdb.apps.val_rel.ValidateRelease

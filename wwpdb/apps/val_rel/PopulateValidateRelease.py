@@ -11,7 +11,6 @@ from wwpdb.apps.val_rel.utils.FindEntries import FindEntries
 from wwpdb.apps.val_rel.utils.XmlInfo import XmlInfo
 from wwpdb.apps.val_rel.utils.getFilesRelease import getFilesRelease
 from wwpdb.apps.val_rel.utils.mmCIFInfo import mmCIFInfo
-from wwpdb.apps.val_rel.utils.outputFiles import outputFiles
 
 # Create logger -
 FORMAT = '[%(asctime)s %(levelname)s]-%(module)s.%(funcName)s: %(message)s'
@@ -20,143 +19,151 @@ logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
 
-def remove_unwanted_folders(pdb_entries):
-    pdb_val_report_dir = outputFiles().get_pdb_root_folder()
-    val_pdbids = set()
-    if os.path.exists(pdb_val_report_dir):
-        for pdbid in [d for d in os.listdir(pdb_val_report_dir) if os.path.isdir(d)]:
-            if pdbid not in pdb_entries:
-                full_dir = os.path.join(pdb_val_report_dir, pdbid)
-                logging.error('will remove {}'.format(full_dir))
-                # shutil.rmtree(full_dir)
+class PopulateValidateRelease:
+
+    def __init__(self, entry_string='', entry_list=[], entry_file='', keep_logs=False, output_root=None,
+                 always_recalculate=False, skip_gzip=False, skip_emdb=False, validation_sub_dir='current',
+                 pdb_release=False, emdb_release=False,
+                 site_id=getSiteId()):
+        self.entry_list = entry_list
+        self.entry_string = entry_string
+        self.entry_file = entry_file
+        self.site_id = site_id
+        self.entries = []
+        self.pdb_entries = []
+        self.emdb_entries = []
+        self.all_pdb_entries = set()
+        self.added_entries = []
+        self.messages = []
+        self.pdb_release = pdb_release
+        self.emdb_release = emdb_release
+        self.keep_logs = keep_logs
+        self.output_root = output_root
+        self.always_recalculate = always_recalculate
+        self.skipGzip = skip_gzip
+        self.skip_emdb = skip_emdb
+        self.validation_sub_dir = validation_sub_dir
+
+    def run_process(self):
+        self.find_onedep_entries()
+        self.process_entry_file()
+        self.process_entry_list()
+        self.categorise_entries()
+        self.process_emdb_entries()
+        self.process_pdb_entries()
+        self.process_messages()
+
+    def find_onedep_entries(self):
+        fe = FindEntries(siteID=self.site_id)
+        if self.pdb_release:
+            self.pdb_entries.extend(fe.get_added_pdb_entries())
+            self.pdb_entries.extend(fe.get_modified_pdb_entries())
+        if self.emdb_release:
+            self.emdb_entries.extend(fe.get_emdb_entries())
+
+    def process_entry_file(self):
+        if self.entry_file:
+            if os.path.exists(self.entry_file):
+                with open(self.entry_file) as inFile:
+                    for file_line in inFile:
+                        self.entries.append(file_line.strip())
+            else:
+                logger.error("file: %s not found", self.entry_file)
+
+    def process_entry_list(self):
+        if self.entry_list:
+            self.entries.extend(self.entry_list)
+
+    def process_entry_string(self):
+        if self.entry_string:
+            self.entries.extend(self.entry_string.split(","))
+
+    def categorise_entries(self):
+        for entry in self.entries:
+            if "EMD-" in entry.upper():
+                self.emdb_entries.append(entry)
+            else:
+                self.pdb_entries.append(entry)
+
+    def process_emdb_entries(self):
+        for emdb_entry in self.emdb_entries:
+            if emdb_entry not in self.added_entries:
+                # stop duplication of making EM validation reports twice
+                logger.debug(emdb_entry)
+                re = getFilesRelease(siteID=self.site_id, emdb_id=emdb_entry, pdb_id=None)
+                em_xml = re.get_emdb_xml()
+
+                em_vol = re.get_emdb_volume()
+                if em_vol:
+                    logger.debug('using XML: %s', em_xml)
+                    pdbids = XmlInfo(em_xml).get_pdbids_from_xml()
+                    if pdbids:
+                        logger.info(
+                            "PDB entries associated with %s: %s", emdb_entry, ",".join(pdbids)
+                        )
+                        for pdbid in pdbids:
+                            pdbid = pdbid.lower()
+                            re.set_pdb_id(pdb_id=pdbid)
+                            pdb_file = re.get_model()
+                            if pdb_file:
+                                cf = mmCIFInfo(pdb_file)
+                                associated_emdb = cf.get_associated_emdb()
+                                if associated_emdb == emdb_entry:
+                                    if pdbid in self.pdb_entries:
+                                        logger.info(
+                                            "removing %s from the PDB queue to stop duplication of report generation",
+                                            pdbid
+                                        )
+                                        self.pdb_entries.remove(pdbid)
+                                    else:
+                                        self.all_pdb_entries.add(pdbid)
+                                # what if its not? should it be added to the queue?
+                            else:
+                                if pdbid in self.pdb_entries:
+                                    logger.info('removing %s as pdb file does not exist', pdbid)
+                                    self.pdb_entries.remove(pdbid)
+
+                    message = {"emdbID": emdb_entry}
+                    self.messages.append(message)
+                    self.added_entries.append(emdb_entry)
+
+    def process_pdb_entries(self):
+        for pdb_entry in self.pdb_entries:
+            if pdb_entry not in self.added_entries:
+                message = {"pdbID": pdb_entry}
+                self.messages.append(message)
+                self.added_entries.append(pdb_entry)
+
+    def process_messages(self):
+        if self.messages:
+            # Set logging for pika to be lower
+            plogging = logging.getLogger('pika')
+            plogging.setLevel(logging.ERROR)
+            for message in self.messages:
+
+                message["siteID"] = self.site_id
+                message["keepLog"] = self.keep_logs
+                message['subfolder'] = self.validation_sub_dir
+                if self.output_root:
+                    message["outputRoot"] = self.output_root
+                if self.always_recalculate:
+                    message["alwaysRecalculate"] = self.always_recalculate
+                if self.skipGzip:
+                    message["skipGzip"] = self.skipGzip
+                if self.skip_emdb:
+                    message['skip_emdb'] = self.skip_emdb
+                logger.info('MESSAGE req %s', message)
+                vc = ValConfig(self.site_id)
+                ok = MessagePublisher().publish(
+                    message=json.dumps(message),
+                    exchangeName=vc.exchange,
+                    queueName=vc.queue_name,
+                    routingKey=vc.routing_key,
+                )
+                logger.info('MESSAGE {}'.format(ok))
 
 
-def main(
-        entry_list=None,
-        entry_file=None,
-        pdb_release=False,
-        emdb_release=False,
-        siteID=getSiteId(),
-        python_siteID=None,
-        keep_logs=False,
-        output_root=None,
-        always_recalculate=False,
-        skipGzip=False,
-        skip_emdb=False,
-        validation_sub_dir='current'
-):
-    all_pdb_entries = set()
-    pdb_entries = []
-    emdb_entries = []
-    entries = []
-    messages = []
-
-    fe = FindEntries(siteID=siteID)
-
-    if pdb_release:
-        pdb_entries.extend(fe.get_added_pdb_entries())
-        pdb_entries.extend(fe.get_modified_pdb_entries())
-    if emdb_release:
-        emdb_entries.extend(fe.get_emdb_entries())
-
-    if entry_list:
-        entries.extend(entry_list.split(","))
-    elif entry_file:
-        if os.path.exists(entry_file):
-            with open(entry_file) as inFile:
-                for l in inFile:
-                    entries.append(l.strip())
-        else:
-            logger.error("file: %s not found", entry_file)
-
-    for entry in entries:
-        if "EMD-" in entry.upper():
-            emdb_entries.append(entry)
-        else:
-            pdb_entries.append(entry)
-
-    added_entries = []
-    for pdbid in pdb_entries:
-        all_pdb_entries.add(pdbid)
-
-    for emdb_entry in emdb_entries:
-        if emdb_entry not in added_entries:
-            # stop duplication of making EM validation reports twice
-            logger.debug(emdb_entry)
-            re = getFilesRelease(siteID=siteID, emdb_id=emdb_entry, pdb_id=None)
-            em_xml = re.get_emdb_xml()
-
-            em_vol = re.get_emdb_volume()
-            if em_vol:
-                logger.debug('using XML: %s', em_xml)
-                pdbids = XmlInfo(em_xml).get_pdbids_from_xml()
-                if pdbids:
-                    logger.info(
-                        "PDB entries associated with %s: %s", emdb_entry, ",".join(pdbids)
-                    )
-                    for pdbid in pdbids:
-                        pdbid = pdbid.lower()
-                        re.set_pdb_id(pdb_id=pdbid)
-                        pdb_file = re.get_model()
-                        if pdb_file:
-                            cf = mmCIFInfo(pdb_file)
-                            associated_emdb = cf.get_associated_emdb()
-                            if associated_emdb == emdb_entry:
-                                if pdbid in pdb_entries:
-                                    logger.info(
-                                        "removing %s from the PDB queue to stop duplication of report generation",
-                                        pdbid
-                                    )
-                                    pdb_entries.remove(pdbid)
-                                else:
-                                    all_pdb_entries.add(pdbid)
-                            # what if its not? should it be added to the queue?
-                        else:
-                            if pdbid in pdb_entries:
-                                logger.info('removing %s as pdb file does not exist', pdbid)
-                                pdb_entries.remove(pdbid)
-
-                message = {"emdbID": emdb_entry}
-                messages.append(message)
-                added_entries.append(emdb_entry)
-
-    for pdb_entry in pdb_entries:
-        if pdb_entry not in added_entries:
-            message = {"pdbID": pdb_entry}
-            messages.append(message)
-            added_entries.append(pdb_entry)
-
-    if messages:
-        for message in messages:
-
-            message["siteID"] = siteID
-            message["keepLog"] = keep_logs
-            message['subfolder'] = validation_sub_dir
-            if python_siteID:
-                message["python_site_id"] = python_siteID
-            if output_root:
-                message["outputRoot"] = output_root
-            if always_recalculate:
-                message["alwaysRecalculate"] = always_recalculate
-            if skipGzip:
-                message["skipGzip"] = skipGzip
-            if skip_emdb:
-                message['skip_emdb'] = skip_emdb
-            logger.info('MESSAGE req %s', message)
-            vc = ValConfig(siteID)
-            ok = MessagePublisher().publish(
-                message=json.dumps(message),
-                exchangeName=vc.exchange,
-                queueName=vc.queue_name,
-                routingKey=vc.routing_key,
-            )
-            logger.info('MESSAGE {}'.format(ok))
-
-    if pdb_release:
-        remove_unwanted_folders(pdb_entries=all_pdb_entries)
-
-
-if "__main__" in __name__:
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "-d",
@@ -200,21 +207,20 @@ if "__main__" in __name__:
     args = parser.parse_args()
     logger.setLevel(args.loglevel)
 
-    # Set logging for pika to be lower
-    plogging = logging.getLogger('pika')
-    plogging.setLevel(logging.ERROR)
+    pvr = PopulateValidateRelease(entry_string=args.entry_list,
+                                  entry_file=args.entry_file,
+                                  pdb_release=args.pdb_release,
+                                  emdb_release=args.emdb_release,
+                                  site_id=args.siteID,
+                                  keep_logs=args.keep_logs,
+                                  always_recalculate=args.always_recalculate,
+                                  skip_gzip=args.skipGzip,
+                                  skip_emdb=args.skip_emdb,
+                                  validation_sub_dir=args.validation_subdir,
+                                  output_root=args.output_root)
 
-    main(
-        entry_list=args.entry_list,
-        entry_file=args.entry_file,
-        pdb_release=args.pdb_release,
-        emdb_release=args.emdb_release,
-        siteID=args.siteID,
-        python_siteID=args.python_siteID,
-        keep_logs=args.keep_logs,
-        always_recalculate=args.always_recalculate,
-        skipGzip=args.skipGzip,
-        skip_emdb=args.skip_emdb,
-        validation_sub_dir=args.validation_subdir,
-        output_root=args.output_root
-    )
+    pvr.run_process()
+
+
+if "__main__" in __name__:
+    main()
