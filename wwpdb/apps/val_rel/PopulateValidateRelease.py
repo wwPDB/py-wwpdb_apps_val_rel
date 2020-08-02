@@ -12,7 +12,7 @@ from wwpdb.apps.val_rel.utils.XmlInfo import XmlInfo
 from wwpdb.apps.val_rel.utils.getFilesRelease import getFilesRelease
 from wwpdb.apps.val_rel.utils.mmCIFInfo import mmCIFInfo
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger()
 
 
 class PopulateValidateRelease:
