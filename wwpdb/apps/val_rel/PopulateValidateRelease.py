@@ -48,6 +48,7 @@ class PopulateValidateRelease:
         self.find_onedep_entries()
         self.process_entry_file()
         self.process_entry_list()
+        self.process_entry_string()
         self.categorise_entries()
         self.process_emdb_entries()
         self.process_pdb_entries()
