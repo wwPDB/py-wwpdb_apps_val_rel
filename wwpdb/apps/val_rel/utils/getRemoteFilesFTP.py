@@ -1,6 +1,7 @@
 import ftplib
 import logging
 import os
+import shutil
 import tempfile
 
 logger = logging.getLogger(__name__)
@@ -15,6 +16,12 @@ def setup_local_temp_ftp(temp_dir, suffix, session_path):
             prefix="ftp_{}".format(suffix)
         )
     return temp_dir
+
+
+def remove_local_temp_ftp(temp_dir):
+    if temp_dir:
+        if os.path.exists(temp_dir):
+            shutil.rmtree(temp_dir, ignore_errors=True)
 
 
 class GetRemoteFiles:

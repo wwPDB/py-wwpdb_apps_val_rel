@@ -4,7 +4,7 @@ import os
 from wwpdb.utils.config.ConfigInfo import getSiteId
 
 from wwpdb.apps.val_rel.config.ValConfig import ValConfig
-from wwpdb.apps.val_rel.utils.getRemoteFilesFTP import GetRemoteFiles, setup_local_temp_ftp
+from wwpdb.apps.val_rel.utils.getRemoteFilesFTP import GetRemoteFiles, setup_local_temp_ftp, remove_local_temp_ftp
 from wwpdb.io.locator.ReleaseFileNames import ReleaseFileNames
 from wwpdb.io.locator.localFTPPathInfo import LocalFTPPathInfo
 
@@ -74,6 +74,8 @@ class getFilesReleaseFtpEMDB:
             ok = self.get_emdb_from_remote_ftp()
             if ok:
                 self.set_temp_local_ftp_as_local_ftp_path()
+                return True
+        remove_local_temp_ftp(self.setup_local_temp_ftp())
 
     def get_emdb_xml(self):
         file_name = self.get_emdb_local_ftp_file(filename=self.__rf.get_emdb_xml(self.emdb_id),

@@ -4,7 +4,7 @@ import os
 from wwpdb.utils.config.ConfigInfo import getSiteId
 
 from wwpdb.apps.val_rel.config.ValConfig import ValConfig
-from wwpdb.apps.val_rel.utils.getRemoteFilesFTP import GetRemoteFiles, setup_local_temp_ftp
+from wwpdb.apps.val_rel.utils.getRemoteFilesFTP import GetRemoteFiles, setup_local_temp_ftp, remove_local_temp_ftp
 from wwpdb.io.locator.ReleaseFileNames import ReleaseFileNames
 from wwpdb.io.locator.localFTPPathInfo import LocalFTPPathInfo
 
@@ -64,6 +64,7 @@ class getFilesReleaseFtpPDB:
             file_path = os.path.join(self.get_temp_local_ftp_path(), filename)
             if os.path.exists(file_path):
                 return file_path
+        remove_local_temp_ftp(self.setup_local_temp_ftp())
         return None
 
     def get_file_from_remote_ftp(self, file_path, filename):
