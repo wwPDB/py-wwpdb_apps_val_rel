@@ -69,7 +69,7 @@ class PopulateValidateRelease:
                     for file_line in inFile:
                         self.entries.append(file_line.strip())
             else:
-                logger.error("file: %s not found", self.entry_file)
+                logging.error("file: %s not found", self.entry_file)
 
     def process_entry_list(self):
         if self.entry_list:
@@ -79,7 +79,7 @@ class PopulateValidateRelease:
     def process_entry_string(self):
         if self.entry_string:
             entries_from_entry_string = self.entry_string.split(",")
-            logger.info('entries from input string: {}'.format(entries_from_entry_string))
+            logging.info('entries from input string: {}'.format(entries_from_entry_string))
             self.entries.extend(entries_from_entry_string)
 
     def categorise_entries(self):
