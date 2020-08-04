@@ -1,12 +1,11 @@
 import logging
 import os
 
-from wwpdb.utils.config.ConfigInfo import getSiteId
-
 from wwpdb.apps.val_rel.config.ValConfig import ValConfig
 from wwpdb.apps.val_rel.utils.getRemoteFilesFTP import GetRemoteFiles, setup_local_temp_ftp, remove_local_temp_ftp
 from wwpdb.io.locator.ReleaseFileNames import ReleaseFileNames
 from wwpdb.io.locator.localFTPPathInfo import LocalFTPPathInfo
+from wwpdb.utils.config.ConfigInfo import getSiteId
 
 logger = logging.getLogger(__name__)
 
@@ -81,9 +80,11 @@ class getFilesReleaseFtpEMDB:
         file_name = self.get_emdb_local_ftp_file(filename=self.__rf.get_emdb_xml(self.emdb_id),
                                                  emdb_path=self.emdb_xml_folder())
         if not file_name:
-            self.get_remote_ftp_data()
-            file_name = self.get_emdb_local_ftp_file(filename=self.__rf.get_emdb_xml(self.emdb_id),
-                                                     emdb_path=self.emdb_xml_folder())
+            self.setup_local_temp_ftp()
+            file_name = self.get_file_from_remote_ftp(filename=self.__rf.get_emdb_xml(self.emdb_id),
+                                                      file_path=os.path.join(self.url_prefix, self.emdb_xml_folder()))
+            if not file_name:
+                remove_local_temp_ftp(self.setup_local_temp_ftp())
         return file_name
 
     def get_emdb_volume(self):
@@ -99,9 +100,11 @@ class getFilesReleaseFtpEMDB:
         file_name = self.get_emdb_local_ftp_file(filename=self.__rf.get_emdb_fsc(self.emdb_id),
                                                  emdb_path=self.emdb_fsc_folder())
         if not file_name:
-            self.get_remote_ftp_data()
-            file_name = self.get_emdb_local_ftp_file(filename=self.__rf.get_emdb_fsc(self.emdb_id),
-                                                     emdb_path=self.emdb_fsc_folder())
+            self.setup_local_temp_ftp()
+            file_name = self.get_file_from_remote_ftp(filename=self.__rf.get_emdb_fsc(self.emdb_id),
+                                                      file_path=os.path.join(self.url_prefix, self.emdb_fsc_folder()))
+            if not file_name:
+                remove_local_temp_ftp(self.setup_local_temp_ftp())
         return file_name
 
     def check_header_on_remote_ftp(self):
@@ -111,8 +114,7 @@ class getFilesReleaseFtpEMDB:
         """
         url_directory = os.path.join(self.url_prefix, self.emdb_xml_folder())
         filename = self.__rf.get_emdb_xml(self.emdb_id)
-        grf = GetRemoteFiles(server=self.server, output_path=self.get_temp_local_ftp_emdb_path())
-        ret = grf.get_url(directory=url_directory, filename=filename)
+        ret = self.get_file_from_remote_ftp(file_path=url_directory, filename=filename)
         print(ret)
         if ret:
             return True
@@ -131,3 +133,14 @@ class getFilesReleaseFtpEMDB:
             if ret:
                 return True
         return False
+
+    def get_file_from_remote_ftp(self, file_path, filename):
+        """
+        gets file from FTP site
+        :return string: file name if it exists or None if it doesn't
+        """
+        grf = GetRemoteFiles(server=self.server, output_path=self.get_temp_local_ftp_emdb_path())
+        ret = grf.get_url(directory=file_path, filename=filename)
+        if ret:
+            return ret[0]
+        return None
