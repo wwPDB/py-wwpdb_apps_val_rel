@@ -427,8 +427,6 @@ class runValidation:
                 self.__rel_files.set_emdb_id(self.__emdbid)
                 if not self.__emXmlPath:
                     self.__emXmlPath = self.__rel_files.get_emdb_xml()
-                self.__volPath = self.__rel_files.get_emdb_volume()
-                self.__fscPath = self.__rel_files.get_emdb_fsc()
             if self.__pdbid:
                 self.__rel_files.set_pdb_id(self.__pdbid)
                 self.__sfPath = self.__rel_files.get_sf()
@@ -442,6 +440,11 @@ class runValidation:
 
                 self.__sds.setValidationRunning(False)
                 return True
+
+            # get EMDB data from FTP to after check for modification
+            if self.__emdbid:
+                self.__volPath = self.__rel_files.get_emdb_volume()
+                self.__fscPath = self.__rel_files.get_emdb_fsc()
 
             # worked = False
             self.__sessionPath = ValConfig(self.siteID).session_path
