@@ -13,7 +13,7 @@ def setup_local_temp_ftp(temp_dir, suffix, session_path):
             os.makedirs(session_path)
         temp_dir = tempfile.mkdtemp(
             dir=session_path,
-            prefix="ftp_{}".format(suffix)
+            prefix="ftp_{}_".format(suffix)
         )
     return temp_dir
 
