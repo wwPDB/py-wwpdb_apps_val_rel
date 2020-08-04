@@ -21,7 +21,7 @@ from wwpdb.apps.val_rel.utils.getFilesRelease import getFilesRelease
 from wwpdb.apps.val_rel.utils.mmCIFInfo import mmCIFInfo, is_simple_modification
 from wwpdb.apps.val_rel.utils.outputFiles import outputFiles
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger()
 
 
 class runValidation:

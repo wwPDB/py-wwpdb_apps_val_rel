@@ -7,7 +7,7 @@ from wwpdb.io.locator.ReleaseFileNames import ReleaseFileNames
 from wwpdb.io.locator.localFTPPathInfo import LocalFTPPathInfo
 from wwpdb.utils.config.ConfigInfo import getSiteId
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger()
 
 
 class getFilesReleaseFtpEMDB:
