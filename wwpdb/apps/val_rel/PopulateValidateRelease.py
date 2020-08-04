@@ -73,11 +73,14 @@ class PopulateValidateRelease:
 
     def process_entry_list(self):
         if self.entry_list:
+            logging.info('entries from input list: {}'.format(self.entry_list))
             self.entries.extend(self.entry_list)
 
     def process_entry_string(self):
         if self.entry_string:
-            self.entries.extend(self.entry_string.split(","))
+            entries_from_entry_string = self.entry_string.split(",")
+            logger.info('entries from input string: {}'.format(entries_from_entry_string))
+            self.entries.extend(entries_from_entry_string)
 
     def categorise_entries(self):
         for entry in self.entries:
