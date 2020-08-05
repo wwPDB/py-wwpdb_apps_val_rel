@@ -442,7 +442,8 @@ class runValidation:
 
                 self.__sds.setValidationRunning(False)
                 return True
-
+              
+            # get EMDB data from FTP to after check for modification
             if self.__emdbid:
                 logger.debug('getting EMDB volume')
                 self.__volPath = self.__rel_files.get_emdb_volume()
