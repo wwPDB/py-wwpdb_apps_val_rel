@@ -7,7 +7,7 @@ from wwpdb.io.locator.ReleaseFileNames import ReleaseFileNames
 from wwpdb.io.locator.localFTPPathInfo import LocalFTPPathInfo
 from wwpdb.utils.config.ConfigInfo import getSiteId
 
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 
 class getFilesReleaseFtpEMDB:
@@ -125,6 +125,7 @@ class getFilesReleaseFtpEMDB:
         checks if an EMDB header exists of the FTP site
         :return: True if it exists, False if it fails
         """
+        logger.debug('check EMDB header from remote FTP')
         url_directory = os.path.join(self.url_prefix, self.emdb_xml_folder())
         filename = self.__rf.get_emdb_xml(self.emdb_id)
         ret = self.get_file_from_remote_ftp(file_path=url_directory, filename=filename)
@@ -138,11 +139,14 @@ class getFilesReleaseFtpEMDB:
         Get the full EMDB FTP directory from the FTP site if it exists
         :return: True if ok, False if either does not exist or failed
         """
+        logger.debug('getting EMDB from remote FTP')
         ok = self.check_header_on_remote_ftp()
         if ok:
+            logger.debug('header found on remote FTP')
             url_directory = os.path.join(self.url_prefix, self.emdb_id)
             grf = GetRemoteFiles(server=self.server, output_path=self.get_temp_local_ftp_emdb_path())
             ret = grf.get_directory(directory=url_directory)
+            logger.debug(ret)
             if ret:
                 return True
         return False
@@ -152,8 +156,11 @@ class getFilesReleaseFtpEMDB:
         gets file from FTP site
         :return string: file name if it exists or None if it doesn't
         """
+        logger.debug('get remote file {} FTP from {}'.format(filename, file_path))
         grf = GetRemoteFiles(server=self.server, output_path=self.get_temp_local_ftp_emdb_path())
         ret = grf.get_url(directory=file_path, filename=filename)
+        logger.debug(ret)
         if ret:
             return ret[0]
         return None
+
