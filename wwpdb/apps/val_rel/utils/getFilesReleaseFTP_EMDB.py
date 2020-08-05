@@ -68,13 +68,20 @@ class getFilesReleaseFtpEMDB:
                 return file_path
         return None
 
+    def get_emdb_local_ftp_single_file(self, filename):
+        if os.path.exists(self.get_temp_local_ftp_emdb_path()):
+            file_path = os.path.join(self.get_temp_local_ftp_emdb_path(), filename)
+            if os.path.exists(file_path):
+                return file_path
+        return None
+
     def get_remote_ftp_data(self):
-        if not os.path.exists(self.get_temp_local_ftp_emdb_path()):
-            ok = self.get_emdb_from_remote_ftp()
-            if ok:
-                self.set_temp_local_ftp_as_local_ftp_path()
-                return True
-        remove_local_temp_ftp(self.setup_local_temp_ftp())
+        ok = self.get_emdb_from_remote_ftp()
+        if ok:
+            self.set_temp_local_ftp_as_local_ftp_path()
+            return True
+        else:
+            remove_local_temp_ftp(self.setup_local_temp_ftp())
 
     def get_emdb_xml(self):
         logger.debug('em XML')
@@ -161,6 +168,6 @@ class getFilesReleaseFtpEMDB:
         ret = grf.get_url(directory=file_path, filename=filename)
         logger.debug(ret)
         if ret:
-            return ret[0]
+            return self.get_emdb_local_ftp_single_file(filename=ret[0])
         return None
 
