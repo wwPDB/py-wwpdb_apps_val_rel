@@ -21,7 +21,7 @@ from wwpdb.apps.val_rel.utils.getFilesRelease import getFilesRelease
 from wwpdb.apps.val_rel.utils.mmCIFInfo import mmCIFInfo, is_simple_modification
 from wwpdb.apps.val_rel.utils.outputFiles import outputFiles
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger()
 
 
 class runValidation:
@@ -230,6 +230,8 @@ class runValidation:
         self.__rel_files.set_emdb_id(self.__emdbid)
         self.__emXmlPath = self.__rel_files.get_emdb_xml()
         self.__volPath = self.__rel_files.get_emdb_volume()
+        logger.debug('xml path: {}'.format(self.__emXmlPath))
+        logger.debug('EM vol path: {}'.format(self.__volPath))
 
     def set_entry_id(self):
         if self.__pdbid:
@@ -440,10 +442,12 @@ class runValidation:
 
                 self.__sds.setValidationRunning(False)
                 return True
-
+              
             # get EMDB data from FTP to after check for modification
             if self.__emdbid:
+                logger.debug('getting EMDB volume')
                 self.__volPath = self.__rel_files.get_emdb_volume()
+                logger.debug('getting FSC')
                 self.__fscPath = self.__rel_files.get_emdb_fsc()
 
             # worked = False
@@ -487,6 +491,7 @@ class runValidation:
                     self.__tempDir, "{}_minimal.cif".format(self.__emdbid)
                 )
                 logger.info('generating minimal cif: {}'.format(self.__modelPath))
+                logger.info('using XML file: {}'.format(self.__emXmlPath))
                 GenerateMinimalCif(emdb_xml=self.__emXmlPath).write_out(
                     output_cif=self.__modelPath
                 )
