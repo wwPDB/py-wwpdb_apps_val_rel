@@ -85,12 +85,19 @@ class CheckEntries:
         self.failed_entries = set()
         self.entries_with_failed_programs = []
 
-    def get_entries(self, skip_emdb=False):
+    def get_entries(self, skip_emdb=False, pdb_entry_file=None, emdb_entry_file=None):
         fe = FindEntries()
         pdb_entries = []
         emdb_entries = []
-        pdb_entries.extend(fe.get_added_pdb_entries())
-        pdb_entries.extend(fe.get_modified_pdb_entries())
+
+        if pdb_entry_file:
+            if os.path.exists(pdb_entry_file):
+                with open(pdb_entry_file) as in_file:
+                    for pdb_line in in_file:
+                        pdb_entries.append(pdb_line.strip())
+        else:
+            pdb_entries.extend(fe.get_added_pdb_entries())
+            pdb_entries.extend(fe.get_modified_pdb_entries())
         if not skip_emdb:
             emdb_entries.extend(fe.get_emdb_entries())
         for pdb_entry in pdb_entries:
@@ -136,9 +143,9 @@ class CheckEntries:
             out_file.write('\n'.join(self.get_failed_entries()))
 
 
-def prepare_entries_and_check(output_folder=None, failed_entries_file=None, skip_emdb=False):
+def prepare_entries_and_check(output_folder=None, failed_entries_file=None, skip_emdb=False, pdb_entry_file=None):
     ce = CheckEntries()
-    ce.get_entries(skip_emdb=skip_emdb)
+    ce.get_entries(skip_emdb=skip_emdb, pdb_entry_file=pdb_entry_file)
     ce.check_entries(output_folder=output_folder)
     print('full details of missing entries')
     pprint(ce.get_full_details())
@@ -165,12 +172,13 @@ def main():
     )
     parser.add_argument("--output_root", help="root folder to output check entries", type=str)
     parser.add_argument("--failed_entries_file", help="file to output failed entries", type=str)
+    parser.add_argument("--pdb_entry_file", help="file containing PDB entries - one per line", type=str)
     parser.add_argument('--skip_emdb', action="store_true")
     args = parser.parse_args()
     logger.setLevel(args.loglevel)
 
     prepare_entries_and_check(output_folder=args.output_root, failed_entries_file=args.failed_entries_file,
-                              skip_emdb=args.skip_emdb)
+                              skip_emdb=args.skip_emdb, pdb_entry_file=args.pdb_entry_file)
 
 
 if __name__ == '__main__':
