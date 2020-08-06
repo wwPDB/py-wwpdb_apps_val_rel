@@ -119,12 +119,12 @@ class runValidation:
 
     def getModelPath(self):
         if not self.__modelPath:
-            self.__modelPath = self.__rel_files.get_model()
+            self.set_model_file()
         return self.__modelPath
 
     def getEMXMLPath(self):
         if not self.__emXmlPath:
-            self.__emXmlPath = self.__rel_files.get_emdb_xml()
+            self.set_xml_file()
         return self.__emXmlPath
 
     @staticmethod
@@ -222,17 +222,25 @@ class runValidation:
         if self.__outputRoot:
             self.__alternativeOutputFolder = True
 
-    def set_pdb_files(self):
+    def set_model_file(self):
         self.__rel_files.set_pdb_id(self.__pdbid)
         self.__modelPath = self.__rel_files.get_model()
+
+    def set_pdb_files(self):
+        self.__rel_files.set_pdb_id(self.__pdbid)
+        self.set_model_file()
         self.__sfPath = self.__rel_files.get_sf()
         self.__csPath = self.__rel_files.get_cs()
         if not self.__csPath:
             self.__csPath = self.__rel_files.get_nmr_data()
 
-    def set_emdb_files(self):
+    def set_xml_file(self):
         self.__rel_files.set_emdb_id(self.__emdbid)
         self.__emXmlPath = self.__rel_files.get_emdb_xml()
+
+    def set_emdb_files(self):
+        self.__rel_files.set_emdb_id(self.__emdbid)
+        self.set_xml_file()
         self.__volPath = self.__rel_files.get_emdb_volume()
         logger.debug('xml path: {}'.format(self.__emXmlPath))
         logger.debug('EM vol path: {}'.format(self.__volPath))
