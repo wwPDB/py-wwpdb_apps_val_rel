@@ -38,11 +38,9 @@ class CheckResult:
 
         model_file = None
         if self.__pdbid:
-            self.rv.set_pdb_files()
             model_file = self.rv.getModelPath()
         em_xml_file = None
         if self.__emdbid:
-            self.rv.set_emdb_files()
             em_xml_file = self.rv.getEMXMLPath()
 
         simple_modification = False

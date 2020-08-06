@@ -118,9 +118,13 @@ class runValidation:
         return self.__pdbid
 
     def getModelPath(self):
+        if not self.__modelPath:
+            self.__modelPath = self.__rel_files.get_model()
         return self.__modelPath
 
     def getEMXMLPath(self):
+        if not self.__emXmlPath:
+            self.__emXmlPath = self.__rel_files.get_emdb_xml()
         return self.__emXmlPath
 
     @staticmethod
