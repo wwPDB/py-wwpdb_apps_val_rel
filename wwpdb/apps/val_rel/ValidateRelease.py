@@ -63,11 +63,15 @@ class runValidation:
         self.__skip_emdb = False
         self.__always_recalculate = False
         self.__remove_validation_files = False
+        self.__rel_files = None
 
-        self.__rel_files = getFilesRelease(siteID=self.siteID)
         self.__statefolder = None
         self.__vds = None
         self.__sds = None
+        self.__setupRelFiles()
+
+    def __setupRelFiles(self):
+        self.__rel_files = getFilesRelease(siteID=self.siteID)
 
     def setOutputRoot(self, outdir):
         self.__outputRoot = outdir
@@ -210,6 +214,8 @@ class runValidation:
         self.siteID = message.get("siteID")
         if not self.siteID:
             self.siteID = getSiteId()
+        # siteID changed, correct validation rel_files so proper session directory used
+        self.__setupRelFiles()
         self.__outputRoot = message.get("outputRoot")
         self.__skip_gzip = message.get("skipGzip", False)
         self.__skip_emdb = message.get('skip_emdb', False)
