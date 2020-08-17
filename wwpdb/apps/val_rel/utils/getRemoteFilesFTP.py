@@ -18,10 +18,15 @@ def setup_local_temp_ftp(temp_dir, suffix, session_path):
     return temp_dir
 
 
-def remove_local_temp_ftp(temp_dir):
-    if temp_dir:
-        if os.path.exists(temp_dir):
-            shutil.rmtree(temp_dir, ignore_errors=True)
+def remove_local_temp_ftp(temp_dir, require_empty=False):
+    """Removes the temporary directory. If require_empty true, will skip if not"""
+    if temp_dir and os.path.exists(temp_dir):
+        if require_empty:
+            dlist = os.listdir(temp_dir)
+            if len(dlist) > 0:
+                logger.debug("Skipping removal of %s as not empty" % temp_dir)
+                return
+        shutil.rmtree(temp_dir, ignore_errors=True)
 
 
 class GetRemoteFiles:
@@ -31,6 +36,7 @@ class GetRemoteFiles:
         self.ftp = ftplib.FTP(server)
         self.ftp.login()
         self.setup_output_path()
+        # logger.debug("Setup for %s to %s", server, output_path)
 
     def setup_output_path(self):
         if not os.path.exists(self.output_path):
@@ -43,8 +49,10 @@ class GetRemoteFiles:
 
     def get_file(self, remote_file):
         file_name = os.path.join(self.output_path, remote_file)
+        logger.debug("Transferring file %s to %s", remote_file, file_name)
         with open(file_name, 'wb') as out_file:
             self.ftp.retrbinary("RETR " + remote_file, out_file.write)
+        # logger.debug("Output exists? %s", os.path.exists(file_name))
 
     def get_size(self, remote_file):
         size = 0
@@ -69,10 +77,13 @@ class GetRemoteFiles:
         return False
 
     def get_url(self, directory=None, filename=None):
+        """Retrieves files from directory.  Returns list of files retrieved"""
         ret_files = []
+        # logger.debug("Directory %s, filename %s", directory, filename)
         if directory:
             ok = self.change_ftp_directory(directory)
             if not ok:
+                logger.error("Failed to change directory to %s", directory)
                 return []
         if filename:
             files = [filename]
