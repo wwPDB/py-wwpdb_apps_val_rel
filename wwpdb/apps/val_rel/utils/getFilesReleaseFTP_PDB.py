@@ -64,7 +64,7 @@ class getFilesReleaseFtpPDB:
             file_path = os.path.join(self.get_temp_local_ftp_path(), filename)
             if os.path.exists(file_path):
                 return file_path
-        remove_local_temp_ftp(self.setup_local_temp_ftp())
+        remove_local_temp_ftp(self.setup_local_temp_ftp(), require_empty=True)
         return None
 
     def get_file_from_remote_ftp(self, file_path, filename):
@@ -72,9 +72,11 @@ class getFilesReleaseFtpPDB:
         gets file from FTP site
         :return: True if it exists, False if it fails
         """
+        logger.debug("About to get %s %s", file_path, filename)
         print(file_path)
         grf = GetRemoteFiles(server=self.server, output_path=self.get_temp_local_ftp_path())
         ret = grf.get_url(directory=file_path, filename=filename)
+        # logger.debug("ret is %s", ret)
         if ret:
             return True
         return False
@@ -85,11 +87,15 @@ class getFilesReleaseFtpPDB:
         :param pdbid: PDB ID
         :return: file name if present or None
         """
+        # logger.debug("About to check local model %s" % self.pdb_id)
         file_name = self.check_filename(self.__local_ftp.get_model_fname(accession=self.pdb_id))
+        # logger.debug("check_filename returned %s" % file_name)
         if not file_name:
+            # logger.debug("About to get_remote_ftp_file")
             file_name = self.get_remote_ftp_file(file_path=self.__remote_ftp.get_model_path(),
                                                  filename=ReleaseFileNames().get_model(accession=self.pdb_id,
                                                                                        for_release=False))
+            # logger.debug("get_remote_ftp_file returned %s" % file_name)
         return file_name
 
     def get_sf(self):
@@ -100,11 +106,10 @@ class getFilesReleaseFtpPDB:
         """
         file_name = self.check_filename(self.__local_ftp.get_structure_factors_fname(accession=self.pdb_id))
         if not file_name:
-            if not file_name:
-                file_name = self.get_remote_ftp_file(file_path=self.__remote_ftp.get_sf_path(),
-                                                     filename=ReleaseFileNames().get_structure_factor(
-                                                         accession=self.pdb_id,
-                                                         for_release=False))
+            file_name = self.get_remote_ftp_file(file_path=self.__remote_ftp.get_sf_path(),
+                                                 filename=ReleaseFileNames().get_structure_factor(
+                                                     accession=self.pdb_id,
+                                                     for_release=False))
         return file_name
 
     def get_cs(self):
