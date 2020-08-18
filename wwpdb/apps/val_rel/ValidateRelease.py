@@ -281,6 +281,7 @@ class runValidation:
         run_pdb = []
         run_emdb = []
         run_emdb_and_pdbid = []
+        validation_ran = False
 
         if self.__emdbid:
             self.set_emdb_files()
@@ -299,7 +300,7 @@ class runValidation:
                     run_emdb_and_pdbid.append(self.get_emdb_pdb_string())
 
             run_pdb.append(self.__pdbid)
-            worked = self.run_validation()
+            worked, validation_ran = self.run_validation()
             all_worked.append(worked)
 
         if self.__emdbid:
@@ -317,7 +318,7 @@ class runValidation:
                                 self.__modelPath = self.__rel_files.get_model()
                                 if self.__modelPath:
                                     # run validation
-                                    worked = self.run_validation()
+                                    worked, validation_ran = self.run_validation()
                                     all_worked.append(worked)
                             else:
                                 logger.info('report already run for %s', self.get_emdb_pdb_string())
@@ -325,7 +326,9 @@ class runValidation:
         if self.__run_map_only:
             logger.info('{} make map only validation report without models'.format(self.__emdbid))
             self.__pdbid = None
-            # run validation
+            # run validation - forcing map only if map+model has already been run
+            if validation_ran:
+                self.setAlwaysRecalculate(True)
             worked = self.run_validation()
             logger.info('map only validation worked: {}'.format(worked))
             all_worked.append(worked)
@@ -435,6 +438,8 @@ class runValidation:
 
     def run_validation(self):
 
+        validation_run = False
+
         self.__sds.setValidationRunning(True)
         try:
             if self.__emdbid:
@@ -453,7 +458,7 @@ class runValidation:
                     self.__pdbid, self.__emdbid))
 
                 self.__sds.setValidationRunning(False)
-                return True
+                return True, validation_run
               
             # get EMDB data from FTP to after check for modification
             if self.__emdbid:
@@ -485,7 +490,7 @@ class runValidation:
                 if not self.__csPath:
                     logger.error('CS star to cif conversion failed')
                     self.__sds.setValidationRunning(False)
-                    return False
+                    return False, validation_run
 
             logger.info("Entry output folder: %s", self.__entry_output_folder)
 
@@ -543,6 +548,8 @@ class runValidation:
             output_file_list = vr.run(data_dict)
             logger.info("Returning with %s", output_file_list)
 
+            validation_run = True
+
             # make output directory if it doesn't exist
             if not os.path.exists(self.__entry_output_folder):
                 os.makedirs(self.__entry_output_folder)
@@ -555,7 +562,7 @@ class runValidation:
                 if not ok:
                     logger.error("failed to copy to emdb folder")
                     self.__sds.setValidationRunning(False)
-                    return False
+                    return False, validation_run
 
             output_file_list = []
             for key in self.__output_file_dict:
@@ -581,12 +588,12 @@ class runValidation:
                                    output_folder=self.__entry_image_output_folder)
 
             self.__sds.setValidationRunning(False)
-            return True
+            return True, validation_run
 
         except Exception as e:
             logger.exception(e)
             self.__sds.setValidationRunning(False)
-            return False
+            return False, False
 
 
 def main():
