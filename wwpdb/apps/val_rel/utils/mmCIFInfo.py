@@ -4,6 +4,26 @@ from mmcif.io.IoAdapterCore import IoAdapterCore as IoAdapterCore
 
 logger = logging.getLogger(__name__)
 
+def is_simple_modification(model_path):
+    """if there are only simple changes based the audit - skip calculation of validation report
+    (currently, citation, citation_author and pdbx_audit_support)
+
+    returns True is only simple changes present
+    """
+
+    SKIP_LIST = ['citation', 'citation_author', 'pdbx_audit_support']
+
+    cf = mmCIFInfo(model_path)
+    modified_cats = cf.get_latest_modified_categories()
+    if modified_cats:
+        for item in modified_cats:
+            if item not in SKIP_LIST:
+                return False
+
+        logger.info('%s only a simple modification: %s', model_path, ','.join(modified_cats))
+        return True
+    return False
+
 
 class mmCIFInfo:
     """Class for parsing model file mmCIF file"""

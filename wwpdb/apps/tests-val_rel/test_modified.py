@@ -23,9 +23,9 @@ class ModifiedFolderTests(unittest.TestCase):
         touch(self.emdb_file)
         self.output_dir = tempfile.mkdtemp()
         self.pdb_output_folder = os.path.join(
-            self.output_dir, self.pdbid_hash, self.pdbid
+            self.output_dir, 'pdb', self.pdbid_hash, self.pdbid
         )
-        self.emdb_output_folder = os.path.join(self.output_dir, self.emdb)
+        self.emdb_output_folder = os.path.join(self.output_dir, 'emd', self.emdb, 'validation')
         self.rv = runValidation()
         self.rv.setOutputRoot(self.output_dir)
         time.sleep(1)

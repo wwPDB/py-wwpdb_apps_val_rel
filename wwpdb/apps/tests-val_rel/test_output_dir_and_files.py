@@ -17,21 +17,21 @@ class OuputFolderTests(unittest.TestCase):
         self.rv = runValidation()
 
     def test_pdbid(self):
-        output_dir = os.path.join(self.output_folder, self.pdbid_hash, self.pdbid)
+        output_dir = os.path.join(self.output_folder, 'pdb', self.pdbid_hash, self.pdbid)
         self.rv.setPdbId(self.pdbid)
         self.rv.setOutputRoot(self.output_folder)
         self.rv.set_output_dir_and_files()
         self.assertTrue(self.rv.getEntryOutputFolder() == output_dir)
 
     def test_emdbid(self):
-        output_dir = os.path.join(self.output_folder, self.emdb)
+        output_dir = os.path.join(self.output_folder, 'emd', self.emdb, 'validation')
         self.rv.setEmdbId(self.emdb)
         self.rv.setOutputRoot(self.output_folder)
         self.rv.set_output_dir_and_files()
         self.assertTrue(self.rv.getEntryOutputFolder() == output_dir)
 
     def test_pdbid_and_emdbid(self):
-        output_dir = os.path.join(self.output_folder, self.pdbid_hash, self.pdbid)
+        output_dir = os.path.join(self.output_folder, 'pdb', self.pdbid_hash, self.pdbid)
         self.rv.setPdbId(self.pdbid)
         self.rv.setEmdbId(self.emdb)
         self.rv.setOutputRoot(self.output_folder)

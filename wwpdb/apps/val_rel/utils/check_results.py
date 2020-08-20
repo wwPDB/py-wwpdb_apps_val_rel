@@ -5,9 +5,10 @@ from pprint import pprint
 
 from wwpdb.apps.validation.src.utils.validation_xml_reader import ValidationXMLReader
 
-from wwpdb.apps.val_rel.ValidateRelease import runValidation, is_simple_modification
+from wwpdb.apps.val_rel.ValidateRelease import runValidation
 from wwpdb.apps.val_rel.utils.Files import get_gzip_name
 from wwpdb.apps.val_rel.utils.FindEntries import FindEntries
+from wwpdb.apps.val_rel.utils.mmCIFInfo import is_simple_modification
 
 logger = logging.getLogger(__name__)
 
@@ -37,11 +38,9 @@ class CheckResult:
 
         model_file = None
         if self.__pdbid:
-            self.rv.set_pdb_files()
             model_file = self.rv.getModelPath()
         em_xml_file = None
         if self.__emdbid:
-            self.rv.set_emdb_files()
             em_xml_file = self.rv.getEMXMLPath()
 
         simple_modification = False
@@ -58,7 +57,8 @@ class CheckResult:
                 output_file = output_file_dict[output_file_type]
                 gzipped_output_file = get_gzip_name(output_file)
                 if not os.path.exists(gzipped_output_file):
-                    self.missing_files.setdefault(output_file_type, []).append({self.rv.getEntryId(): gzipped_output_file})
+                    self.missing_files.setdefault(output_file_type, []).append(
+                        {self.rv.getEntryId(): gzipped_output_file})
 
             self.check_failed_programs()
 
@@ -83,12 +83,19 @@ class CheckEntries:
         self.failed_entries = set()
         self.entries_with_failed_programs = []
 
-    def get_entries(self, skip_emdb=False):
+    def get_entries(self, skip_emdb=False, pdb_entry_file=None, emdb_entry_file=None):
         fe = FindEntries()
         pdb_entries = []
         emdb_entries = []
-        pdb_entries.extend(fe.get_added_pdb_entries())
-        pdb_entries.extend(fe.get_modified_pdb_entries())
+
+        if pdb_entry_file:
+            if os.path.exists(pdb_entry_file):
+                with open(pdb_entry_file) as in_file:
+                    for pdb_line in in_file:
+                        pdb_entries.append(pdb_line.strip())
+        else:
+            pdb_entries.extend(fe.get_added_pdb_entries())
+            pdb_entries.extend(fe.get_modified_pdb_entries())
         if not skip_emdb:
             emdb_entries.extend(fe.get_emdb_entries())
         for pdb_entry in pdb_entries:
@@ -129,10 +136,14 @@ class CheckEntries:
     def get_failed_entries(self):
         return list(self.failed_entries)
 
+    def write_missing(self, output_file):
+        with open(output_file, 'w') as out_file:
+            out_file.write('\n'.join(self.get_failed_entries()))
 
-def prepare_entries_and_check(output_folder=None, failed_entries_file=None, skip_emdb=False):
+
+def prepare_entries_and_check(output_folder=None, failed_entries_file=None, skip_emdb=False, pdb_entry_file=None):
     ce = CheckEntries()
-    ce.get_entries(skip_emdb=skip_emdb)
+    ce.get_entries(skip_emdb=skip_emdb, pdb_entry_file=pdb_entry_file)
     ce.check_entries(output_folder=output_folder)
     print('full details of missing entries')
     pprint(ce.get_full_details())
@@ -140,8 +151,7 @@ def prepare_entries_and_check(output_folder=None, failed_entries_file=None, skip
     print('entries with failed programs: {}'.format(','.join(ce.get_entries_with_failed_programs())))
 
     if failed_entries_file:
-        with open(failed_entries_file, 'w') as out_file:
-            out_file.write('\n'.join(ce.get_failed_entries()))
+        ce.write_missing(failed_entries_file)
 
 
 def main():
@@ -160,12 +170,13 @@ def main():
     )
     parser.add_argument("--output_root", help="root folder to output check entries", type=str)
     parser.add_argument("--failed_entries_file", help="file to output failed entries", type=str)
+    parser.add_argument("--pdb_entry_file", help="file containing PDB entries - one per line", type=str)
     parser.add_argument('--skip_emdb', action="store_true")
     args = parser.parse_args()
     logger.setLevel(args.loglevel)
 
     prepare_entries_and_check(output_folder=args.output_root, failed_entries_file=args.failed_entries_file,
-                              skip_emdb=args.skip_emdb)
+                              skip_emdb=args.skip_emdb, pdb_entry_file=args.pdb_entry_file)
 
 
 if __name__ == '__main__':
