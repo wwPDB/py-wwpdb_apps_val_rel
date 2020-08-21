@@ -12,11 +12,7 @@ from wwpdb.apps.val_rel.utils.XmlInfo import XmlInfo
 from wwpdb.apps.val_rel.utils.getFilesRelease import getFilesRelease
 from wwpdb.apps.val_rel.utils.mmCIFInfo import mmCIFInfo
 
-# Create logger -
-FORMAT = '[%(asctime)s %(levelname)s]-%(module)s.%(funcName)s: %(message)s'
-logging.basicConfig(format=FORMAT)
 logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
 
 
 class PopulateValidateRelease:
@@ -168,6 +164,11 @@ class PopulateValidateRelease:
 
 
 def main():
+    # Create logger -
+    FORMAT = '[%(asctime)s %(levelname)s]-%(module)s.%(funcName)s: %(message)s'
+    logging.basicConfig(format=FORMAT)
+    logger.setLevel(logging.DEBUG)
+
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "-d",
