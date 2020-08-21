@@ -73,7 +73,6 @@ class getFilesReleaseFtpPDB:
         :return: True if it exists, False if it fails
         """
         logger.debug("About to get %s %s", file_path, filename)
-        print(file_path)
         grf = GetRemoteFiles(server=self.server, output_path=self.get_temp_local_ftp_path())
         ret = grf.get_url(directory=file_path, filename=filename)
         # logger.debug("ret is %s", ret)
