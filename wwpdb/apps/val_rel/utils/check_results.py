@@ -179,7 +179,6 @@ def main():
     args = parser.parse_args()
     logger.setLevel(args.loglevel)
 
-    print args
     prepare_entries_and_check(siteID=args.site_id, output_folder=args.output_root, failed_entries_file=args.failed_entries_file,
                               skip_emdb=args.skip_emdb, pdb_entry_file=args.pdb_entry_file)
 
