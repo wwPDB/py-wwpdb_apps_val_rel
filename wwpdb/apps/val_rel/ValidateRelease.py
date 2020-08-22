@@ -408,13 +408,16 @@ class runValidation:
         start_cut_off_time, end_cut_off_time = get_start_end_cut_off(cut_off_times=cut_off_times)
         return start_cut_off_time, end_cut_off_time
 
-    def is_ok_to_copy(self, now=datetime.now()):
+    def is_ok_to_copy(self, now=None):
         """
         Checks if its ok to copy the files to the Output folder.
         If an alternative output folder has been given then its always ok to copy
         :param now: time to check
         :return: True if ok, False if not
         """
+        if now is None:
+            now=datetime.now()
+    
         if self.__alternativeOutputFolder:
             return True
         start_cut_off_time, end_cut_off_time = self.get_start_end_cut_off()
