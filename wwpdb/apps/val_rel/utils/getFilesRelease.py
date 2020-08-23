@@ -27,18 +27,26 @@ class getFilesRelease:
         self.__tempFTP = None
 
     def set_pdb_id(self, pdb_id):
-        self.pdb_id = pdb_id
-        self.__release_file_from_onedep = getFilesReleaseOneDep(siteID=self.__siteID,
-                                                                pdb_id=self.pdb_id,
-                                                                emdb_id=self.emdb_id)
-        self.__release_file_from_ftp_pdb = getFilesReleaseFtpPDB(site_id=self.__siteID, pdbid=pdb_id)
+        """Sets up pdb_id for processing release files"""
+
+        # Do not create a new path if same pdb_id. Prevents excessive downloads
+        if self.pdb_id != pdb_id:
+            self.pdb_id = pdb_id
+            self.__release_file_from_onedep = getFilesReleaseOneDep(siteID=self.__siteID,
+                                                                    pdb_id=self.pdb_id,
+                                                                    emdb_id=self.emdb_id)
+            self.__release_file_from_ftp_pdb = getFilesReleaseFtpPDB(site_id=self.__siteID, pdbid=pdb_id)
 
     def set_emdb_id(self, emdb_id):
-        self.emdb_id = emdb_id
-        self.__release_file_from_onedep = getFilesReleaseOneDep(siteID=self.__siteID,
-                                                                pdb_id=self.pdb_id,
-                                                                emdb_id=emdb_id)
-        self.__release_file_from_ftp_emdb = getFilesReleaseFtpEMDB(site_id=self.__siteID, emdbid=emdb_id)
+        """Sets up emdb_id for processing release files"""
+
+        # Do not create a new path if same pdb_id
+        if self.emdb_id != emdb_id:
+            self.emdb_id = emdb_id
+            self.__release_file_from_onedep = getFilesReleaseOneDep(siteID=self.__siteID,
+                                                                    pdb_id=self.pdb_id,
+                                                                    emdb_id=emdb_id)
+            self.__release_file_from_ftp_emdb = getFilesReleaseFtpEMDB(site_id=self.__siteID, emdbid=emdb_id)
 
     def get_model(self):
         """
