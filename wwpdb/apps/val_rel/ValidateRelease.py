@@ -362,6 +362,9 @@ class runValidation:
             remove_files(emdb_output_file_dict.values())
 
     def copy_to_emdb(self, copy_to_root_emdb=False):
+        """ For map + model validation report, copy the validation report to names for EMDB, and then 
+            copy to proper output directory with potential compression
+        """
         if self.__emdbid:
             temp_output_dir = tempfile.mkdtemp(
                 dir=self.__sessionPath,
@@ -397,6 +400,9 @@ class runValidation:
                 else:
                     self.__gzip_output(filelist=files_to_copy, output_folder=__emdb_output_folder)
 
+            # Clean up intermediate staging directoy
+            shutil.rmtree(temp_output_dir)
+
         return True
 
     def get_start_end_cut_off(self):
@@ -427,7 +433,7 @@ class runValidation:
                           )
 
     def __gzip_output(self, filelist, output_folder):
-        """Compresses list of files"""
+        """Creates compressed file in place and then copy to output_folder"""
         if self.is_ok_to_copy():
             logger.debug('gzip files: {}'.format(filelist))
             for f in filelist:
