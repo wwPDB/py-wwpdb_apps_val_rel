@@ -81,7 +81,7 @@ class getFilesReleaseFtpEMDB:
             self.set_temp_local_ftp_as_local_ftp_path()
             return True
         else:
-            remove_local_temp_ftp(self.setup_local_temp_ftp())
+            remove_local_temp_ftp(self.setup_local_temp_ftp(), require_empty=True)
 
     def get_emdb_xml(self):
         logger.debug('em XML')
@@ -95,7 +95,7 @@ class getFilesReleaseFtpEMDB:
                                                       file_path=os.path.join(self.url_prefix, self.emdb_xml_folder()))
 
             if not file_name:
-                remove_local_temp_ftp(self.setup_local_temp_ftp())
+                remove_local_temp_ftp(self.setup_local_temp_ftp(), require_empty=True)
         logger.debug('returning: {}'.format(file_name))
         return file_name
 
@@ -123,7 +123,7 @@ class getFilesReleaseFtpEMDB:
             file_name = self.get_file_from_remote_ftp(filename=self.__rf.get_emdb_fsc(self.emdb_id),
                                                       file_path=os.path.join(self.url_prefix, self.emdb_fsc_folder()))
             if not file_name:
-                remove_local_temp_ftp(self.setup_local_temp_ftp())
+                remove_local_temp_ftp(self.setup_local_temp_ftp(), require_empty=True)
         logger.debug('returning: {}'.format(file_name))
         return file_name
 
