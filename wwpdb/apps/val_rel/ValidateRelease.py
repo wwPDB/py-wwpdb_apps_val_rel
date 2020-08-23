@@ -44,7 +44,6 @@ class runValidation:
         self.__emXmlPath = None
         self.__volPath = None
         self.__fscPath = None
-        self.__tempDir = None
         self.__runDir = None
         self.__sessionPath = None
         # self.contour_level = None # not needed as its in the xml
@@ -490,7 +489,7 @@ class runValidation:
                 dir=self.__sessionPath,
                 prefix="{}_validation_release_".format(self.__entry_id),
             )
-            self.__tempDir = tempfile.mkdtemp(
+            sessTempDir = tempfile.mkdtemp(
                 dir=self.__runDir,
                 prefix="{}_validation_release_temp_dir_".format(self.__entry_id),
             )
@@ -500,9 +499,10 @@ class runValidation:
             )
             self.set_output_dir_and_files()
 
+            csPath = None
             if self.__csPath:
-                self.__csPath = convert_cs_file(cs_file=self.__csPath, working_dir=self.__tempDir)
-                if not self.__csPath:
+                csPath = convert_cs_file(cs_file=self.__csPath, working_dir=sessTempDir)
+                if not csPath:
                     logger.error('CS star to cif conversion failed')
                     self.__sds.setValidationRunning(False)
                     return False, validation_run
@@ -520,7 +520,7 @@ class runValidation:
             # map only generation
             if not self.__pdbid:
                 self.__modelPath = os.path.join(
-                    self.__tempDir, "{}_minimal.cif".format(self.__emdbid)
+                    sessTempDir, "{}_minimal.cif".format(self.__emdbid)
                 )
                 logger.info('generating minimal cif: {}'.format(self.__modelPath))
                 logger.info('using XML file: {}'.format(self.__emXmlPath))
@@ -533,7 +533,7 @@ class runValidation:
             logger.info("input files")
             logger.info("model: %s", self.__modelPath)
             logger.info("SF: %s", self.__sfPath)
-            logger.info("cs: %s", self.__csPath)
+            logger.info("cs: %s", csPath)
             logger.info("EM volume: %s", self.__volPath)
             logger.info("EM XML: %s", self.__emXmlPath)
             logger.info("entry_id: %s", self.__entry_id)
@@ -543,13 +543,13 @@ class runValidation:
             data_dict = {
                 "model": self.__modelPath,
                 "sf": self.__sfPath,
-                "cs": self.__csPath,
+                "cs": csPath,
                 "emvol": self.__volPath,
                 "emxml": self.__emXmlPath,
                 "pdb_id": self.__pdbid,
                 "entry_id": self.__entry_id,
                 "emdb_id": self.__emdbid,
-                "tempDir": self.__tempDir,
+                "tempDir": sessTempDir,
                 "rundir": run_dir,
                 "fsc": self.__fscPath,
                 "keeplog": self.__keepLog,
