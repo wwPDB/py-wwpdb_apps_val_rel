@@ -21,8 +21,8 @@ def already_run(test_file, output_folder):
                 logger.info("validation to be run")
                 return False
         else:
-            logger.info("missing input file - not running")
+            logger.info("missing input file %s - not running", test_file)
             return True
     else:
-        logger.info("missing input file - not running")
+        logger.info("missing input file - %s - not running", test_file)
         return True
