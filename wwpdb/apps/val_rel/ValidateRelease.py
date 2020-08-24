@@ -263,6 +263,8 @@ class runValidation:
     def __cleanup(self):
         """Cleanup handler on finishing process"""
         self.__rel_files.remove_local_temp_files()
+        if self.__runDir is not None and not self.__keepLog and os.path.exists(self.__runDir):
+            shutil.rmtree(self.__runDir)
 
     def run_process(self, message):
         """Process message and act on it.  This is the main entry point"""
