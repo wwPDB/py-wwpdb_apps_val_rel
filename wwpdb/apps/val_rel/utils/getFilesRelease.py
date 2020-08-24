@@ -48,6 +48,11 @@ class getFilesRelease:
                                                                     emdb_id=emdb_id)
             self.__release_file_from_ftp_emdb = getFilesReleaseFtpEMDB(site_id=self.__siteID, emdbid=emdb_id)
 
+    def remove_local_temp_files(self):
+        """Removes any temporary FTP directories"""
+        self.__release_file_from_ftp_pdb.remove_local_temp_files()
+        self.__release_file_from_ftp_emdb.remove_local_temp_files()
+
     def get_model(self):
         """
         get the PDB model file - from OneDep then local FTP

@@ -260,24 +260,31 @@ class runValidation:
             return False
         return True
 
+    def __cleanup(self):
+        """Cleanup handler on finishing process"""
+        self.__rel_files.remove_local_temp_files()
+
     def run_process(self, message):
-        """Process message and act on it"""
+        """Process message and act on it.  This is the main entry point"""
 
         self.process_message(message)
         ret = self.set_entry_id()
         if not ret:
+            self.__cleanup()
             return False
 
         self.__temp_output_dir = None
         self.set_output_dir_and_files()  # To get statefolder and prepare for removal
         if self.__remove_validation_files:
             self.remove_existing_files()
+            self.__cleanup()
             return True
 
         # If validation already running skip - will reschedule later
         self.__sds = ValDataStore(self.__entry_id, self.__statefolder)
         if self.__sds.isValidationRunning is True:
             logger.info("Skipping run of %s as run in progress", self.__entry_id)
+            self.__cleanup()
             return True
 
         logger.info("running validation for %s, %s", self.__pdbid, self.__emdbid)
@@ -338,6 +345,8 @@ class runValidation:
             logger.info('map only validation worked: {}'.format(worked))
             all_worked.append(worked)
 
+        # Cleanup ftp temp
+        self.__cleanup()
         if list(set(all_worked)) == [True]:
             return True
         else:

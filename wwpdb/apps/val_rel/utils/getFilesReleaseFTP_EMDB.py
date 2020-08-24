@@ -10,7 +10,7 @@ from wwpdb.utils.config.ConfigInfo import getSiteId
 logger = logging.getLogger(__name__)
 
 
-class getFilesReleaseFtpEMDB:
+class getFilesReleaseFtpEMDB(object):
     def __init__(self, emdbid, site_id=getSiteId(), local_ftp_emdb_path=None):
         self.__site_id = site_id
         self.__rf = ReleaseFileNames()
@@ -47,6 +47,13 @@ class getFilesReleaseFtpEMDB:
                                                          session_path=session_path
                                                          )
         return self.__temp_local_ftp
+
+    def remove_local_temp_files(self):
+        """Cleanup of local ftp diretcory if present"""
+
+        logger.debug("Cleaning up FTP EMDB local directory %s", self.__temp_local_ftp)
+        if self.__temp_local_ftp and os.path.exists(self.__temp_local_ftp):
+            remove_local_temp_ftp(self.__temp_local_ftp, require_empty=False)
 
     def set_temp_local_ftp_as_local_ftp_path(self):
         self.setup_local_temp_ftp()

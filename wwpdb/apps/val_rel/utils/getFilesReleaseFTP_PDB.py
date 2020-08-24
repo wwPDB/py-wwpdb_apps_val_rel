@@ -11,7 +11,7 @@ from wwpdb.io.locator.localFTPPathInfo import LocalFTPPathInfo
 logger = logging.getLogger(__name__)
 
 
-class getFilesReleaseFtpPDB:
+class getFilesReleaseFtpPDB(object):
     def __init__(self, pdbid, site_id=getSiteId()):
         self.__site_id = site_id
         self.__rf = ReleaseFileNames()
@@ -52,6 +52,14 @@ class getFilesReleaseFtpPDB:
         return os.path.join(self.setup_local_temp_ftp(),
                             self.pdb_id)
 
+    def remove_local_temp_files(self):
+        """Cleanup of local ftp diretcory if present"""
+
+        logger.debug("Cleaning up FTP local directory %s", self.__local_ftp_path)
+        if self.__local_ftp_path and os.path.exists(self.__local_ftp_path):
+            remove_local_temp_ftp(self.__local_ftp_path, require_empty=False)
+
+
     def get_remote_ftp_file(self, file_path, filename):
         """
         Get a file from the remote FTP
@@ -72,7 +80,7 @@ class getFilesReleaseFtpPDB:
         gets file from FTP site
         :return: True if it exists, False if it fails
         """
-        logger.debug("About to get %s %s", file_path, filename)
+        logger.debug("About to get %s %s to %s", file_path, filename, self.get_temp_local_ftp_path())
         grf = GetRemoteFiles(server=self.server, output_path=self.get_temp_local_ftp_path())
         ret = grf.get_url(directory=file_path, filename=filename)
         # logger.debug("ret is %s", ret)
