@@ -94,15 +94,12 @@ class getFilesReleaseFtpPDB(object):
         :param pdbid: PDB ID
         :return: file name if present or None
         """
-        # logger.debug("About to check local model %s" % self.pdb_id)
-        file_name = self.check_filename(self.__local_ftp.get_model_fname(accession=self.pdb_id))
-        # logger.debug("check_filename returned %s" % file_name)
+        fpart = ReleaseFileNames().get_model(accession=self.pdb_id, for_release=False)
+        file_path = os.path.join(self.get_temp_local_ftp_path(), fpart)
+        file_name = self.check_filename(file_path)
         if not file_name:
-            # logger.debug("About to get_remote_ftp_file")
             file_name = self.get_remote_ftp_file(file_path=self.__remote_ftp.get_model_path(),
-                                                 filename=ReleaseFileNames().get_model(accession=self.pdb_id,
-                                                                                       for_release=False))
-            # logger.debug("get_remote_ftp_file returned %s" % file_name)
+                                                 filename=fpart)
         return file_name
 
     def get_sf(self):
@@ -111,12 +108,12 @@ class getFilesReleaseFtpPDB(object):
         :param pdbid: PDB ID
         :return: file name if present or None
         """
-        file_name = self.check_filename(self.__local_ftp.get_structure_factors_fname(accession=self.pdb_id))
+        fpart = ReleaseFileNames().get_structure_factor(accession=self.pdb_id, for_release=False)
+        file_path = os.path.join(self.get_temp_local_ftp_path(), fpart)
+        file_name = self.check_filename(file_path)
         if not file_name:
             file_name = self.get_remote_ftp_file(file_path=self.__remote_ftp.get_sf_path(),
-                                                 filename=ReleaseFileNames().get_structure_factor(
-                                                     accession=self.pdb_id,
-                                                     for_release=False))
+                                                 filename=fpart)
         return file_name
 
     def get_cs(self):
@@ -125,11 +122,12 @@ class getFilesReleaseFtpPDB(object):
         :param pdbid: PDB ID
         :return: file name if present or None
         """
-        file_name = self.check_filename(self.__local_ftp.get_chemical_shifts_fname(accession=self.pdb_id))
+        fpart = ReleaseFileNames().get_chemical_shifts(accession=self.pdb_id, for_release=False)
+        file_path = os.path.join(self.get_temp_local_ftp_path(), fpart)                                                                                           
+        file_name = self.check_filename(file_path)
         if not file_name:
             file_name = self.get_remote_ftp_file(file_path=self.__remote_ftp.get_cs_path(),
-                                                 filename=ReleaseFileNames().get_chemical_shifts(accession=self.pdb_id,
-                                                                                                 for_release=False))
+                                                 filename=fpart)
         return file_name
 
     def get_nmr_data(self):
@@ -138,10 +136,11 @@ class getFilesReleaseFtpPDB(object):
         :param pdbid: PDB ID
         :return: file name if present or None
         """
-        file_name = self.check_filename(self.__local_ftp.get_nmr_data_fname(accession=self.pdb_id))
+        fpart = ReleaseFileNames().get_nmr_data(accession=self.pdb_id, for_release=False)
+        file_path = os.path.join(self.get_temp_local_ftp_path(), fpart)
+        file_name = self.check_filename(file_path)
         if not file_name:
             file_name = self.get_remote_ftp_file(file_path=self.__remote_ftp.get_nmr_data_path(),
-                                                 filename=ReleaseFileNames().get_nmr_data(accession=self.pdb_id,
-                                                                                          for_release=False))
+                                                 filename=fpart)
 
         return file_name
