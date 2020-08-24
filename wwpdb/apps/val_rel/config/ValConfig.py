@@ -13,7 +13,9 @@ from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
 
 
 class ValConfig(object):
-    def __init__(self, site_id=getSiteId()):
+    def __init__(self, site_id=None):
+        if site_id is None:
+            site_id = getSiteId()
         self.__site_id = site_id
         self.__cI = ConfigInfo(self.__site_id)
 
