@@ -126,6 +126,7 @@ class PopulateValidateRelease:
                     message = {"emdbID": emdb_entry}
                     self.messages.append(message)
                     self.added_entries.append(emdb_entry)
+                re.remove_local_temp_files()
 
     def process_pdb_entries(self):
         for pdb_entry in self.pdb_entries:
