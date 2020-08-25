@@ -260,9 +260,10 @@ class runValidation:
             return False
         return True
 
-    def __cleanup(self):
+    def __cleanup(self, onlyRunDir=False):
         """Cleanup handler on finishing process"""
-        self.__rel_files.remove_local_temp_files()
+        if not onlyRunDir:
+            self.__rel_files.remove_local_temp_files()
         if self.__runDir is not None and not self.__keepLog and os.path.exists(self.__runDir):
             shutil.rmtree(self.__runDir)
 
@@ -315,6 +316,7 @@ class runValidation:
 
             run_pdb.append(self.__pdbid)
             worked, validation_ran = self.run_validation()
+            self.__cleanup(onlyRunDir=True)
             all_worked.append(worked)
 
         if self.__emdbid:
@@ -334,6 +336,7 @@ class runValidation:
                                     # run validation
                                     worked, validation_ran = self.run_validation()
                                     all_worked.append(worked)
+                                    self.__cleanup(onlyRunDir=True)
                             else:
                                 logger.info('report already run for %s', self.get_emdb_pdb_string())
 
@@ -344,6 +347,7 @@ class runValidation:
             if validation_ran:
                 self.setAlwaysRecalculate(True)
             worked = self.run_validation()
+            # Not needed as fallthrough self.__cleanup(onlyRunDir=True)
             logger.info('map only validation worked: {}'.format(worked))
             all_worked.append(worked)
 
@@ -500,6 +504,7 @@ class runValidation:
                 dir=self.__sessionPath,
                 prefix="{}_validation_release_".format(self.__entry_id),
             )
+
             sessTempDir = tempfile.mkdtemp(
                 dir=self.__runDir,
                 prefix="{}_validation_release_temp_dir_".format(self.__entry_id),
