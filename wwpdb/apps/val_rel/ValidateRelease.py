@@ -479,6 +479,9 @@ class runValidation:
                 self.__rel_files.set_pdb_id(self.__pdbid)
                 self.__sfPath = self.__rel_files.get_sf()
                 self.__csPath = self.__rel_files.get_cs()
+                if not self.__csPath:
+                    self.__csPath = self.__rel_files.get_nmr_data()
+
 
             # check if any input files have changed and set output folders
             is_modified = self.check_modified()
