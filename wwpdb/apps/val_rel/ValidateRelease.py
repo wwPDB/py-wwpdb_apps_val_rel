@@ -44,7 +44,6 @@ class runValidation:
         self.__emXmlPath = None
         self.__volPath = None
         self.__fscPath = None
-        self.__tempDir = None
         self.__runDir = None
         self.__sessionPath = None
         # self.contour_level = None # not needed as its in the xml
@@ -261,24 +260,34 @@ class runValidation:
             return False
         return True
 
+    def __cleanup(self, onlyRunDir=False):
+        """Cleanup handler on finishing process"""
+        if not onlyRunDir:
+            self.__rel_files.remove_local_temp_files()
+        if self.__runDir is not None and not self.__keepLog and os.path.exists(self.__runDir):
+            shutil.rmtree(self.__runDir)
+
     def run_process(self, message):
-        """Process message and act on it"""
+        """Process message and act on it.  This is the main entry point"""
 
         self.process_message(message)
         ret = self.set_entry_id()
         if not ret:
+            self.__cleanup()
             return False
 
         self.__temp_output_dir = None
         self.set_output_dir_and_files()  # To get statefolder and prepare for removal
         if self.__remove_validation_files:
             self.remove_existing_files()
+            self.__cleanup()
             return True
 
         # If validation already running skip - will reschedule later
         self.__sds = ValDataStore(self.__entry_id, self.__statefolder)
         if self.__sds.isValidationRunning is True:
             logger.info("Skipping run of %s as run in progress", self.__entry_id)
+            self.__cleanup()
             return True
 
         logger.info("running validation for %s, %s", self.__pdbid, self.__emdbid)
@@ -307,6 +316,7 @@ class runValidation:
 
             run_pdb.append(self.__pdbid)
             worked, validation_ran = self.run_validation()
+            self.__cleanup(onlyRunDir=True)
             all_worked.append(worked)
 
         if self.__emdbid:
@@ -326,6 +336,7 @@ class runValidation:
                                     # run validation
                                     worked, validation_ran = self.run_validation()
                                     all_worked.append(worked)
+                                    self.__cleanup(onlyRunDir=True)
                             else:
                                 logger.info('report already run for %s', self.get_emdb_pdb_string())
 
@@ -336,9 +347,12 @@ class runValidation:
             if validation_ran:
                 self.setAlwaysRecalculate(True)
             worked = self.run_validation()
+            # Not needed as fallthrough self.__cleanup(onlyRunDir=True)
             logger.info('map only validation worked: {}'.format(worked))
             all_worked.append(worked)
 
+        # Cleanup ftp temp
+        self.__cleanup()
         if list(set(all_worked)) == [True]:
             return True
         else:
@@ -362,6 +376,9 @@ class runValidation:
             remove_files(emdb_output_file_dict.values())
 
     def copy_to_emdb(self, copy_to_root_emdb=False):
+        """ For map + model validation report, copy the validation report to names for EMDB, and then 
+            copy to proper output directory with potential compression
+        """
         if self.__emdbid:
             temp_output_dir = tempfile.mkdtemp(
                 dir=self.__sessionPath,
@@ -397,6 +414,9 @@ class runValidation:
                 else:
                     self.__gzip_output(filelist=files_to_copy, output_folder=__emdb_output_folder)
 
+            # Clean up intermediate staging directoy
+            shutil.rmtree(temp_output_dir)
+
         return True
 
     def get_start_end_cut_off(self):
@@ -408,13 +428,16 @@ class runValidation:
         start_cut_off_time, end_cut_off_time = get_start_end_cut_off(cut_off_times=cut_off_times)
         return start_cut_off_time, end_cut_off_time
 
-    def is_ok_to_copy(self, now=datetime.now()):
+    def is_ok_to_copy(self, now=None):
         """
         Checks if its ok to copy the files to the Output folder.
         If an alternative output folder has been given then its always ok to copy
         :param now: time to check
         :return: True if ok, False if not
         """
+        if now is None:
+            now=datetime.now()
+    
         if self.__alternativeOutputFolder:
             return True
         start_cut_off_time, end_cut_off_time = self.get_start_end_cut_off()
@@ -424,7 +447,7 @@ class runValidation:
                           )
 
     def __gzip_output(self, filelist, output_folder):
-        """Compresses list of files"""
+        """Creates compressed file in place and then copy to output_folder"""
         if self.is_ok_to_copy():
             logger.debug('gzip files: {}'.format(filelist))
             for f in filelist:
@@ -456,6 +479,9 @@ class runValidation:
                 self.__rel_files.set_pdb_id(self.__pdbid)
                 self.__sfPath = self.__rel_files.get_sf()
                 self.__csPath = self.__rel_files.get_cs()
+                if not self.__csPath:
+                    self.__csPath = self.__rel_files.get_nmr_data()
+
 
             # check if any input files have changed and set output folders
             is_modified = self.check_modified()
@@ -481,7 +507,8 @@ class runValidation:
                 dir=self.__sessionPath,
                 prefix="{}_validation_release_".format(self.__entry_id),
             )
-            self.__tempDir = tempfile.mkdtemp(
+
+            sessTempDir = tempfile.mkdtemp(
                 dir=self.__runDir,
                 prefix="{}_validation_release_temp_dir_".format(self.__entry_id),
             )
@@ -491,9 +518,10 @@ class runValidation:
             )
             self.set_output_dir_and_files()
 
+            csPath = None
             if self.__csPath:
-                self.__csPath = convert_cs_file(cs_file=self.__csPath, working_dir=self.__tempDir)
-                if not self.__csPath:
+                csPath = convert_cs_file(cs_file=self.__csPath, working_dir=sessTempDir)
+                if not csPath:
                     logger.error('CS star to cif conversion failed')
                     self.__sds.setValidationRunning(False)
                     return False, validation_run
@@ -511,7 +539,7 @@ class runValidation:
             # map only generation
             if not self.__pdbid:
                 self.__modelPath = os.path.join(
-                    self.__tempDir, "{}_minimal.cif".format(self.__emdbid)
+                    sessTempDir, "{}_minimal.cif".format(self.__emdbid)
                 )
                 logger.info('generating minimal cif: {}'.format(self.__modelPath))
                 logger.info('using XML file: {}'.format(self.__emXmlPath))
@@ -524,7 +552,7 @@ class runValidation:
             logger.info("input files")
             logger.info("model: %s", self.__modelPath)
             logger.info("SF: %s", self.__sfPath)
-            logger.info("cs: %s", self.__csPath)
+            logger.info("cs: %s", csPath)
             logger.info("EM volume: %s", self.__volPath)
             logger.info("EM XML: %s", self.__emXmlPath)
             logger.info("entry_id: %s", self.__entry_id)
@@ -534,13 +562,13 @@ class runValidation:
             data_dict = {
                 "model": self.__modelPath,
                 "sf": self.__sfPath,
-                "cs": self.__csPath,
+                "cs": csPath,
                 "emvol": self.__volPath,
                 "emxml": self.__emXmlPath,
                 "pdb_id": self.__pdbid,
                 "entry_id": self.__entry_id,
                 "emdb_id": self.__emdbid,
-                "tempDir": self.__tempDir,
+                "tempDir": sessTempDir,
                 "rundir": run_dir,
                 "fsc": self.__fscPath,
                 "keeplog": self.__keepLog,

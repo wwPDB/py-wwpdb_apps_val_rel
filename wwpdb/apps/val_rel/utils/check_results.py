@@ -14,11 +14,11 @@ logger = logging.getLogger(__name__)
 
 
 class CheckResult:
-
-    def __init__(self, output_folder=None, pdbid=None, emdbid=None):
+    def __init__(self, output_folder=None, pdbid=None, emdbid=None, siteID=None):
         self.__output_folder = output_folder
         self.__pdbid = pdbid
         self.__emdbid = emdbid
+        self.__siteid = siteID
         self.__message = {}
         self.__prepare_message()
         self.missing_files = {}
@@ -29,6 +29,9 @@ class CheckResult:
         self.__message["pdbID"] = self.__pdbid
         self.__message["emdbID"] = self.__emdbid
         self.__message['outputRoot'] = self.__output_folder
+        if self.__siteid is not None:
+            self.__message["siteID"] = self.__siteid
+
 
     def check_entry(self):
         self.rv = runValidation()
@@ -76,15 +79,15 @@ class CheckResult:
 
 
 class CheckEntries:
-
-    def __init__(self):
+    def __init__(self, siteID=None):
+        self.__siteid = siteID
         self.entry_list = []
         self.return_dictionary = {}
         self.failed_entries = set()
         self.entries_with_failed_programs = []
 
     def get_entries(self, skip_emdb=False, pdb_entry_file=None, emdb_entry_file=None):
-        fe = FindEntries()
+        fe = FindEntries(siteID=self.__siteid)
         pdb_entries = []
         emdb_entries = []
 
@@ -109,9 +112,9 @@ class CheckEntries:
             entry_id = entry[0]
             entry_type = entry[1]
             if entry_type == 'pdb':
-                cr = CheckResult(output_folder=output_folder, pdbid=entry_id)
+                cr = CheckResult(output_folder=output_folder, pdbid=entry_id, siteID=self.__siteid)
             elif entry_type == 'emdb':
-                cr = CheckResult(output_folder=output_folder, emdbid=entry_id)
+                cr = CheckResult(output_folder=output_folder, emdbid=entry_id, siteID=self.__siteid)
             else:
                 logging.error('Unknown entry type')
                 return {}
@@ -141,8 +144,8 @@ class CheckEntries:
             out_file.write('\n'.join(self.get_failed_entries()))
 
 
-def prepare_entries_and_check(output_folder=None, failed_entries_file=None, skip_emdb=False, pdb_entry_file=None):
-    ce = CheckEntries()
+def prepare_entries_and_check(siteID=None, output_folder=None, failed_entries_file=None, skip_emdb=False, pdb_entry_file=None):
+    ce = CheckEntries(siteID=siteID)
     ce.get_entries(skip_emdb=skip_emdb, pdb_entry_file=pdb_entry_file)
     ce.check_entries(output_folder=output_folder)
     print('full details of missing entries')
@@ -171,11 +174,12 @@ def main():
     parser.add_argument("--output_root", help="root folder to output check entries", type=str)
     parser.add_argument("--failed_entries_file", help="file to output failed entries", type=str)
     parser.add_argument("--pdb_entry_file", help="file containing PDB entries - one per line", type=str)
+    parser.add_argument("--site_id", help="site id to get files from", type=str)
     parser.add_argument('--skip_emdb', action="store_true")
     args = parser.parse_args()
     logger.setLevel(args.loglevel)
 
-    prepare_entries_and_check(output_folder=args.output_root, failed_entries_file=args.failed_entries_file,
+    prepare_entries_and_check(siteID=args.site_id, output_folder=args.output_root, failed_entries_file=args.failed_entries_file,
                               skip_emdb=args.skip_emdb, pdb_entry_file=args.pdb_entry_file)
 
 

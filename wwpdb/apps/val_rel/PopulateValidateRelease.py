@@ -12,11 +12,7 @@ from wwpdb.apps.val_rel.utils.XmlInfo import XmlInfo
 from wwpdb.apps.val_rel.utils.getFilesRelease import getFilesRelease
 from wwpdb.apps.val_rel.utils.mmCIFInfo import mmCIFInfo
 
-# Create logger -
-FORMAT = '[%(asctime)s %(levelname)s]-%(module)s.%(funcName)s: %(message)s'
-logging.basicConfig(format=FORMAT)
 logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
 
 
 class PopulateValidateRelease:
@@ -130,6 +126,7 @@ class PopulateValidateRelease:
                     message = {"emdbID": emdb_entry}
                     self.messages.append(message)
                     self.added_entries.append(emdb_entry)
+                re.remove_local_temp_files()
 
     def process_pdb_entries(self):
         for pdb_entry in self.pdb_entries:
@@ -168,6 +165,11 @@ class PopulateValidateRelease:
 
 
 def main():
+    # Create logger -
+    FORMAT = '[%(asctime)s %(levelname)s]-%(module)s.%(funcName)s: %(message)s'
+    logging.basicConfig(format=FORMAT)
+    logger.setLevel(logging.DEBUG)
+
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "-d",

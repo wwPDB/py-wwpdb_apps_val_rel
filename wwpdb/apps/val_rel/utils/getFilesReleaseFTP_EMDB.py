@@ -10,7 +10,7 @@ from wwpdb.utils.config.ConfigInfo import getSiteId
 logger = logging.getLogger(__name__)
 
 
-class getFilesReleaseFtpEMDB:
+class getFilesReleaseFtpEMDB(object):
     def __init__(self, emdbid, site_id=getSiteId(), local_ftp_emdb_path=None):
         self.__site_id = site_id
         self.__rf = ReleaseFileNames()
@@ -48,6 +48,13 @@ class getFilesReleaseFtpEMDB:
                                                          )
         return self.__temp_local_ftp
 
+    def remove_local_temp_files(self):
+        """Cleanup of local ftp diretcory if present"""
+
+        logger.debug("Cleaning up FTP EMDB local directory %s", self.__temp_local_ftp)
+        if self.__temp_local_ftp and os.path.exists(self.__temp_local_ftp):
+            remove_local_temp_ftp(self.__temp_local_ftp, require_empty=False)
+
     def set_temp_local_ftp_as_local_ftp_path(self):
         self.setup_local_temp_ftp()
         self.__local_ftp_emdb_path = self.__temp_local_ftp
@@ -81,7 +88,7 @@ class getFilesReleaseFtpEMDB:
             self.set_temp_local_ftp_as_local_ftp_path()
             return True
         else:
-            remove_local_temp_ftp(self.setup_local_temp_ftp())
+            remove_local_temp_ftp(self.setup_local_temp_ftp(), require_empty=True)
 
     def get_emdb_xml(self):
         logger.debug('em XML')
@@ -95,7 +102,7 @@ class getFilesReleaseFtpEMDB:
                                                       file_path=os.path.join(self.url_prefix, self.emdb_xml_folder()))
 
             if not file_name:
-                remove_local_temp_ftp(self.setup_local_temp_ftp())
+                remove_local_temp_ftp(self.setup_local_temp_ftp(), require_empty=True)
         logger.debug('returning: {}'.format(file_name))
         return file_name
 
@@ -123,7 +130,7 @@ class getFilesReleaseFtpEMDB:
             file_name = self.get_file_from_remote_ftp(filename=self.__rf.get_emdb_fsc(self.emdb_id),
                                                       file_path=os.path.join(self.url_prefix, self.emdb_fsc_folder()))
             if not file_name:
-                remove_local_temp_ftp(self.setup_local_temp_ftp())
+                remove_local_temp_ftp(self.setup_local_temp_ftp(), require_empty=True)
         logger.debug('returning: {}'.format(file_name))
         return file_name
 
