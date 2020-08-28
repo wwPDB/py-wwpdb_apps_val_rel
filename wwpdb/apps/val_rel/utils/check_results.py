@@ -145,10 +145,14 @@ def prepare_entries_and_check(output_folder=None, failed_entries_file=None, skip
     ce = CheckEntries()
     ce.get_entries(skip_emdb=skip_emdb, pdb_entry_file=pdb_entry_file)
     ce.check_entries(output_folder=output_folder)
-    print('full details of missing entries')
+    print('Full details of missing entries')
     pprint(ce.get_full_details())
-    print('entries with missing output: {}'.format(','.join(ce.get_failed_entries())))
-    print('entries with failed programs: {}'.format(','.join(ce.get_entries_with_failed_programs())))
+    print('Entries with programs failed')
+    for program in ce.get_full_details().get('failed_programs', {}):
+        values = ce.get_full_details().get('failed_programs', {})[program]
+        print('{}: {}'.format(program, ','.join(values)))
+    print('All entries with missing output: {}'.format(','.join(ce.get_failed_entries())))
+    print('All entries with failed programs: {}'.format(','.join(ce.get_entries_with_failed_programs())))
 
     if failed_entries_file:
         ce.write_missing(failed_entries_file)
