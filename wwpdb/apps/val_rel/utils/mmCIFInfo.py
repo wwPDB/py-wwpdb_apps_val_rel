@@ -20,7 +20,7 @@ def is_simple_modification(model_path):
             if item not in SKIP_LIST:
                 return False
 
-        logger.info('%s only a simple modification: %s', model_path, ','.join(modified_cats))
+        logger.debug('%s only a simple modification: %s', model_path, ','.join(modified_cats))
         return True
     return False
 

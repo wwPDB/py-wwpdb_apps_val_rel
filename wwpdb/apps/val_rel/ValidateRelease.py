@@ -192,7 +192,7 @@ class runValidation:
             temp_output_folder=self.__temp_output_dir
         )
         self.__entry_output_folder = of.get_entry_output_folder()
-        logger.info("output folder: %s", self.__entry_output_folder)
+        logger.debug("output folder: %s", self.__entry_output_folder)
         self.__entry_image_output_folder = of.get_pdb_validation_images_output_folder()
         self.__core_output_file_dict = of.get_core_validation_files()
         self.__validation_files_alternative_location = of.get_validation_files_for_separate_location()
@@ -203,7 +203,7 @@ class runValidation:
         self.__statefolder = of.get_root_state_folder()
 
     def process_message(self, message):
-        logger.info("Message received %s", message)
+        logger.debug("Message received %s", message)
         self.__pdbid = message.get("pdbID")
         if self.__pdbid:
             self.__pdbid = self.__pdbid.lower()
