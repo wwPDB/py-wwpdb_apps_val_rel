@@ -10,7 +10,7 @@ from wwpdb.apps.val_rel.utils.Files import get_gzip_name
 from wwpdb.apps.val_rel.utils.FindEntries import FindEntries
 from wwpdb.apps.val_rel.utils.mmCIFInfo import is_simple_modification
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger()
 
 
 class CheckResult:
