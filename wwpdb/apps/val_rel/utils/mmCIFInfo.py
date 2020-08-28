@@ -105,7 +105,7 @@ class mmCIFInfo:
                     emdb_ids.append(db_id)
         if emdb_ids:
             emdb_id = emdb_ids[0]
-            logger.info('found EMDB ID: {}'.format(emdb_id))
+            logger.debug('found EMDB ID: {}'.format(emdb_id))
             return emdb_id
         return None
 
@@ -132,7 +132,7 @@ class mmCIFInfo:
                 else:
                     latest_audit_ordinal = ordinal
         if latest_audit_ordinal:
-            logger.info('latest audit ordinal: %s', latest_audit_ordinal)
+            logger.debug('latest audit ordinal: %s', latest_audit_ordinal)
             ret = self.get_category_list_of_dictionaries(category="pdbx_audit_revision_category")
             if ret:
                 for row in ret:
