@@ -53,7 +53,7 @@ class getFilesReleaseFtpPDB(object):
                             self.pdb_id)
 
     def remove_local_temp_files(self):
-        """Cleanup of local ftp diretcory if present"""
+        """Cleanup of local ftp directory if present"""
 
         logger.debug("Cleaning up FTP local directory %s", self.__local_ftp_path)
         if self.__local_ftp_path and os.path.exists(self.__local_ftp_path):
@@ -94,12 +94,14 @@ class getFilesReleaseFtpPDB(object):
         :param pdbid: PDB ID
         :return: file name if present or None
         """
-        fpart = ReleaseFileNames().get_model(accession=self.pdb_id, for_release=False)
-        file_path = os.path.join(self.get_temp_local_ftp_path(), fpart)
+        file_path = self.__local_ftp.get_model_fname(accession=self.pdb_id)
+        logger.debug('checking local model filepath: {}'.format(file_path))
         file_name = self.check_filename(file_path)
         if not file_name:
+            fpart = ReleaseFileNames().get_model(accession=self.pdb_id, for_release=False)
             file_name = self.get_remote_ftp_file(file_path=self.__remote_ftp.get_model_path(),
                                                  filename=fpart)
+        logger.debug('final model filepath: {}'.format(file_name))
         return file_name
 
     def get_sf(self):
@@ -108,12 +110,15 @@ class getFilesReleaseFtpPDB(object):
         :param pdbid: PDB ID
         :return: file name if present or None
         """
-        fpart = ReleaseFileNames().get_structure_factor(accession=self.pdb_id, for_release=False)
-        file_path = os.path.join(self.get_temp_local_ftp_path(), fpart)
+        file_path = self.__local_ftp.get_structure_factors_fname(accession=self.pdb_id)
+        #file_path = os.path.join(self.get_temp_local_ftp_path(), fpart)
+        logger.debug('checking local structure factor filepath: {}'.format(file_path))
         file_name = self.check_filename(file_path)
         if not file_name:
+            fpart = ReleaseFileNames().get_structure_factor(accession=self.pdb_id, for_release=False)
             file_name = self.get_remote_ftp_file(file_path=self.__remote_ftp.get_sf_path(),
                                                  filename=fpart)
+        logger.debug('final structure factor filepath: {}'.format(file_name))
         return file_name
 
     def get_cs(self):
@@ -122,12 +127,15 @@ class getFilesReleaseFtpPDB(object):
         :param pdbid: PDB ID
         :return: file name if present or None
         """
-        fpart = ReleaseFileNames().get_chemical_shifts(accession=self.pdb_id, for_release=False)
-        file_path = os.path.join(self.get_temp_local_ftp_path(), fpart)                                                                                           
+        #file_path = os.path.join(self.get_temp_local_ftp_path(), fpart)
+        file_path = self.__local_ftp.get_chemical_shifts_fname(accession=self.pdb_id)
+        logger.debug('checking local chemical shift filepath: {}'.format(file_path))
         file_name = self.check_filename(file_path)
         if not file_name:
+            fpart = ReleaseFileNames().get_chemical_shifts(accession=self.pdb_id, for_release=False)
             file_name = self.get_remote_ftp_file(file_path=self.__remote_ftp.get_cs_path(),
                                                  filename=fpart)
+        logger.debug('final chemical shift filepath: {}'.format(file_name))
         return file_name
 
     def get_nmr_data(self):
@@ -136,10 +144,11 @@ class getFilesReleaseFtpPDB(object):
         :param pdbid: PDB ID
         :return: file name if present or None
         """
-        fpart = ReleaseFileNames().get_nmr_data(accession=self.pdb_id, for_release=False)
-        file_path = os.path.join(self.get_temp_local_ftp_path(), fpart)
+        file_path = self.__local_ftp.get_nmr_data_fname(accession=self.pdb_id)
+        #file_path = os.path.join(self.get_temp_local_ftp_path(), fpart)
         file_name = self.check_filename(file_path)
         if not file_name:
+            fpart = ReleaseFileNames().get_nmr_data(accession=self.pdb_id, for_release=False)
             file_name = self.get_remote_ftp_file(file_path=self.__remote_ftp.get_nmr_data_path(),
                                                  filename=fpart)
 
