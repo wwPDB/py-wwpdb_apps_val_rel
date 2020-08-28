@@ -32,6 +32,12 @@ class CheckResult:
         if self.__siteid is not None:
             self.__message["siteID"] = self.__siteid
 
+    def is_expected_file_type(self, file_type):
+        if not self.__pdbid and self.__emdbid:
+            expected_missing_file_types = ['svg', 'png']
+            if file_type in expected_missing_file_types:
+                return False
+        return True
 
     def check_entry(self):
         self.rv = runValidation()
@@ -59,9 +65,10 @@ class CheckResult:
             for output_file_type in output_file_dict:
                 output_file = output_file_dict[output_file_type]
                 gzipped_output_file = get_gzip_name(output_file)
-                if not os.path.exists(gzipped_output_file):
-                    self.missing_files.setdefault(output_file_type, []).append(
-                        {self.rv.getEntryId(): gzipped_output_file})
+                if self.is_expected_file_type(output_file_type):
+                    if not os.path.exists(gzipped_output_file):
+                        self.missing_files.setdefault(output_file_type, []).append(
+                            {self.rv.getEntryId(): gzipped_output_file})
 
             self.check_failed_programs()
 
