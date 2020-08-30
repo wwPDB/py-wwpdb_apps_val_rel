@@ -25,28 +25,19 @@ class FindAndRunMissing:
     def find_missing(self):
         self.ce.get_entries()
         self.ce.check_entries()
-        self.missing_ids = self.ce.get_failed_entries()
-
-    def get_missing_file_path(self):
-        return os.path.join(self.rpi.get_for_release_path(), 'missing.ids')
+        failed_entries = self.ce.get_failed_entries()
+        logger.debug('failed_entries')
+        logger.debug(failed_entries)
 
     def write_out_missing(self):
         """Writes out the list of missing ids.
            If the list is empty - create empty file to prevent reruns the following week
         """
-        with open(self.get_missing_file_path(), 'w') as out_file:
-            if self.missing_ids:
-                for missing_id in self.missing_ids:
-                    out_file.write("%s\n" % missing_id)
+        self.ce.write_missing_file()
 
     def read_missing_file(self):
-        fpath = self.get_missing_file_path()
-        if not os.path.exists(fpath):
-            print("File %s does not exist" % fpath)
-            sys.exit(1)
-        with open(fpath, "r") as in_file:
-            for file_line in in_file:
-                self.missing_ids.append(file_line.strip())
+        self.missing_ids = self.ce.read_missing_file()
+        logger.debug('missing IDs: {}'.format(','.join(self.missing_ids)))
 
     def populate_queue(self):
         if self.missing_ids:
@@ -60,12 +51,10 @@ class FindAndRunMissing:
     def run_process(self):
         if self.read_missing:
             self.read_missing_file()
-        else:
-            self.find_missing()
-        if self.write_missing:
-            self.write_out_missing()
-        else:
             self.populate_queue()
+        if self.write_missing:
+            self.find_missing()
+            self.write_out_missing()
 
 
 def main():
