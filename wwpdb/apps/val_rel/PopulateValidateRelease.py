@@ -12,7 +12,7 @@ from wwpdb.apps.val_rel.utils.XmlInfo import XmlInfo
 from wwpdb.apps.val_rel.utils.getFilesRelease import getFilesRelease
 from wwpdb.apps.val_rel.utils.mmCIFInfo import mmCIFInfo
 
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 
 class PopulateValidateRelease:
@@ -55,6 +55,7 @@ class PopulateValidateRelease:
         if self.pdb_release:
             self.pdb_entries.extend(fe.get_added_pdb_entries())
             self.pdb_entries.extend(fe.get_modified_pdb_entries())
+            self.all_pdb_entries = set(self.pdb_entries[:])
         if self.emdb_release:
             self.emdb_entries.extend(fe.get_emdb_entries())
 
@@ -166,9 +167,9 @@ class PopulateValidateRelease:
 
 def main():
     # Create logger -
+    logger = logging.getLogger()
     FORMAT = '[%(asctime)s %(levelname)s]-%(module)s.%(funcName)s: %(message)s'
     logging.basicConfig(format=FORMAT)
-    logger.setLevel(logging.DEBUG)
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
