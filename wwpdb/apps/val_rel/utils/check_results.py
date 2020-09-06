@@ -132,7 +132,7 @@ class CheckEntries:
                         entry_type = row['entry_type']
                         entry_row = {'entry_type': entry_type,
                                      'entry_id': entry_id}
-                        missing_entries.append(entry_row)
+                        missing_entries.append(entry_id)
                         entries_to_add.setdefault(entry_type, []).append(entry_id)
                 except Exception as e:
                     logging.error('unable to read: {}'.format(self.get_missing_file_path()))
