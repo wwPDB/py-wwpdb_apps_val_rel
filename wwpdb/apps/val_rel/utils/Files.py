@@ -20,8 +20,9 @@ def gzip_file(in_file, output_folder):
     if in_file and output_folder:
         if os.path.exists(in_file):
             output_gzipped_file = get_gzip_name(in_file)
-            with open(in_file, 'r') as f_in, gzip.open(output_gzipped_file, "wb") as f_out:
-                f_out.writelines(f_in)
+            logger.debug("About to compress %s to %s", in_file, output_gzipped_file)
+            with open(in_file, 'rb') as f_in, gzip.open(output_gzipped_file, "wb") as f_out:
+                f_out.write(f_in.read())
             if os.path.exists(output_gzipped_file):
                 copy_file(in_file=output_gzipped_file, output_folder=output_folder)
                 return True
