@@ -40,6 +40,7 @@ class runValidation:
         self.__entry_id = None
         self.__modelPath = None
         self.__csPath = None
+        self.__resPath = None
         self.__sfPath = None
         self.__emXmlPath = None
         self.__volPath = None
@@ -236,8 +237,10 @@ class runValidation:
         self.set_model_file()
         self.__sfPath = self.__rel_files.get_sf()
         self.__csPath = self.__rel_files.get_cs()
+        self.__resPath = None
         if not self.__csPath:
             self.__csPath = self.__rel_files.get_nmr_data()
+            self.__resPath = self.__csPath
 
     def set_xml_file(self):
         self.__rel_files.set_emdb_id(self.__emdbid)
@@ -479,9 +482,10 @@ class runValidation:
                 self.__rel_files.set_pdb_id(self.__pdbid)
                 self.__sfPath = self.__rel_files.get_sf()
                 self.__csPath = self.__rel_files.get_cs()
+                self.__resPath = None
                 if not self.__csPath:
                     self.__csPath = self.__rel_files.get_nmr_data()
-
+                    self.__resPath = self.__csPath
 
             # check if any input files have changed and set output folders
             is_modified = self.check_modified()
@@ -519,12 +523,16 @@ class runValidation:
             self.set_output_dir_and_files()
 
             csPath = None
+            resPath = None
             if self.__csPath:
                 csPath = convert_cs_file(cs_file=self.__csPath, working_dir=sessTempDir)
                 if not csPath:
                     logger.error('CS star to cif conversion failed')
                     self.__sds.setValidationRunning(False)
                     return False, validation_run
+                # If self.__resPath was set, nmr-data - need converted file
+                if self.__resPath is not None:
+                    resPath = csPath
 
             logger.info("Entry output folder: %s", self.__entry_output_folder)
 
@@ -553,6 +561,7 @@ class runValidation:
             logger.info("model: %s", self.__modelPath)
             logger.info("SF: %s", self.__sfPath)
             logger.info("cs: %s", csPath)
+            logger.info("restraints: %s", resPath)
             logger.info("EM volume: %s", self.__volPath)
             logger.info("EM XML: %s", self.__emXmlPath)
             logger.info("entry_id: %s", self.__entry_id)
@@ -563,6 +572,7 @@ class runValidation:
                 "model": self.__modelPath,
                 "sf": self.__sfPath,
                 "cs": csPath,
+                "res": resPath,
                 "emvol": self.__volPath,
                 "emxml": self.__emXmlPath,
                 "pdb_id": self.__pdbid,

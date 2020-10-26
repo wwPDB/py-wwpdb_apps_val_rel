@@ -18,6 +18,7 @@ class ValidationRun(object):
         model = dD.get("model")
         sfPath = dD.get("sf")
         csPath = dD.get("cs")
+        resPath = dD.get("res")
         volPath = dD.get("emvol")
         emXmlPath = dD.get("emxml")
         pdbid = dD.get("pdb_id")
@@ -36,6 +37,7 @@ class ValidationRun(object):
         logger.info("model: %s", model)
         logger.info("SF: %s", sfPath)
         logger.info("cs: %s", csPath)
+        logger.info("res: %s", resPath)
         logger.info("EM volume: %s", volPath)
         logger.info("EM XML: %s", emXmlPath)
         logger.info("FSC: %s", fscPath)
@@ -64,6 +66,9 @@ class ValidationRun(object):
 
         if csPath is not None and os.access(csPath, os.R_OK):
             vw.addInput(name="cs_file_path", value=csPath)
+
+        if resPath is not None and os.access(resPath, os.R_OK):
+            vw.addInput(name="nmr_restraint_file_path", value=resPath)
 
         if volPath is not None and os.access(volPath, os.R_OK):
             vw.addInput(name="vol_file_path", value=volPath)
