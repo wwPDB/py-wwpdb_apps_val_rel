@@ -43,14 +43,14 @@ class TestsGettingEMDBData(unittest.TestCase):
         self.assertFalse(ret)
 
     def test_get_header_existing_emdb(self):
-        gfrf = getFilesReleaseFtpEMDB(emdbid='EMD-0070', local_ftp_emdb_path='/tmp')
+        gfrf = getFilesReleaseFtpEMDB(emdbid='EMD-0070', local_ftp_emdb_path='')
         gfrf.setup_local_temp_ftp(session_path=self.temp_folder)
         ret = gfrf.get_emdb_xml()
         print(ret)
         self.assertIsNotNone(ret)
 
     def test_get_map_existing_emdb(self):
-        gfrf = getFilesReleaseFtpEMDB(emdbid='EMD-0070', local_ftp_emdb_path='/tmp')
+        gfrf = getFilesReleaseFtpEMDB(emdbid='EMD-0070', local_ftp_emdb_path='')
         gfrf.setup_local_temp_ftp(session_path=self.temp_folder)
         ret = gfrf.get_emdb_volume()
         print(ret)
