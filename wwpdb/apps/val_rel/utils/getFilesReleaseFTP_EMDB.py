@@ -27,7 +27,10 @@ class getFilesReleaseFtpEMDB(object):
         self.emdb_id = emdbid
 
     def get_local_ftp_path(self):
-        return self.__local_ftp_emdb_path
+        return self.__local_ftp.get_ftp_emdb()
+
+    def set_local_ftp_path(self, ftp_path):
+        self.__local_ftp.set_ftp_emdb_root(ftp_path)
 
     def get_emdb_subfolder(self, sub_folder):
         return os.path.join(self.emdb_id, sub_folder)
