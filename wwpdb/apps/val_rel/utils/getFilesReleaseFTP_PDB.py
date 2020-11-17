@@ -83,6 +83,7 @@ class getFilesReleaseFtpPDB(object):
         logger.debug("About to get %s %s to %s", file_path, filename, self.get_temp_local_ftp_path())
         grf = GetRemoteFiles(server=self.server, output_path=self.get_temp_local_ftp_path())
         ret = grf.get_url(directory=file_path, filename=filename)
+        grf.disconnect()
         # logger.debug("ret is %s", ret)
         if ret:
             return True

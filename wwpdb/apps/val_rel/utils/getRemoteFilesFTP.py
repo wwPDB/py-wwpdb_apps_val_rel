@@ -1,10 +1,10 @@
-import os
-import time
 import datetime
 import ftplib
 import logging
+import os
 import shutil
 import tempfile
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -59,8 +59,6 @@ class GetRemoteFiles(object):
         if mtime is not None:
             logger.debug("Setting mtime on %s to %s", file_name, mtime)
             os.utime(file_name, (mtime, mtime))
-            
-
 
     def get_remote_file_mtime(self, remote_file):
         # Try to retrieve remote file time from server.
@@ -119,8 +117,6 @@ class GetRemoteFiles(object):
             return timestamp
         except:
             return None
-        
-        
 
     def get_size(self, remote_file):
         size = 0
@@ -180,3 +176,6 @@ class GetRemoteFiles(object):
                     self.output_path = os.path.join(self.output_path, '..')
             return True
         return False
+
+    def disconnect(self):
+        self.ftp.quit()

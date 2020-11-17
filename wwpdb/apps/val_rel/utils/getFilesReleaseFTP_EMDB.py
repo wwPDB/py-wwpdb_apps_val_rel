@@ -26,6 +26,9 @@ class getFilesReleaseFtpEMDB(object):
         self.url_prefix = l_ftp.get_ftp_emdb()
         self.emdb_id = emdbid
 
+    def get_local_ftp_path(self):
+        return self.__local_ftp_emdb_path
+
     def get_emdb_subfolder(self, sub_folder):
         return os.path.join(self.emdb_id, sub_folder)
 
@@ -164,6 +167,7 @@ class getFilesReleaseFtpEMDB(object):
             grf = GetRemoteFiles(server=self.server, output_path=self.get_temp_local_ftp_emdb_path())
             ret = grf.get_directory(directory=url_directory)
             logger.debug(ret)
+            grf.disconnect()
             if ret:
                 return True
         return False
@@ -177,6 +181,7 @@ class getFilesReleaseFtpEMDB(object):
         grf = GetRemoteFiles(server=self.server, output_path=self.get_temp_local_ftp_emdb_path())
         ret = grf.get_url(directory=file_path, filename=filename)
         logger.debug(ret)
+        grf.disconnect()
         if ret:
             return self.get_emdb_local_ftp_single_file(filename=ret[0])
         return None
