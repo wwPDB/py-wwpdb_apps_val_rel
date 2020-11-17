@@ -1,6 +1,8 @@
+import os
+import time
+import datetime
 import ftplib
 import logging
-import os
 import shutil
 import tempfile
 
@@ -29,8 +31,7 @@ def remove_local_temp_ftp(temp_dir, require_empty=False):
         shutil.rmtree(temp_dir, ignore_errors=True)
 
 
-class GetRemoteFiles:
-
+class GetRemoteFiles(object):
     def __init__(self, server, output_path):
         self.output_path = output_path
         self.ftp = ftplib.FTP(server)
@@ -53,6 +54,73 @@ class GetRemoteFiles:
         with open(file_name, 'wb') as out_file:
             self.ftp.retrbinary("RETR " + remote_file, out_file.write)
         # logger.debug("Output exists? %s", os.path.exists(file_name))
+        # See if can get details..
+        mtime = self.get_remote_file_mtime(remote_file)
+        if mtime is not None:
+            logger.debug("Setting mtime on %s to %s", file_name, mtime)
+            os.utime(file_name, (mtime, mtime))
+            
+
+
+    def get_remote_file_mtime(self, remote_file):
+        # Try to retrieve remote file time from server.
+        # Returns None if could not be determined
+
+        # See https://stackoverflow.com/questions/29026709/how-to-get-ftp-files-modify-time-using-python-ftplib
+        # Python 3 has added mlsd which could be used - but we are not there yet
+
+        # Several attempts to see if server supports one. Raises exception if command not know
+        ts = None
+        try:
+            # MDTM is supported by all wwpdb partner ftp sites
+            mdtmr = self.ftp.voidcmd("MDTM %s" % remote_file)
+            # Make sure get 213 return
+            if mdtmr[0:3] != "213":
+                return None
+            ts = mdtmr[4:].strip()
+
+            # Fall through
+
+        except Exception as e:
+            try:
+                # Fall back on MLST - which is more machine readable - but less universal
+
+                mlst = self.ftp.voidcmd("MLST %s" % remote_file)
+
+                if not mlst:
+                    return None
+                for line in mlst.split('\n'):
+                    if line[0:3] == '250':
+                        continue
+                    l = line.strip()
+                    facts_found, _, fname = l.partition(" ")
+                    factsd = {}
+                    # Last ends in semicolor
+                    for fact in facts_found[:-1].split(";"):
+                        key, _dum, value = fact.partition("=")
+                        factsd[key.lower()] = value
+                ts = factsd.get('modify', None)
+                # None caught below
+
+            except Exception as e:
+                return None
+
+        # print("TS: %s" % ts)
+        if not ts:
+            return None
+
+        try:
+            # Parse string like 0200704134000  -- 14 digits ["." 1*digit]
+            # Could have optional tenths of second after period
+            bts = ts.split(".")[0]
+            dt = datetime.datetime.strptime(bts, "%Y%m%d%H%M%S")
+            time_tuple = dt.timetuple()
+            timestamp = time.mktime(time_tuple)
+            return timestamp
+        except:
+            return None
+        
+        
 
     def get_size(self, remote_file):
         size = 0
