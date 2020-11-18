@@ -26,6 +26,13 @@ class getFilesReleaseFtpEMDB(object):
         self.url_prefix = l_ftp.get_ftp_emdb()
         self.emdb_id = emdbid
 
+    def get_local_ftp_path(self):
+        return self.__local_ftp.get_ftp_emdb()
+
+    def set_local_ftp_path(self, ftp_path):
+        self.__local_ftp.set_ftp_emdb_root(ftp_path)
+        self.__local_ftp_emdb_path = ftp_path
+
     def get_emdb_subfolder(self, sub_folder):
         return os.path.join(self.emdb_id, sub_folder)
 
@@ -91,11 +98,14 @@ class getFilesReleaseFtpEMDB(object):
             remove_local_temp_ftp(self.setup_local_temp_ftp(), require_empty=True)
 
     def get_emdb_xml(self):
-        logger.debug('em XML')
-        logger.debug('trying local FTP')
-        file_name = self.get_emdb_local_ftp_file(filename=self.__rf.get_emdb_xml(self.emdb_id),
-                                                 emdb_path=self.emdb_xml_folder())
-        if not file_name:
+        logger.debug('EM XML')
+        local_ftp = self.__local_ftp.get_ftp_emdb()
+        logger.debug('local FTP path: "{}"'.format(local_ftp))
+        if local_ftp:
+            logger.debug('trying local FTP')
+            file_name = self.get_emdb_local_ftp_file(filename=self.__rf.get_emdb_xml(self.emdb_id),
+                                                     emdb_path=self.emdb_xml_folder())
+        else:
             logger.debug('trying remote FTP')
             self.setup_local_temp_ftp()
             file_name = self.get_file_from_remote_ftp(filename=self.__rf.get_emdb_xml(self.emdb_id),
@@ -108,10 +118,13 @@ class getFilesReleaseFtpEMDB(object):
 
     def get_emdb_volume(self):
         logger.debug('em volume')
-        logger.debug('trying local FTP')
-        file_name = self.get_emdb_local_ftp_file(filename=self.__rf.get_emdb_map(self.emdb_id),
-                                                 emdb_path=self.emdb_map_folder())
-        if not file_name:
+        local_ftp = self.__local_ftp.get_ftp_emdb()
+        logger.debug('local FTP path: "{}"'.format(local_ftp))
+        if local_ftp:
+            logger.debug('trying local FTP')
+            file_name = self.get_emdb_local_ftp_file(filename=self.__rf.get_emdb_map(self.emdb_id),
+                                                     emdb_path=self.emdb_map_folder())
+        else:
             logger.debug('trying remote FTP')
             self.get_remote_ftp_data()
             file_name = self.get_emdb_local_ftp_file(filename=self.__rf.get_emdb_map(self.emdb_id),
@@ -121,10 +134,13 @@ class getFilesReleaseFtpEMDB(object):
 
     def get_emdb_fsc(self):
         logger.debug('FSC')
-        logger.debug('trying local FTP')
-        file_name = self.get_emdb_local_ftp_file(filename=self.__rf.get_emdb_fsc(self.emdb_id),
-                                                 emdb_path=self.emdb_fsc_folder())
-        if not file_name:
+        local_ftp = self.__local_ftp.get_ftp_emdb()
+        logger.debug('local FTP path: "{}"'.format(local_ftp))
+        if local_ftp:
+            logger.debug('trying local FTP')
+            file_name = self.get_emdb_local_ftp_file(filename=self.__rf.get_emdb_fsc(self.emdb_id),
+                                                     emdb_path=self.emdb_fsc_folder())
+        else:
             self.setup_local_temp_ftp()
             logger.debug('trying remote FTP')
             file_name = self.get_file_from_remote_ftp(filename=self.__rf.get_emdb_fsc(self.emdb_id),
@@ -161,6 +177,7 @@ class getFilesReleaseFtpEMDB(object):
             grf = GetRemoteFiles(server=self.server, output_path=self.get_temp_local_ftp_emdb_path())
             ret = grf.get_directory(directory=url_directory)
             logger.debug(ret)
+            grf.disconnect()
             if ret:
                 return True
         return False
@@ -174,6 +191,7 @@ class getFilesReleaseFtpEMDB(object):
         grf = GetRemoteFiles(server=self.server, output_path=self.get_temp_local_ftp_emdb_path())
         ret = grf.get_url(directory=file_path, filename=filename)
         logger.debug(ret)
+        grf.disconnect()
         if ret:
             return self.get_emdb_local_ftp_single_file(filename=ret[0])
         return None
