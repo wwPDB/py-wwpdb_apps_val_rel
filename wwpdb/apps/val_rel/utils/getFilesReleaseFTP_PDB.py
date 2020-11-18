@@ -151,10 +151,12 @@ class getFilesReleaseFtpPDB(object):
         if self.__local_ftp.get_ftp_pdb():
             file_path = self.__local_ftp.get_nmr_data_fname(accession=self.pdb_id)
             #file_path = os.path.join(self.get_temp_local_ftp_path(), fpart)
+            logger.debug('checking local NMR data filepath: {}'.format(file_path))
             file_name = self.check_filename(file_path)
         else:
             fpart = ReleaseFileNames().get_nmr_data(accession=self.pdb_id, for_release=False)
             file_name = self.get_remote_ftp_file(file_path=self.__remote_ftp.get_nmr_data_path(),
                                                  filename=fpart)
 
+        logger.debug('final NMR data filepath: {}'.format(file_name))
         return file_name
