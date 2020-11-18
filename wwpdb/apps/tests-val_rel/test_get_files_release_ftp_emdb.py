@@ -48,9 +48,25 @@ class TestsGettingEMDBData(unittest.TestCase):
         ret = gfrf.get_local_ftp_path()
         self.assertEqual(ret, '')
 
+    def test_get_header_empty_local_ftp_emdb(self):
+        gfrf = getFilesReleaseFtpEMDB(emdbid='EMD-0070')
+        gfrf.set_local_ftp_path('/tmp')
+        ret = gfrf.get_emdb_xml()
+        print(ret)
+        self.assertIsNone(ret)
+
+    def test_get_map_empty_local_ftp_emdb(self):
+        gfrf = getFilesReleaseFtpEMDB(emdbid='EMD-0070')
+        gfrf.set_local_ftp_path('/tmp')
+        ret = gfrf.get_emdb_volume()
+        print(ret)
+        self.assertIsNone(ret)
+
     def test_get_header_existing_emdb(self):
         gfrf = getFilesReleaseFtpEMDB(emdbid='EMD-0070')
         gfrf.set_local_ftp_path('')
+        print('HERERE')
+
         ret = gfrf.get_emdb_xml()
         print(ret)
         self.assertIsNotNone(ret)
