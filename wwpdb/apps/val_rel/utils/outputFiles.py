@@ -50,7 +50,7 @@ class outputFiles:
         return rp.getForReleasePath("val_images")
 
     def get_root_state_folder(self):
-        # Place under pdb val-reports as extra director
+        # Place under pdb val-reports as extra directory
         rp = ReleasePathInfo(self._siteID)
         return os.path.join(
             rp.getForReleasePath("val_reports"),
@@ -254,3 +254,9 @@ class outputFiles:
         elif self.get_emdb_id():
             self.entry_output_folder = self.get_emdb_output_folder()
         return self.entry_output_folder
+
+    def get_ftp_cache_folder(self):
+        # Same for both x-ray/em
+        rp = ReleasePathInfo(self._siteID)
+        return os.path.join(
+            rp.getForReleasePath("val_reports"), "cache")

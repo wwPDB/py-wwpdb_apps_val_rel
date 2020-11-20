@@ -8,6 +8,7 @@ import time
 
 logger = logging.getLogger(__name__)
 
+from wwpdb.apps.val_rel.utils.PersistFileCache import PersistFileCache
 
 def setup_local_temp_ftp(temp_dir, suffix, session_path):
     if not temp_dir:
@@ -32,11 +33,14 @@ def remove_local_temp_ftp(temp_dir, require_empty=False):
 
 
 class GetRemoteFiles(object):
-    def __init__(self, server, output_path):
+    def __init__(self, server, output_path, cache=None):
         self.output_path = output_path
         self.ftp = ftplib.FTP(server)
         self.ftp.login()
         self.setup_output_path()
+        self.__cache = cache
+        # The current remote directory as we go up and down tree
+        self.__curdir = "." 
         # logger.debug("Setup for %s to %s", server, output_path)
 
     def setup_output_path(self):
@@ -51,14 +55,30 @@ class GetRemoteFiles(object):
     def get_file(self, remote_file):
         file_name = os.path.join(self.output_path, remote_file)
         logger.debug("Transferring file %s to %s", remote_file, file_name)
+        # logger.debug("Cache is %s", self.__cache)
+        if self.__cache is not None:
+            # See if in cache
+            pfc = PersistFileCache(self.__cache)
+            rp = os.path.join(self.__curdir, remote_file)
+            if pfc.exists(rp):
+                pfc.get_file(rp, file_name)
+                logger.debug("Found %s in cache", rp)
+                return
+            # logger.debug("Did not find %s in cache", remote_file)
+
         with open(file_name, 'wb') as out_file:
             self.ftp.retrbinary("RETR " + remote_file, out_file.write)
-        # logger.debug("Output exists? %s", os.path.exists(file_name))
+            
+        # File always exist - but might be zero length.... Annoying interface
+        #logger.debug("Output exists? %s", os.path.exists(file_name))
         # See if can get details..
         mtime = self.get_remote_file_mtime(remote_file)
         if mtime is not None:
             logger.debug("Setting mtime on %s to %s", file_name, mtime)
             os.utime(file_name, (mtime, mtime))
+        if self.__cache is not None:
+            pfc.add_file(file_name, rp)
+            #logger.debug("Adding %s to cache", rp)
 
     def get_remote_file_mtime(self, remote_file):
         # Try to retrieve remote file time from server.
@@ -132,9 +152,15 @@ class GetRemoteFiles(object):
         return False
 
     def change_ftp_directory(self, directory):
+        logger.debug("Changing directory %s", directory)
         if directory:
             try:
                 self.ftp.cwd(directory)
+                if directory[0] == '/':
+                    self.__curdir = directory
+                else:
+                    self.__curdir = os.path.join(self.__curdir, directory)
+                logger.debug("cur directory is %s", self.__curdir)
                 return True
             except Exception as e:
                 logger.error(e)
@@ -160,6 +186,9 @@ class GetRemoteFiles(object):
         return ret_files
 
     def get_directory(self, directory):
+        """Recursivle retrieve contents of directory"""
+        
+        # Improvement - cache nlst?
         ok = self.change_ftp_directory(directory)
         if not ok:
             return False
@@ -174,6 +203,8 @@ class GetRemoteFiles(object):
                     self.get_directory(obj)
                     self.ftp.cwd('..')
                     self.output_path = os.path.join(self.output_path, '..')
+                    self.__curdir = os.path.join(self.__curdir, "..")
+                    logger.debug("curr directory %s", self.__curdir)
             return True
         return False
 

@@ -58,6 +58,7 @@ class runValidation:
         self.__output_file_dict = {}
         self.__core_output_file_dict = {}
         self.__validation_xml = None
+        self.__cachedir = None
 
         self.__skip_gzip = False
         self.__skip_emdb = False
@@ -71,7 +72,7 @@ class runValidation:
         self.__setupRelFiles()
 
     def __setupRelFiles(self):
-        self.__rel_files = getFilesRelease(siteID=self.siteID)
+        self.__rel_files = getFilesRelease(siteID=self.siteID, cache=self.__cachedir)
 
     def setOutputRoot(self, outdir):
         self.__outputRoot = outdir
@@ -202,6 +203,10 @@ class runValidation:
         self.__pdb_output_folder = of.get_pdb_output_folder()
         self.__emdb_output_folder = of.get_emdb_output_folder()
         self.__statefolder = of.get_root_state_folder()
+        self.__cachedir = of.get_ftp_cache_folder()
+        if self.__rel_files is not None:
+            self.__rel_files.set_cache(self.__cachedir)
+
 
     def process_message(self, message):
         logger.debug("Message received %s", message)

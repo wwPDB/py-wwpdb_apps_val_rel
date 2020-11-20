@@ -12,13 +12,14 @@ logger = logging.getLogger(__name__)
 class getFilesRelease:
     """Class to access prior/public release files"""
 
-    def __init__(self, pdb_id=None, emdb_id=None, siteID=getSiteId()):
+    def __init__(self, pdb_id=None, emdb_id=None, siteID=getSiteId(), cache=None):
         self.__siteID = siteID
         self.pdb_id = pdb_id
         self.emdb_id = emdb_id
+        self.__cache = cache
         self.__release_file_from_onedep = getFilesReleaseOneDep(siteID=self.__siteID, pdb_id=pdb_id, emdb_id=emdb_id)
-        self.__release_file_from_ftp_emdb = getFilesReleaseFtpEMDB(site_id=self.__siteID, emdbid=emdb_id)
-        self.__release_file_from_ftp_pdb = getFilesReleaseFtpPDB(site_id=self.__siteID, pdbid=pdb_id)
+        self.__release_file_from_ftp_emdb = getFilesReleaseFtpEMDB(site_id=self.__siteID, emdbid=emdb_id, cache=self.__cache)
+        self.__release_file_from_ftp_pdb = getFilesReleaseFtpPDB(site_id=self.__siteID, pdbid=pdb_id, cache=self.__cache)
         self.model_current = False
         self.sf_current = False
         self.cs_current = False
@@ -35,7 +36,7 @@ class getFilesRelease:
             self.__release_file_from_onedep = getFilesReleaseOneDep(siteID=self.__siteID,
                                                                     pdb_id=self.pdb_id,
                                                                     emdb_id=self.emdb_id)
-            self.__release_file_from_ftp_pdb = getFilesReleaseFtpPDB(site_id=self.__siteID, pdbid=pdb_id)
+            self.__release_file_from_ftp_pdb = getFilesReleaseFtpPDB(site_id=self.__siteID, pdbid=pdb_id, cache=self.__cache)
 
     def set_emdb_id(self, emdb_id):
         """Sets up emdb_id for processing release files"""
@@ -46,7 +47,7 @@ class getFilesRelease:
             self.__release_file_from_onedep = getFilesReleaseOneDep(siteID=self.__siteID,
                                                                     pdb_id=self.pdb_id,
                                                                     emdb_id=emdb_id)
-            self.__release_file_from_ftp_emdb = getFilesReleaseFtpEMDB(site_id=self.__siteID, emdbid=emdb_id)
+            self.__release_file_from_ftp_emdb = getFilesReleaseFtpEMDB(site_id=self.__siteID, emdbid=emdb_id, cache=self.__cache)
 
     def remove_local_temp_files(self):
         """Removes any temporary FTP directories"""
@@ -125,3 +126,6 @@ class getFilesRelease:
 
     def is_em_xml_current(self):
         return self.em_xml_current
+
+    def set_cache(self, fpath):
+        self.__cache = fpath

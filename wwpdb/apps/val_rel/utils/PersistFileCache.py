@@ -30,7 +30,7 @@ class PersistFileCache(object):
         """Returns the internal cachedir for fpath"""
         if fpath is None:
             return None
-
+        
         # Remove starting slash if present on filename
         if fpath[0] == "/":
             fpath = fpath[1:]
@@ -38,7 +38,7 @@ class PersistFileCache(object):
         if len(fpath) == 0:
             return None
 
-        basedir = os.path.dirname(fpath)
+        basedir = os.path.dirname(os.path.normpath(fpath))
         return os.path.join(self.__cache_dir, basedir)
 
     def __getcachefile(self, fpath):
@@ -49,7 +49,8 @@ class PersistFileCache(object):
 
         bname = os.path.basename(fpath)
 
-        cache_path = os.path.join(cd, bname)
+        # In case there are any ../ etc
+        cache_path = os.path.normpath(os.path.join(cd, bname))
         return cache_path
 
     @lockutils.synchronized("sessiondatastore.lock", external=True)
@@ -130,8 +131,9 @@ class PersistFileCache(object):
             os.makedirs(cache_dir)
 
         mlist = self.__getmissinglist(fpath)
-        if fpath not in mlist:
-            mlist.append(fpath)
+        npath = os.path.normpath(fpath)
+        if npath not in mlist:
+            mlist.append(npath)
             ret = self.__writemissinglist(fpath, mlist)
         else:
             ret = True
@@ -141,7 +143,9 @@ class PersistFileCache(object):
     @lockutils.synchronized("sessiondatastore.lock", external=True)
     def is_negative_cache(self, fpath):
         mlist = self.__getmissinglist(fpath)
-        if fpath in mlist:
+
+        npath = os.path.normpath(fpath)
+        if npath in mlist:
             return True
         return False
 
@@ -164,7 +168,8 @@ class PersistFileCache(object):
 
         # Check negative cache
         mlist = self.__getmissinglist(fpath)
-        if fpath in mlist:
+        npath = os.path.normpath(fpath)
+        if npath in mlist:
             return False
 
         # We known nothing

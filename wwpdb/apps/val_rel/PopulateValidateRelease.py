@@ -11,6 +11,7 @@ from wwpdb.apps.val_rel.utils.FindEntries import FindEntries
 from wwpdb.apps.val_rel.utils.XmlInfo import XmlInfo
 from wwpdb.apps.val_rel.utils.getFilesRelease import getFilesRelease
 from wwpdb.apps.val_rel.utils.mmCIFInfo import mmCIFInfo
+from wwpdb.apps.val_rel.utils.outputFiles import outputFiles
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +40,10 @@ class PopulateValidateRelease:
         self.skipGzip = skip_gzip
         self.skip_emdb = skip_emdb
         self.validation_sub_dir = validation_sub_dir
+        # Get cachedir
+        of = outputFiles(siteID=site_id)
+        self.__cache = of.get_ftp_cache_folder()
+
 
     def run_process(self):
         self.find_onedep_entries()
@@ -91,7 +96,7 @@ class PopulateValidateRelease:
             if emdb_entry not in self.added_entries:
                 # stop duplication of making EM validation reports twice
                 logger.debug(emdb_entry)
-                re = getFilesRelease(siteID=self.site_id, emdb_id=emdb_entry, pdb_id=None)
+                re = getFilesRelease(siteID=self.site_id, emdb_id=emdb_entry, pdb_id=None, cache=self.__cache)
                 em_xml = re.get_emdb_xml()
 
                 em_vol = re.get_emdb_volume()

@@ -12,8 +12,9 @@ logger = logging.getLogger(__name__)
 
 
 class getFilesReleaseFtpPDB(object):
-    def __init__(self, pdbid, site_id=getSiteId()):
+    def __init__(self, pdbid, site_id=getSiteId(), cache=None):
         self.__site_id = site_id
+        self.__cache = cache
         self.__rf = ReleaseFileNames()
         self.__local_ftp = LocalFTPPathInfo()
         self.__temp_local_ftp = None
@@ -81,7 +82,7 @@ class getFilesReleaseFtpPDB(object):
         :return: True if it exists, False if it fails
         """
         logger.debug("About to get %s %s to %s", file_path, filename, self.get_temp_local_ftp_path())
-        grf = GetRemoteFiles(server=self.server, output_path=self.get_temp_local_ftp_path())
+        grf = GetRemoteFiles(server=self.server, output_path=self.get_temp_local_ftp_path(), cache=self.__cache)
         ret = grf.get_url(directory=file_path, filename=filename)
         grf.disconnect()
         # logger.debug("ret is %s", ret)

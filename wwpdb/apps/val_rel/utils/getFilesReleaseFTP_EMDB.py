@@ -11,12 +11,13 @@ logger = logging.getLogger(__name__)
 
 
 class getFilesReleaseFtpEMDB(object):
-    def __init__(self, emdbid, site_id=getSiteId(), local_ftp_emdb_path=None):
+    def __init__(self, emdbid, site_id=getSiteId(), local_ftp_emdb_path=None, cache=None):
         self.__site_id = site_id
         self.__rf = ReleaseFileNames()
         self.__local_ftp = LocalFTPPathInfo()
         self.__local_ftp_emdb_path = local_ftp_emdb_path if local_ftp_emdb_path else self.__local_ftp.get_ftp_emdb()
         self.__temp_local_ftp = None
+        self.__cache = cache
         vc = ValConfig(self.__site_id)
         self.server = vc.ftp_server
         self.session_path = vc.session_path
@@ -174,7 +175,7 @@ class getFilesReleaseFtpEMDB(object):
         if ok:
             logger.debug('header found on remote FTP')
             url_directory = os.path.join(self.url_prefix, self.emdb_id)
-            grf = GetRemoteFiles(server=self.server, output_path=self.get_temp_local_ftp_emdb_path())
+            grf = GetRemoteFiles(server=self.server, output_path=self.get_temp_local_ftp_emdb_path(), cache=self.__cache)
             ret = grf.get_directory(directory=url_directory)
             logger.debug(ret)
             grf.disconnect()
@@ -188,7 +189,7 @@ class getFilesReleaseFtpEMDB(object):
         :return string: file name if it exists or None if it doesn't
         """
         logger.debug('get remote file {} FTP from {}'.format(filename, file_path))
-        grf = GetRemoteFiles(server=self.server, output_path=self.get_temp_local_ftp_emdb_path())
+        grf = GetRemoteFiles(server=self.server, output_path=self.get_temp_local_ftp_emdb_path(), cache=self.__cache)
         ret = grf.get_url(directory=file_path, filename=filename)
         logger.debug(ret)
         grf.disconnect()
