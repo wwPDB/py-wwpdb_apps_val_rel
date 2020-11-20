@@ -443,6 +443,8 @@ class runValidation:
     
         if self.__alternativeOutputFolder:
             return True
+        if self.__always_recalculate:
+            return True
         start_cut_off_time, end_cut_off_time = self.get_start_end_cut_off()
         return ok_to_copy(start_cut_off_time=start_cut_off_time,
                           end_cut_off_time=end_cut_off_time,
