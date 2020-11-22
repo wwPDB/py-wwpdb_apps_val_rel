@@ -61,7 +61,7 @@ class GetRemoteFiles(object):
             pfc = PersistFileCache(self.__cache)
             rp = os.path.join(self.__curdir, remote_file)
             if pfc.exists(rp):
-                pfc.get_file(rp, file_name)
+                pfc.get_file(rp, file_name, symlink=True)
                 logger.debug("Found %s in cache", rp)
                 return
             # logger.debug("Did not find %s in cache", remote_file)

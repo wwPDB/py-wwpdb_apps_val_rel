@@ -76,7 +76,7 @@ class PersistFileCache(object):
         return True
 
     @lockutils.synchronized("sessiondatastore.lock", external=True)
-    def get_file(self, fpath, realfpath):
+    def get_file(self, fpath, realfpath, symlink=False):
         """Retrieves fpath from the cache and copies it to realfpath
            If fpath is not in cache, returns False, else True.
 
@@ -91,7 +91,13 @@ class PersistFileCache(object):
             return False
 
         df = DataFile(cache_file)
-        df.copy(dstPath=realfpath)
+        if symlink:
+            # First time putting in cache - file might exists when trying to retrieve
+            if os.path.exists(realfpath):
+                os.unlink(realfpath)
+            df.symLink(dstPath=realfpath)
+        else:
+            df.copy(dstPath=realfpath)
         return True
 
     @lockutils.synchronized("sessiondatastore.lock", external=True)
