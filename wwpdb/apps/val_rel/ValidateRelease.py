@@ -59,6 +59,7 @@ class runValidation:
         self.__core_output_file_dict = {}
         self.__validation_xml = None
         self.__cachedir = None
+        self.__nocache = False
 
         self.__skip_gzip = False
         self.__skip_emdb = False
@@ -203,7 +204,10 @@ class runValidation:
         self.__pdb_output_folder = of.get_pdb_output_folder()
         self.__emdb_output_folder = of.get_emdb_output_folder()
         self.__statefolder = of.get_root_state_folder()
-        self.__cachedir = of.get_ftp_cache_folder()
+        if self.__nocache:
+            self.__cachedir = None
+        else:
+            self.__cachedir = of.get_ftp_cache_folder()
         if self.__rel_files is not None:
             self.__rel_files.set_cache(self.__cachedir)
 
@@ -230,6 +234,7 @@ class runValidation:
         self.__remove_validation_files = message.get('removeValFiles', False)
         self.__pythonSiteID = message.get("python_site_id", self.siteID)
         self.__entry_output_folder = None
+        self.__nocache = message.get("nocache", False)
         if self.__outputRoot:
             self.__alternativeOutputFolder = True
 
@@ -678,6 +683,9 @@ def main():
         "--keep_log", help="keep the log file from validation", action="store_true"
     )
     parser.add_argument(
+        "--nocache", help="Do not use the FTP cache", action="store_true"
+    )
+    parser.add_argument(
         "--remove_files", help="clear out the existing files for a validation run", action="store_true"
     )
     args = parser.parse_args()
@@ -697,6 +705,9 @@ def main():
     # If pass in None - overrides siteid
     if args.python_site_id:
         message["pythonSiteID"] = args.python_site_id,
+
+    if args.nocache:
+        message["nocache"] = args.nocache
 
     runValidation().run_process(message=message)
 

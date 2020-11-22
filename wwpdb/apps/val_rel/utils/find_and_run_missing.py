@@ -44,7 +44,8 @@ class FindAndRunMissing:
             pvr = PopulateValidateRelease(entry_list=self.missing_ids,
                                           validation_sub_dir='missing',
                                           site_id=self.__siteid,
-                                          always_recalculate=True
+                                          always_recalculate=True,
+                                          nocache=True
                                           )
             pvr.run_process()
 

@@ -21,7 +21,7 @@ class PopulateValidateRelease:
     def __init__(self, entry_string='', entry_list=[], entry_file='', keep_logs=False, output_root=None,
                  always_recalculate=False, skip_gzip=False, skip_emdb=False, validation_sub_dir='current',
                  pdb_release=False, emdb_release=False,
-                 site_id=getSiteId()):
+                 site_id=getSiteId(), nocache=False):
         self.entry_list = entry_list
         self.entry_string = entry_string
         self.entry_file = entry_file
@@ -42,7 +42,11 @@ class PopulateValidateRelease:
         self.validation_sub_dir = validation_sub_dir
         # Get cachedir
         of = outputFiles(siteID=site_id)
-        self.__cache = of.get_ftp_cache_folder()
+        self.__nocache = nocache
+        if nocache:
+            self.__cache = None
+        else:
+            self.__cache = of.get_ftp_cache_folder()
 
 
     def run_process(self):
@@ -151,6 +155,8 @@ class PopulateValidateRelease:
                 message["siteID"] = self.site_id
                 message["keepLog"] = self.keep_logs
                 message['subfolder'] = self.validation_sub_dir
+                if self.__nocache:
+                    message["nocache"] = self.__nocache
                 if self.output_root:
                     message["outputRoot"] = self.output_root
                 if self.always_recalculate:
@@ -216,6 +222,9 @@ def main():
         help="Folder to output the results to - overrides default OneDep folders",
         type=str,
     )
+    parser.add_argument(
+        "--nocache", help="Do not use the FTP cache", action="store_true"
+    )
     args = parser.parse_args()
     logger.setLevel(args.loglevel)
 
@@ -229,7 +238,8 @@ def main():
                                   skip_gzip=args.skipGzip,
                                   skip_emdb=args.skip_emdb,
                                   validation_sub_dir=args.validation_subdir,
-                                  output_root=args.output_root)
+                                  output_root=args.output_root,
+                                  nocache=args.nocache)
 
     pvr.run_process()
 
