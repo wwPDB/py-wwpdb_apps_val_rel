@@ -61,6 +61,27 @@ class PersisFileCacheTests(unittest.TestCase):
         self.assertEqual(pfc.cache_file_status(cfname2), False)
         self.assertEqual(pfc.cache_file_status(cfname3), None)
 
+    def testFileSymlink(self):
+        """Test adding and symlink to file"""
+
+        pfc = PersistFileCache(self.__cache)
+        lfile = __file__
+        cfname = "/tmp/somewhere/file.txt"
+
+        ret = pfc.add_file(lfile, cfname)
+        self.assertTrue(ret, "Adding file failed")
+
+        self.assertTrue(pfc.exists(cfname))
+
+        outfile = "/tmp/testout.txt2"
+        self.assertTrue(pfc.exists(cfname))
+
+        self.assertTrue(pfc.get_file(cfname, outfile, symlink=True))
+
+        self.assertTrue(os.path.exists(outfile))
+
+        self.assertTrue(abs(os.path.getmtime(outfile) - os.path.getmtime(lfile)) < 1)
+
 
 if __name__ == "__main__":  # pragma: no cover
     unittest.main()
