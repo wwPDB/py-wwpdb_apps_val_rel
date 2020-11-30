@@ -1,15 +1,14 @@
 import argparse
+import csv
 import logging
 import os
-import csv
 from pprint import pformat, pprint
-
-from wwpdb.apps.validation.src.utils.validation_xml_reader import ValidationXMLReader
 
 from wwpdb.apps.val_rel.ValidateRelease import runValidation
 from wwpdb.apps.val_rel.utils.Files import get_gzip_name
 from wwpdb.apps.val_rel.utils.FindEntries import FindEntries
 from wwpdb.apps.val_rel.utils.mmCIFInfo import is_simple_modification
+from wwpdb.apps.validation.src.utils.validation_xml_reader import ValidationXMLReader
 from wwpdb.io.locator.ReleasePathInfo import ReleasePathInfo
 
 # We replace with root if main
@@ -157,7 +156,7 @@ class CheckEntries:
                 writer.writeheader()
                 for entry_type in self.failed_entries:
                     for entry_id in self.failed_entries[entry_type]:
-                        entry_row = {'entry_type': entry_type ,'entry_id': entry_id}
+                        entry_row = {'entry_type': entry_type, 'entry_id': entry_id}
                         writer.writerow(entry_row)
 
     def get_entries(self, skip_emdb=False, pdb_entry_file=None, emdb_entry_file=None):
@@ -215,19 +214,19 @@ class CheckEntries:
 
                 missing_ret = cr.get_missing_files()
                 for missing_type in missing_ret:
-                    self.return_dictionary.\
-                        setdefault('missing_output', {}).\
-                        setdefault(entry_type, {}).\
-                        setdefault(missing_type, []).\
+                    self.return_dictionary. \
+                        setdefault('missing_output', {}). \
+                        setdefault(entry_type, {}). \
+                        setdefault(missing_type, []). \
                         append(missing_ret[missing_type])
 
                 ret_failed = cr.get_failed_programs()
                 if ret_failed:
                     self.entries_with_failed_programs.append(entry_id)
                     for program in ret_failed:
-                        self.return_dictionary.\
-                            setdefault('failed_programs', {}).\
-                            setdefault(program, []).\
+                        self.return_dictionary. \
+                            setdefault('failed_programs', {}). \
+                            setdefault(program, []). \
                             append(entry_id)
 
     def get_full_details(self):
@@ -254,7 +253,7 @@ class CheckEntries:
 
 
 def prepare_entries_and_check(siteID=None, output_folder=None, failed_entries_file=None, skip_emdb=False,
-                              pdb_entry_file=None, emdb_entry_file=None,
+                              pdb_entry_file=None, emdb_entry_file=None, validation_sub_folder=None
                               ):
     ce = CheckEntries(siteID=siteID)
     failed_entries = {}
@@ -267,9 +266,14 @@ def prepare_entries_and_check(siteID=None, output_folder=None, failed_entries_fi
         failed_programs['output'] = ce.get_failed_programs()
         full_details['output'] = ce.get_full_details()
     else:
-        for sub_folder in ['current', 'missing']:
+        check_folders = ['current', 'missing']
+        if validation_sub_folder:
+            check_folders = [validation_sub_folder]
+        for sub_folder in check_folders:
             ce.clear_entry_list()
-            if sub_folder == 'current':
+            if pdb_entry_file or emdb_entry_file:
+                ce.get_entries(skip_emdb=skip_emdb, pdb_entry_file=pdb_entry_file, emdb_entry_file=emdb_entry_file)
+            elif sub_folder == 'current':
                 ce.get_entries()
             else:
                 ce.read_missing_file()
@@ -318,14 +322,16 @@ def main():
     parser.add_argument("--pdb_entry_file", help="file containing PDB entries - one per line", type=str)
     parser.add_argument("--emdb_entry_file", help="file containing EMDB entries - one per line", type=str)
     parser.add_argument("--site_id", help="site id to get files from", type=str)
-    parser.add_argument("--validation_sub_folder", help="validation sub directory to check", type=str, default='current')
+    parser.add_argument("--validation_sub_folder", help="validation sub directory to check", type=str,
+                        default='current')
     parser.add_argument('--skip_emdb', action="store_true")
     args = parser.parse_args()
     logger.setLevel(args.loglevel)
 
-    prepare_entries_and_check(siteID=args.site_id, output_folder=args.output_root, failed_entries_file=args.failed_entries_file,
+    prepare_entries_and_check(siteID=args.site_id, output_folder=args.output_root,
+                              failed_entries_file=args.failed_entries_file,
                               skip_emdb=args.skip_emdb, pdb_entry_file=args.pdb_entry_file,
-                              emdb_entry_file=args.emdb_entry_file,
+                              emdb_entry_file=args.emdb_entry_file, validation_sub_folder=args.validation_sub_folder
                               )
 
 
