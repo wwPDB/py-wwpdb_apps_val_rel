@@ -164,21 +164,22 @@ class CheckEntries:
         pdb_entries = []
         emdb_entries = []
 
-        if pdb_entry_file:
-            if os.path.exists(pdb_entry_file):
-                with open(pdb_entry_file) as in_file:
-                    for pdb_line in in_file:
-                        pdb_entries.append(pdb_line.strip())
-        elif emdb_entry_file:
-            if os.path.exists(emdb_entry_file):
-                with open(emdb_entry_file) as in_file:
-                    for emdb_line in in_file:
-                        emdb_entries.append(emdb_line.strip())
+        if pdb_entry_file or emdb_entry_file:
+            if pdb_entry_file:
+                if os.path.exists(pdb_entry_file):
+                    with open(pdb_entry_file) as in_file:
+                        for pdb_line in in_file:
+                            pdb_entries.append(pdb_line.strip())
+            if emdb_entry_file:
+                if os.path.exists(emdb_entry_file):
+                    with open(emdb_entry_file) as in_file:
+                        for emdb_line in in_file:
+                            emdb_entries.append(emdb_line.strip())
         else:
             pdb_entries.extend(fe.get_added_pdb_entries())
             pdb_entries.extend(fe.get_modified_pdb_entries())
-        if not skip_emdb:
-            emdb_entries.extend(fe.get_emdb_entries())
+            if not skip_emdb:
+                emdb_entries.extend(fe.get_emdb_entries())
 
         self.add_pdb_entries(pdb_entries=pdb_entries)
         self.add_emdb_entries(emdb_entries=emdb_entries)
