@@ -33,6 +33,10 @@ class OutputFilesTests(unittest.TestCase):
                 self.final_pdb_output_folder,
                 self.pdbid + "_multipercentile_validation.svg",
             ),
+            "cif": os.path.join(
+                self.final_pdb_output_folder,
+                self.pdbid + "_validation.cif",
+            ),
         }
         self.pdb_aux_files = {
             "fofc": os.path.join(
@@ -45,6 +49,9 @@ class OutputFilesTests(unittest.TestCase):
             ),
         }
         self.emdb_core_files = {
+            "cif": os.path.join(
+                self.final_emdb_output_folder, self.emdb_accession + "_validation.cif",
+            ),
             "xml": os.path.join(
                 self.final_emdb_output_folder, self.emdb_accession + "_validation.xml"
             ),

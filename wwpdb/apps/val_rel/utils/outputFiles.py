@@ -166,6 +166,11 @@ class outputFiles:
             self.rf.get_validation_image_tar(self.accession)
         )
 
+    def get_validation_cif(self):
+        return self.add_output_folder_accession(
+            self.rf.get_validation_cif(self.accession)
+        )
+
     def get_core_validation_files(self):
         logger.debug("getting core files for: %s", self._entryID)
         logger.debug("path: %s", self.entry_output_folder)
@@ -173,8 +178,13 @@ class outputFiles:
         self.set_accession()
         logger.debug("accession set to %s", self.accession)
 
-        ret = {"pdf": self.get_validation_pdf(), "full_pdf": self.get_validation_full_pdf(),
-               "xml": self.get_validation_xml(), "png": self.get_validation_png(), "svg": self.get_validation_svg()}
+        ret = {"pdf": self.get_validation_pdf(),
+               "full_pdf": self.get_validation_full_pdf(),
+               "xml": self.get_validation_xml(),
+               "png": self.get_validation_png(),
+               "svg": self.get_validation_svg(),
+               "cif": self.get_validation_cif()
+               }
 
         logger.debug(ret)
 

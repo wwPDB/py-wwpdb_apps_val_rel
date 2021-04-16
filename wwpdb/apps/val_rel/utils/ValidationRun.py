@@ -86,7 +86,7 @@ class ValidationRun(object):
 
         output_file_list = []
         # Keys needs to be in order of arguments - and must have something
-        for key in ["pdf", "xml", "full_pdf", "png", "svg", "image_tar","fofc", "2fofc"]:
+        for key in ["pdf", "xml", "full_pdf", "png", "svg", "image_tar", "cif", "fofc", "2fofc"]:
             output_file_list.append(output_file_dict.get(key, None))
 
         logger.info(output_file_list)
