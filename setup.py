@@ -40,11 +40,12 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
     ],
     #
     install_requires=['wwpdb.utils.config', 'wwpdb.utils.detach',
                       'wwpdb.utils.dp', 'wwpdb.utils.message_queue',
-                      'wwpdb.apps.validation', 'wwpdb.io~=0.10',
+                      'wwpdb.apps.validation', 'wwpdb.io~=0.15',
                       'wwpdb.utils.ws_utils', 'oslo_concurrency'
                       ],
     packages=find_packages(exclude=['wwpdb.apps.tests-val_rel',
