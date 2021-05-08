@@ -199,6 +199,9 @@ class GetRemoteFiles(object):
                     self.get_file(obj)
                 else:
                     logging.debug('not a file: {}'.format(obj))
+                    # Skip recursion
+                    if obj == "." or obj == "..":
+                        continue
                     self.setup_output_directory(obj)
                     self.get_directory(obj)
                     self.ftp.cwd('..')
