@@ -47,7 +47,6 @@ class ValConfig(object):
     def session_path(self):
         return self.__cICommon.get_site_web_apps_sessions_path()
 
-
     @property
     def val_cut_off(self):
         return self.__cI.get("PROJECT_VAL_REL_CUTOFF")
