@@ -10,6 +10,7 @@
 Contains settings pertinent to configuring the behaviour of the Validation Services
 """
 from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
+from wwpdb.utils.config.ConfigInfoApp import ConfigInfoAppCommon
 
 
 class ValConfig(object):
@@ -18,6 +19,7 @@ class ValConfig(object):
             site_id = getSiteId()
         self.__site_id = site_id
         self.__cI = ConfigInfo(self.__site_id)
+        self.__cICommon = ConfigInfoAppCommon(self.__site_id)
 
     @property
     def queue_name(self):
@@ -43,7 +45,8 @@ class ValConfig(object):
 
     @property
     def session_path(self):
-        return self.__cI.get("SITE_WEB_APPS_SESSIONS_PATH")
+        return self.__cICommon.get_site_web_apps_sessions_path()
+
 
     @property
     def val_cut_off(self):
