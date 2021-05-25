@@ -32,6 +32,7 @@ class getFilesRelease:
         connections in subclasses.
         """
         self.__release_file_from_ftp_pdb.close_connection()
+        self.__release_file_from_ftp_emdb.close_connection()
 
     def set_pdb_id(self, pdb_id):
         """Sets up pdb_id for processing release files"""
