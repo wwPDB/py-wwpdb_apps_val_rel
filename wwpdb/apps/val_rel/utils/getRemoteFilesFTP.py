@@ -33,27 +33,35 @@ def remove_local_temp_ftp(temp_dir, require_empty=False):
 
 
 class GetRemoteFiles(object):
-    def __init__(self, server, output_path, cache=None):
-        self.output_path = output_path
+    def __init__(self, server, cache=None):
         self.ftp = ftplib.FTP(server)
         self.ftp.login()
-        self.setup_output_path()
         self.__cache = cache
         # The current remote directory as we go up and down tree
         self.__curdir = "." 
         # logger.debug("Setup for %s to %s", server, output_path)
+    
+    def _check_connection(self):
+        retries = 3
+        
+        while retries > 0:
+            try:
+                return self.ftp.voidcmd("noop")
+            except Exception as e:
+                logger.error(e)
+                retries -= 1
+        
+        raise Exception("error connecting to server")
 
-    def setup_output_path(self):
-        if not os.path.exists(self.output_path):
-            os.makedirs(self.output_path)
+    def _setup_output_path(self, output_path):
+        if not os.path.exists(output_path):
+            os.makedirs(output_path)
 
-    def setup_output_directory(self, directory):
-        self.output_path = os.path.join(self.output_path, directory)
-        if not os.path.exists(self.output_path):
-            os.makedirs(self.output_path)
+    def get_file(self, remote_file, output_path):
+        self._check_connection()
+        self._setup_output_path(output_path)
 
-    def get_file(self, remote_file):
-        file_name = os.path.join(self.output_path, remote_file)
+        file_name = os.path.join(output_path, remote_file)
         logger.debug("Transferring file %s to %s", remote_file, file_name)
         # logger.debug("Cache is %s", self.__cache)
         if self.__cache is not None:
@@ -81,6 +89,7 @@ class GetRemoteFiles(object):
             #logger.debug("Adding %s to cache", rp)
 
     def get_remote_file_mtime(self, remote_file):
+        self._check_connection()
         # Try to retrieve remote file time from server.
         # Returns None if could not be determined
 
@@ -139,6 +148,8 @@ class GetRemoteFiles(object):
             return None
 
     def get_size(self, remote_file):
+        self._check_connection()
+
         size = 0
         try:
             size = self.ftp.size(remote_file)
@@ -147,11 +158,15 @@ class GetRemoteFiles(object):
         return size
 
     def is_file(self, remote_file):
+        self._check_connection()
+
         if self.get_size(remote_file):
             return True
         return False
 
     def change_ftp_directory(self, directory):
+        self._check_connection()
+
         logger.debug("Changing directory %s", directory)
         if directory:
             try:
@@ -166,8 +181,10 @@ class GetRemoteFiles(object):
                 logger.error(e)
         return False
 
-    def get_url(self, directory=None, filename=None):
+    def get_url(self, output_path, directory=None, filename=None):
         """Retrieves files from directory.  Returns list of files retrieved"""
+        self._check_connection()
+
         ret_files = []
         # logger.debug("Directory %s, filename %s", directory, filename)
         if directory:
@@ -181,12 +198,13 @@ class GetRemoteFiles(object):
             files = self.ftp.nlst()
         for filename in files:
             if self.is_file(filename):
-                self.get_file(filename)
+                self.get_file(filename, output_path)
                 ret_files.append(filename)
         return ret_files
 
-    def get_directory(self, directory):
+    def get_directory(self, directory, output_path):
         """Recursivle retrieve contents of directory"""
+        self._check_connection()
         
         # Improvement - cache nlst?
         ok = self.change_ftp_directory(directory)
@@ -196,16 +214,19 @@ class GetRemoteFiles(object):
         if objects:
             for obj in objects:
                 if self.is_file(obj):
-                    self.get_file(obj)
+                    self.get_file(obj, output_path)
                 else:
                     logging.debug('not a file: {}'.format(obj))
                     # Skip recursion
                     if obj == "." or obj == "..":
                         continue
-                    self.setup_output_directory(obj)
-                    self.get_directory(obj)
+
+                    output_path = os.path.join(output_path, obj)
+                    self._setup_output_path(output_path)
+                    self.get_directory(obj, output_path)
+
                     self.ftp.cwd('..')
-                    self.output_path = os.path.join(self.output_path, '..')
+                    output_path = os.path.join(output_path, '..')
                     self.__curdir = os.path.join(self.__curdir, "..")
                     logger.debug("curr directory %s", self.__curdir)
             return True
