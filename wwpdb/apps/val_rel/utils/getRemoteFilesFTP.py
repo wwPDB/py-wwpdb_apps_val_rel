@@ -50,6 +50,7 @@ class GetRemoteFiles(object):
             except Exception as e:
                 logger.error(e)
                 retries -= 1
+                self.ftp.login()
         
         raise Exception("error connecting to server")
 

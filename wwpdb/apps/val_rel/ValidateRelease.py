@@ -273,8 +273,11 @@ class runValidation:
             return False
         return True
 
-    def __cleanup(self, onlyRunDir=False):
+    def __cleanup(self, onlyRunDir=False, closeConnections=False):
         """Cleanup handler on finishing process"""
+        if closeConnections:
+            self.__rel_files.close_connections()
+
         if not onlyRunDir:
             self.__rel_files.remove_local_temp_files()
         if self.__runDir is not None and not self.__keepLog and os.path.exists(self.__runDir):
@@ -365,7 +368,7 @@ class runValidation:
             all_worked.append(worked)
 
         # Cleanup ftp temp
-        self.__cleanup()
+        self.__cleanup(closeConnections=True)
         if list(set(all_worked)) == [True]:
             return True
         else:
