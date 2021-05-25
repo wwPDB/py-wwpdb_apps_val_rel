@@ -20,6 +20,7 @@ from wwpdb.apps.val_rel.utils.fileConversion import convert_cs_file
 from wwpdb.apps.val_rel.utils.getFilesRelease import getFilesRelease
 from wwpdb.apps.val_rel.utils.mmCIFInfo import mmCIFInfo, is_simple_modification
 from wwpdb.apps.val_rel.utils.outputFiles import outputFiles
+from wwpdb.utils.session.SessionManager import SessionManager
 
 logger = logging.getLogger()
 
@@ -516,20 +517,21 @@ class runValidation:
                 self.__fscPath = self.__rel_files.get_emdb_fsc()
 
             # worked = False
-            self.__sessionPath = ValConfig(self.siteID).session_path
-            if not os.path.exists(self.__sessionPath):
-                os.makedirs(self.__sessionPath)
+            sm = SessionManager(topPath=ValConfig(self.siteID).session_path)
+            sm.assignId()
+            self.__sessionPath = sm.makeSessionPath()
+            # self.__sessionPath = ValConfig(self.siteID).session_path
             self.__runDir = tempfile.mkdtemp(
                 dir=self.__sessionPath,
                 prefix="{}_validation_release_".format(self.__entry_id),
             )
 
             sessTempDir = tempfile.mkdtemp(
-                dir=self.__runDir,
+                dir=self.__sessionPath,
                 prefix="{}_validation_release_temp_dir_".format(self.__entry_id),
             )
             self.__temp_output_dir = tempfile.mkdtemp(
-                dir=self.__runDir,
+                dir=self.__sessionPath,
                 prefix="%s_validation_release_output_dir_" % self.__entry_id
             )
             self.set_output_dir_and_files()
@@ -552,7 +554,7 @@ class runValidation:
             self.remove_existing_files()
 
             run_dir = tempfile.mkdtemp(
-                dir=self.__runDir,
+                dir=self.__sessionPath,
                 prefix="%s_validation_release_rundir_" % self.__entry_id
             )
 

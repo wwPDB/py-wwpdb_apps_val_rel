@@ -45,7 +45,7 @@ class ValConfig(object):
 
     @property
     def session_path(self):
-        return self.__cICommon.get_site_web_apps_sessions_path()
+        return self.__cICommon.get_site_web_apps_top_sessions_path()
 
     @property
     def val_cut_off(self):
