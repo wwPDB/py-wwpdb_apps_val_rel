@@ -43,7 +43,7 @@ setup(
         'Programming Language :: Python :: 3.8',
     ],
     #
-    install_requires=['wwpdb.utils.config', 'wwpdb.utils.detach',
+    install_requires=['wwpdb.utils.config ~= 0.24', 'wwpdb.utils.detach',
                       'wwpdb.utils.dp', 'wwpdb.utils.message_queue',
                       'wwpdb.apps.validation', 'wwpdb.io~=0.15',
                       'wwpdb.utils.ws_utils', 'oslo_concurrency'
