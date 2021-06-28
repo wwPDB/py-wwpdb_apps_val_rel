@@ -27,6 +27,7 @@ class getFilesReleaseFtpPDB(object):
         self.url_prefix = self.__remote_ftp.get_ftp_pdb()
         self.pdb_id = pdbid
         self.__local_ftp_path = None
+        self.grf = GetRemoteFiles(server=self.server, cache=self.__cache)
 
     @staticmethod
     def check_filename(file_name):
@@ -82,9 +83,7 @@ class getFilesReleaseFtpPDB(object):
         :return: True if it exists, False if it fails
         """
         logger.debug("About to get %s %s to %s", file_path, filename, self.get_temp_local_ftp_path())
-        grf = GetRemoteFiles(server=self.server, output_path=self.get_temp_local_ftp_path(), cache=self.__cache)
-        ret = grf.get_url(directory=file_path, filename=filename)
-        grf.disconnect()
+        ret = self.grf.get_url(output_path=self.get_temp_local_ftp_path(), directory=file_path, filename=filename)
         # logger.debug("ret is %s", ret)
         if ret:
             return True
@@ -161,3 +160,6 @@ class getFilesReleaseFtpPDB(object):
 
         logger.debug('final NMR data filepath: {}'.format(file_name))
         return file_name
+
+    def close_connection(self):
+        self.grf.disconnect()

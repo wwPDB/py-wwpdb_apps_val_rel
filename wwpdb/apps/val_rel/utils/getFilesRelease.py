@@ -27,6 +27,13 @@ class getFilesRelease:
         self.em_xml_current = False
         self.__tempFTP = None
 
+    def close_connections(self):
+        """This method should be used to close all open
+        connections in subclasses.
+        """
+        self.__release_file_from_ftp_pdb.close_connection()
+        self.__release_file_from_ftp_emdb.close_connection()
+
     def set_pdb_id(self, pdb_id):
         """Sets up pdb_id for processing release files"""
 
