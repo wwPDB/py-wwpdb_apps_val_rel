@@ -46,7 +46,6 @@ class runValidation:
         self.__emXmlPath = None
         self.__volPath = None
         self.__fscPath = None
-        self.__runDir = None
         self.__sessionPath = None
         # self.contour_level = None # not needed as its in the xml
         self.__entry_output_folder = None
@@ -278,8 +277,8 @@ class runValidation:
         """Cleanup handler on finishing process"""
         if not onlyRunDir:
             self.__rel_files.remove_local_temp_files()
-        if self.__runDir is not None and not self.__keepLog and os.path.exists(self.__runDir):
-            shutil.rmtree(self.__runDir)
+        if self.__sessionPath is not None and not self.__keepLog and os.path.exists(self.__sessionPath):
+            shutil.rmtree(self.__sessionPath)
 
     def run_process(self, message):
         """Process message and act on it.  This is the main entry point"""
@@ -521,10 +520,6 @@ class runValidation:
             sm.assignId()
             self.__sessionPath = sm.makeSessionPath()
             # self.__sessionPath = ValConfig(self.siteID).session_path
-            self.__runDir = tempfile.mkdtemp(
-                dir=self.__sessionPath,
-                prefix="{}_validation_release_".format(self.__entry_id),
-            )
 
             sessTempDir = tempfile.mkdtemp(
                 dir=self.__sessionPath,
