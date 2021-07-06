@@ -40,7 +40,7 @@ class ValConfig(object):
 
     @property
     def ftp_prefix(self):
-        prefix = self.__cI.get('SITE_FTP_SERVER_PREFIX') if self.__cI.get('SITE_FTP_SERVER_PREFIX') else 'pub'
+        prefix = self.__cI.get('SITE_FTP_SERVER_PREFIX') if self.__cI.get('SITE_FTP_SERVER_PREFIX') else '/pub'
         return prefix
 
     @property
