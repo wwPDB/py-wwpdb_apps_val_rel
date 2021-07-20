@@ -26,7 +26,10 @@ class getFilesReleaseFtpEMDB(object):
         l_ftp.set_ftp_emdb_root(site_url_prefix)
         self.url_prefix = l_ftp.get_ftp_emdb()
         self.emdb_id = emdbid
-        self.grf = GetRemoteFiles(server=self.server, cache=self.__cache)
+        self.grf = None
+
+        if not self.__local_ftp.get_ftp_emdb():
+            self.grf = GetRemoteFiles(server=self.server, cache=self.__cache)
 
     def get_local_ftp_path(self):
         return self.__local_ftp.get_ftp_emdb()
@@ -176,6 +179,9 @@ class getFilesReleaseFtpEMDB(object):
         if ok:
             logger.debug('header found on remote FTP')
             url_directory = os.path.join(self.url_prefix, self.emdb_id)
+
+            # no need to check self.grf again here as it will be checked in
+            # get_file_from_remote_ftp()
             ret = self.grf.get_directory(directory=url_directory, output_path=self.get_temp_local_ftp_emdb_path())
             logger.debug(ret)
             if ret:
@@ -188,6 +194,11 @@ class getFilesReleaseFtpEMDB(object):
         :return string: file name if it exists or None if it doesn't
         """
         logger.debug('get remote file {} FTP from {}'.format(filename, file_path))
+
+        if self.grf is None:
+            logger.warning("There was no existing ftp connection. Opening new connection now...")
+            self.grf = GetRemoteFiles(server=self.server, cache=self.__cache)
+        
         ret = self.grf.get_url(output_path=self.get_temp_local_ftp_emdb_path(), directory=file_path, filename=filename)
         logger.debug(ret)
         if ret:
@@ -195,4 +206,6 @@ class getFilesReleaseFtpEMDB(object):
         return None
 
     def close_connection(self):
-        self.grf.disconnect()
+        if self.grf is not None:
+            self.grf.disconnect()
+            self.grf = None
