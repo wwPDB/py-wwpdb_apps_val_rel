@@ -41,7 +41,7 @@ class getFilesReleaseFtpEMDB(object):
     def emdb_xml_folder(self):
         return self.get_emdb_subfolder(sub_folder='header')
 
-    def emdb_map_folder(self, ):
+    def emdb_map_folder(self):
         return self.get_emdb_subfolder(sub_folder='map')
 
     def emdb_fsc_folder(self):
