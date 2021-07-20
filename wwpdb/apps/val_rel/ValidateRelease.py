@@ -332,7 +332,7 @@ class runValidation:
 
             run_pdb.append(self.__pdbid)
             worked, validation_ran = self.run_validation()
-            self.__cleanup(onlyRunDir=True)
+            self.__cleanup(onlyRunDir=True, closeConnections=True)
             all_worked.append(worked)
 
         if self.__emdbid:
@@ -599,6 +599,9 @@ class runValidation:
                 # "entry_output_folder": self.__entry_output_folder,
                 "entry_output_folder": self.__temp_output_dir,
             }
+
+            # close any FTP connections
+            self.__rel_files.close_connections()
 
             vr = ValidationRun(siteId=self.__pythonSiteID, verbose=False, log=sys.stderr)
             output_file_list = vr.run(data_dict)
