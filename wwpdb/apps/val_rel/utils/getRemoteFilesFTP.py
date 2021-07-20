@@ -41,6 +41,12 @@ class GetRemoteFiles(object):
         self.__curdir = "." 
         # logger.debug("Setup for %s to %s", server, output_path)
     
+    def __del__(self):
+        # for cases where ftplib.FTP.__init__() failed
+        if hasattr(self, 'ftp'):
+            # possible exceptions in ftp.quit() will be ignored
+            self.disconnect()
+    
     def _check_connection(self):
         retries = 3
         
@@ -234,4 +240,19 @@ class GetRemoteFiles(object):
         return False
 
     def disconnect(self):
-        self.ftp.quit()
+        """Issues 'QUIT' command to server
+
+        Note: `quit()` may also raise an exception (see [1])
+        It will be ignored by __del__ even if not wrapped by try/except (see [2]), so try/except
+        is necessary for when disconnect() is called directly, as to set self.ftp to None
+
+        [1] https://docs.python.org/3.9/library/ftplib.html#ftplib.FTP.quit
+        [2] https://docs.python.org/3/reference/datamodel.html#object.__del__
+        """
+        if self.ftp is not None:
+            try:
+                self.ftp.quit()
+            except:
+                logger.error("Error trying to close ftp connection")
+
+            self.ftp = None

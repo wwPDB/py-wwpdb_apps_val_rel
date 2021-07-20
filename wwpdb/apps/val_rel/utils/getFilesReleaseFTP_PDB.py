@@ -162,7 +162,4 @@ class getFilesReleaseFtpPDB(object):
         return file_name
 
     def close_connection(self):
-        try:
-            self.grf.disconnect()
-        except:
-            pass
+        self.grf.disconnect()
