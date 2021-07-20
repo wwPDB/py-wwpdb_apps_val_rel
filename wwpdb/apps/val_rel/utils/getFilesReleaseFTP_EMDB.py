@@ -195,4 +195,7 @@ class getFilesReleaseFtpEMDB(object):
         return None
 
     def close_connection(self):
-        self.grf.disconnect()
+        try:
+            self.grf.disconnect()
+        except:
+            pass
