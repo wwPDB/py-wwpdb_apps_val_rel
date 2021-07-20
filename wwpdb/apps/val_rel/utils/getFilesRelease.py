@@ -43,7 +43,7 @@ class getFilesRelease:
             self.__release_file_from_onedep = getFilesReleaseOneDep(siteID=self.__siteID,
                                                                     pdb_id=self.pdb_id,
                                                                     emdb_id=self.emdb_id)
-            self.__release_file_from_ftp_pdb = getFilesReleaseFtpPDB(site_id=self.__siteID, pdbid=pdb_id, cache=self.__cache)
+            self.__release_file_from_ftp_pdb.set_pdb_id(pdb_id=pdb_id)
 
     def set_emdb_id(self, emdb_id):
         """Sets up emdb_id for processing release files"""
@@ -54,7 +54,7 @@ class getFilesRelease:
             self.__release_file_from_onedep = getFilesReleaseOneDep(siteID=self.__siteID,
                                                                     pdb_id=self.pdb_id,
                                                                     emdb_id=emdb_id)
-            self.__release_file_from_ftp_emdb = getFilesReleaseFtpEMDB(site_id=self.__siteID, emdbid=emdb_id, cache=self.__cache)
+            self.__release_file_from_ftp_emdb.set_emdb_id(emdbid=emdb_id)
 
     def remove_local_temp_files(self):
         """Removes any temporary FTP directories"""

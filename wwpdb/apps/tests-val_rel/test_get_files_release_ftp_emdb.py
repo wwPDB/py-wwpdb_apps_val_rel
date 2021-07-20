@@ -91,6 +91,22 @@ class TestsGettingEMDBData(unittest.TestCase):
         ret = gfrf.get_emdb_fsc()
         print(ret)
         self.assertIsNone(ret)
+    
+    def test_change_emdb_id(self):
+        gfrf = getFilesReleaseFtpEMDB(emdbid='EMD-0070')
+        ret = gfrf.check_header_on_remote_ftp()
+        self.assertTrue(ret)
+        
+        gfrf.set_emdb_id('EMD-ABCD')
+        ret = gfrf.check_header_on_remote_ftp()
+        self.assertFalse(ret)
+
+        ret = gfrf.get_emdb_volume()
+        self.assertIsNone(ret)
+
+        gfrf.set_emdb_id('EMD-10316')
+        ret = gfrf.get_emdb_fsc()
+        self.assertIsNone(ret)
 
 
 if __name__ == '__main__':

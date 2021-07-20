@@ -96,11 +96,13 @@ class PopulateValidateRelease:
                 self.pdb_entries.append(entry)
 
     def process_emdb_entries(self):
+        re = getFilesRelease(siteID=self.site_id, emdb_id=None, pdb_id=None, cache=self.__cache)
+
         for emdb_entry in self.emdb_entries:
             if emdb_entry not in self.added_entries:
                 # stop duplication of making EM validation reports twice
                 logger.debug(emdb_entry)
-                re = getFilesRelease(siteID=self.site_id, emdb_id=emdb_entry, pdb_id=None, cache=self.__cache)
+                re.set_emdb_id(emdb_id=emdb_entry)
                 em_xml = re.get_emdb_xml()
 
                 em_vol = re.get_emdb_volume()

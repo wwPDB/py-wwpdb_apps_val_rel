@@ -31,7 +31,18 @@ class TestsGettingEMDBData(unittest.TestCase):
         gfrf.url_prefix = self.url_prefix
         ret = gfrf.get_model()
         self.assertFalse(ret)
-
+    
+    def test_change_pdb_id(self):
+        gfrf = getFilesReleaseFtpPDB(pdbid='1cbs')
+        gfrf.setup_local_temp_ftp(session_path=self.temp_folder)
+        gfrf.server = self.server
+        gfrf.url_prefix = self.url_prefix
+        ret = gfrf.get_model()
+        self.assertTrue(ret)
+        
+        gfrf.set_pdb_id('1cbssFDSDFSF')
+        ret = gfrf.get_model()
+        self.assertFalse(ret)
 
 if __name__ == '__main__':
     unittest.main()
