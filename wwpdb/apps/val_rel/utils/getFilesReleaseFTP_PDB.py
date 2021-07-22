@@ -27,7 +27,10 @@ class getFilesReleaseFtpPDB(object):
         self.url_prefix = self.__remote_ftp.get_ftp_pdb()
         self.pdb_id = pdbid
         self.__local_ftp_path = None
-        self.grf = GetRemoteFiles(server=self.server, cache=self.__cache)
+        self.grf = None
+
+        if not self.__local_ftp.get_ftp_pdb():
+            self.grf = GetRemoteFiles(server=self.server, cache=self.__cache)
 
     @staticmethod
     def check_filename(file_name):
@@ -83,6 +86,11 @@ class getFilesReleaseFtpPDB(object):
         :return: True if it exists, False if it fails
         """
         logger.debug("About to get %s %s to %s", file_path, filename, self.get_temp_local_ftp_path())
+
+        if self.grf is None:
+            logger.warning("There was no existing ftp connection. Opening new connection now...")
+            self.grf = GetRemoteFiles(server=self.server, cache=self.__cache)
+
         ret = self.grf.get_url(output_path=self.get_temp_local_ftp_path(), directory=file_path, filename=filename)
         # logger.debug("ret is %s", ret)
         if ret:
@@ -162,7 +170,6 @@ class getFilesReleaseFtpPDB(object):
         return file_name
 
     def close_connection(self):
-        try:
+        if self.grf is not None:
             self.grf.disconnect()
-        except:
-            pass
+            self.grf = None
