@@ -519,7 +519,7 @@ class runValidation:
                 self.__fscPath = self.__rel_files.get_emdb_fsc()
 
             # worked = False
-            sm = SessionManager(topPath=ValConfig(self.siteID).session_path)
+            sm = SessionManager(topPath=ValConfig(self.siteID).top_session_path)
             sm.assignId()
             self.__sessionPath = sm.makeSessionPath()
             # self.__sessionPath = ValConfig(self.siteID).session_path
