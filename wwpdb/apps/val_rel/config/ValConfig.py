@@ -23,7 +23,9 @@ class ValConfig(object):
 
     @property
     def queue_name(self):
-        return "val_release_queue_{}".format(self.__site_id)
+        message_queue = self.__cI.get('SITE_MESSAGE_QUEUE')
+        queue_name = message_queue if message_queue else 'val_release_queue_{}'.format(self.__site_id)
+        return queue_name
 
     @property
     def routing_key(self):
