@@ -12,8 +12,7 @@ def is_simple_modification(model_path):
     """
 
     SKIP_LIST = ['citation', 'citation_author', 'pdbx_audit_support',
-                 'pdbx_contact_author', 'struct_ref_seq_dif',
-                 'struct_ref', 'struct_ref_seq']
+                 'pdbx_contact_author', 'struct_site']
 
     cf = mmCIFInfo(model_path)
     modified_cats = cf.get_latest_modified_categories()
