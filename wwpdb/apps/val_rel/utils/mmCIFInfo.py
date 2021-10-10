@@ -6,12 +6,14 @@ logger = logging.getLogger(__name__)
 
 def is_simple_modification(model_path):
     """if there are only simple changes based the audit - skip calculation of validation report
-    (currently, citation, citation_author and pdbx_audit_support)
+    (currently, citation, citation_author, pdbx_audit_support and struct_ref_seq*)
 
     returns True is only simple changes present
     """
 
-    SKIP_LIST = ['citation', 'citation_author', 'pdbx_audit_support']
+    SKIP_LIST = ['citation', 'citation_author', 'pdbx_audit_support',
+                 'pdbx_contact_author', 'struct_ref_seq_dif',
+                 'struct_ref', 'struct_ref_seq']
 
     cf = mmCIFInfo(model_path)
     modified_cats = cf.get_latest_modified_categories()
