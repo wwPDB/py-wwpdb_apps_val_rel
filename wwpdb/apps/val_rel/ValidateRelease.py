@@ -691,6 +691,9 @@ def main():
     parser.add_argument(
         "--remove_files", help="clear out the existing files for a validation run", action="store_true"
     )
+    parser.add_argument(
+        "--validation_sub_folder", help="validation subfolder", type=str, default='current'
+    )
     args = parser.parse_args()
     logger.setLevel(args.loglevel)
 
@@ -703,6 +706,7 @@ def main():
         "siteID": args.site_id,
         "keepLog": args.keep_log,
         "removeValFiles": args.remove_files,
+        "subfolder": args.validation_sub_folder
     }
 
     # If pass in None - overrides siteid
