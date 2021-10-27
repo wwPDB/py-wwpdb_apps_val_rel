@@ -2,6 +2,7 @@ import argparse
 import csv
 import logging
 import os
+import json
 from pprint import pformat, pprint
 
 from wwpdb.apps.val_rel.ValidateRelease import runValidation
@@ -244,6 +245,13 @@ class CheckEntries:
 
     def get_failed_entries(self):
         return self.failed_entries
+
+    def get_entry_list(self):
+        return self.entry_list
+
+    def write_missing_json(self, output_file):
+        with open(output_file, 'w') as out_file:
+            json.dump(self.get_failed_entries(), out_file)
 
     def write_missing(self, output_file):
         with open(output_file, 'w') as out_file:
