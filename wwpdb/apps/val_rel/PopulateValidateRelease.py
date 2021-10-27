@@ -1,17 +1,12 @@
 import argparse
 import json
 import logging
-import os
-
-from wwpdb.utils.config.ConfigInfo import getSiteId
-from wwpdb.utils.message_queue.MessagePublisher import MessagePublisher
 
 from wwpdb.apps.val_rel.config.ValConfig import ValConfig
-from wwpdb.apps.val_rel.utils.FindEntries import FindEntries
-from wwpdb.apps.val_rel.utils.XmlInfo import XmlInfo
-from wwpdb.apps.val_rel.utils.getFilesRelease import getFilesRelease
-from wwpdb.apps.val_rel.utils.mmCIFInfo import mmCIFInfo
+from wwpdb.utils.config.ConfigInfo import getSiteId
 from wwpdb.apps.val_rel.utils.outputFiles import outputFiles
+from wwpdb.utils.message_queue.MessagePublisher import MessagePublisher
+from wwpdb.apps.val_rel.utils.FindAndProcessEntries import FindAndProcessEntries
 
 logger = logging.getLogger(__name__)
 
@@ -48,102 +43,21 @@ class PopulateValidateRelease:
         else:
             self.__cache = of.get_ftp_cache_folder()
 
+    def find_and_process_entries(self):
+        fape = FindAndProcessEntries(entry_string=self.entry_string,
+                                     entry_file=self.entry_file,
+                                     entry_list=self.entry_list,
+                                     skip_emdb=self.skip_emdb,
+                                     pdb_release=self.pdb_release,
+                                     emdb_release=self.emdb_release,
+                                     site_id=self.site_id,
+                                     nocache=self.__nocache)
+        fape.run_process()
+        self.messages = fape.get_found_entries()
 
     def run_process(self):
-        self.find_onedep_entries()
-        self.process_entry_file()
-        self.process_entry_list()
-        self.process_entry_string()
-        self.categorise_entries()
-        self.process_emdb_entries()
-        self.process_pdb_entries()
+        self.find_and_process_entries()
         self.process_messages()
-
-    def find_onedep_entries(self):
-        fe = FindEntries(siteID=self.site_id)
-        if self.pdb_release:
-            self.pdb_entries.extend(fe.get_added_pdb_entries())
-            self.pdb_entries.extend(fe.get_modified_pdb_entries())
-            self.all_pdb_entries = set(self.pdb_entries[:])
-        if self.emdb_release:
-            self.emdb_entries.extend(fe.get_emdb_entries())
-
-    def process_entry_file(self):
-        if self.entry_file:
-            if os.path.exists(self.entry_file):
-                with open(self.entry_file) as inFile:
-                    for file_line in inFile:
-                        self.entries.append(file_line.strip())
-            else:
-                logging.error("file: %s not found", self.entry_file)
-
-    def process_entry_list(self):
-        if self.entry_list:
-            logging.info('entries from input list: {}'.format(self.entry_list))
-            self.entries.extend(self.entry_list)
-
-    def process_entry_string(self):
-        if self.entry_string:
-            entries_from_entry_string = self.entry_string.split(",")
-            logging.info('entries from input string: {}'.format(entries_from_entry_string))
-            self.entries.extend(entries_from_entry_string)
-
-    def categorise_entries(self):
-        for entry in self.entries:
-            if "EMD-" in entry.upper():
-                self.emdb_entries.append(entry)
-            else:
-                self.pdb_entries.append(entry)
-
-    def process_emdb_entries(self):
-        for emdb_entry in self.emdb_entries:
-            if emdb_entry not in self.added_entries:
-                # stop duplication of making EM validation reports twice
-                logger.debug(emdb_entry)
-                re = getFilesRelease(siteID=self.site_id, emdb_id=emdb_entry, pdb_id=None, cache=self.__cache)
-                em_xml = re.get_emdb_xml()
-
-                em_vol = re.get_emdb_volume()
-                if em_vol:
-                    logger.debug('using XML: %s', em_xml)
-                    pdbids = XmlInfo(em_xml).get_pdbids_from_xml()
-                    if pdbids:
-                        logger.info(
-                            "PDB entries associated with %s: %s", emdb_entry, ",".join(pdbids)
-                        )
-                        for pdbid in pdbids:
-                            pdbid = pdbid.lower()
-                            re.set_pdb_id(pdb_id=pdbid)
-                            pdb_file = re.get_model()
-                            if pdb_file:
-                                cf = mmCIFInfo(pdb_file)
-                                associated_emdb = cf.get_associated_emdb()
-                                if associated_emdb == emdb_entry:
-                                    if pdbid in self.pdb_entries:
-                                        logger.info(
-                                            "removing %s from the PDB queue to stop duplication of report generation",
-                                            pdbid
-                                        )
-                                        self.pdb_entries.remove(pdbid)
-                                    else:
-                                        self.all_pdb_entries.add(pdbid)
-                                # what if its not? should it be added to the queue?
-                            else:
-                                if pdbid in self.pdb_entries:
-                                    logger.info('removing %s as pdb file does not exist', pdbid)
-                                    self.pdb_entries.remove(pdbid)
-
-                    message = {"emdbID": emdb_entry}
-                    self.messages.append(message)
-                    self.added_entries.append(emdb_entry)
-                re.remove_local_temp_files()
-
-    def process_pdb_entries(self):
-        for pdb_entry in self.pdb_entries:
-            if pdb_entry not in self.added_entries:
-                message = {"pdbID": pdb_entry}
-                self.messages.append(message)
-                self.added_entries.append(pdb_entry)
 
     def process_messages(self):
         if self.messages:
