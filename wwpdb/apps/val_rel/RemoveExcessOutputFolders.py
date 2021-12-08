@@ -4,7 +4,8 @@ import os
 import shutil
 
 from wwpdb.utils.config.ConfigInfo import getSiteId
-from wwpdb.apps.val_rel.PopulateValidateRelease import PopulateValidateRelease
+from wwpdb.apps.val_rel.utils.FindAndProcessEntries import FindAndProcessEntries
+
 from wwpdb.apps.val_rel.utils.outputFiles import outputFiles
 
 logger = logging.getLogger(__name__)
@@ -26,7 +27,7 @@ class FindExcessEntries:
         self.check_pdb_entries_output_should_exist()
 
     def find_pdb_and_emdb_entries(self):
-        pvr = PopulateValidateRelease(
+        pvr = FindAndProcessEntries(
             pdb_release=True,
             emdb_release=True,
             site_id=self.site_id,
