@@ -34,8 +34,11 @@ def remove_local_temp_ftp(temp_dir, require_empty=False):
 
 class GetRemoteFiles(object):
     def __init__(self, server, cache=None):
-        self.ftp = ftplib.FTP(server)
-        self.ftp.login()
+
+        # Single underscore for __del__ to be able to find
+        self._ftp = self.__connect(server)
+        # logger.info("Connect!!! %s", self._ftp)
+        self._ftp.login()
         self.__cache = cache
         # The current remote directory as we go up and down tree
         self.__curdir = "." 
@@ -43,20 +46,44 @@ class GetRemoteFiles(object):
     
     def __del__(self):
         # for cases where ftplib.FTP.__init__() failed
-        if hasattr(self, 'ftp'):
+        if hasattr(self, '_ftp'):
             # possible exceptions in ftp.quit() will be ignored
             self.disconnect()
-    
+
+    def __connect(self, server):
+        """Connects to remote server with retry"""
+        
+        retry = 0
+        sleep = 2
+        ftp = None
+
+        while 1:
+            try:
+                ftp = ftplib.FTP(server)
+                return ftp
+            except ftplib.error_temp as e:
+                ecode = str(e)[:3]
+                if ecode == "421":
+                    if retry > 5:
+                        raise
+                    logger.error("Remote resource unavailable - sleep %s and retry %s", sleep, str(e))
+                    time.sleep(sleep)
+                    retry += 1
+                    sleep *= 2
+                    continue
+            # unhandled exception not caught - raises us
+        # Never reached
+        
     def _check_connection(self):
         retries = 3
         
         while retries > 0:
             try:
-                return self.ftp.voidcmd("noop")
+                return self._ftp.voidcmd("noop")
             except Exception as e:
                 logger.error(e)
                 retries -= 1
-                self.ftp.login()
+                self._ftp.login()
         
         raise Exception("error connecting to server")
 
@@ -82,7 +109,7 @@ class GetRemoteFiles(object):
             # logger.debug("Did not find %s in cache", remote_file)
 
         with open(file_name, 'wb') as out_file:
-            self.ftp.retrbinary("RETR " + remote_file, out_file.write)
+            self._ftp.retrbinary("RETR " + remote_file, out_file.write)
             
         # File always exist - but might be zero length.... Annoying interface
         #logger.debug("Output exists? %s", os.path.exists(file_name))
@@ -107,7 +134,7 @@ class GetRemoteFiles(object):
         ts = None
         try:
             # MDTM is supported by all wwpdb partner ftp sites
-            mdtmr = self.ftp.voidcmd("MDTM %s" % remote_file)
+            mdtmr = self._ftp.voidcmd("MDTM %s" % remote_file)
             # Make sure get 213 return
             if mdtmr[0:3] != "213":
                 return None
@@ -119,7 +146,7 @@ class GetRemoteFiles(object):
             try:
                 # Fall back on MLST - which is more machine readable - but less universal
 
-                mlst = self.ftp.voidcmd("MLST %s" % remote_file)
+                mlst = self._ftp.voidcmd("MLST %s" % remote_file)
 
                 if not mlst:
                     return None
@@ -159,7 +186,7 @@ class GetRemoteFiles(object):
 
         size = 0
         try:
-            size = self.ftp.size(remote_file)
+            size = self._ftp.size(remote_file)
         except:
             size = None
         return size
@@ -177,7 +204,7 @@ class GetRemoteFiles(object):
         logger.debug("Changing directory %s", directory)
         if directory:
             try:
-                self.ftp.cwd(directory)
+                self._ftp.cwd(directory)
                 if directory[0] == '/':
                     self.__curdir = directory
                 else:
@@ -202,7 +229,7 @@ class GetRemoteFiles(object):
         if filename:
             files = [filename]
         else:
-            files = self.ftp.nlst()
+            files = self._ftp.nlst()
         for filename in files:
             if self.is_file(filename):
                 self.get_file(filename, output_path)
@@ -217,7 +244,7 @@ class GetRemoteFiles(object):
         ok = self.change_ftp_directory(directory)
         if not ok:
             return False
-        objects = self.ftp.nlst()
+        objects = self._ftp.nlst()
         if objects:
             for obj in objects:
                 if self.is_file(obj):
@@ -232,7 +259,7 @@ class GetRemoteFiles(object):
                     self._setup_output_path(output_path)
                     self.get_directory(obj, output_path)
 
-                    self.ftp.cwd('..')
+                    self._ftp.cwd('..')
                     output_path = os.path.join(output_path, '..')
                     self.__curdir = os.path.join(self.__curdir, "..")
                     logger.debug("curr directory %s", self.__curdir)
@@ -244,15 +271,16 @@ class GetRemoteFiles(object):
 
         Note: `quit()` may also raise an exception (see [1])
         It will be ignored by __del__ even if not wrapped by try/except (see [2]), so try/except
-        is necessary for when disconnect() is called directly, as to set self.ftp to None
+        is necessary for when disconnect() is called directly, as to set self._ftp to None
 
         [1] https://docs.python.org/3.9/library/ftplib.html#ftplib.FTP.quit
         [2] https://docs.python.org/3/reference/datamodel.html#object.__del__
         """
-        if self.ftp is not None:
+        if self._ftp is not None:
+            # logger.info("Disconnect %s", self._ftp)
             try:
-                self.ftp.quit()
+                self._ftp.quit()
             except:
                 logger.error("Error trying to close ftp connection")
 
-            self.ftp = None
+            self._ftp = None
