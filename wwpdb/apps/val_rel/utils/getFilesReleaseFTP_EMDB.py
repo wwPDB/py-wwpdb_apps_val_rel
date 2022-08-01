@@ -31,6 +31,9 @@ class getFilesReleaseFtpEMDB(object):
         if not self.__local_ftp.get_ftp_emdb():
             self.grf = GetRemoteFiles(server=self.server, cache=self.__cache)
 
+    def set_id(self, emdb_id):
+        self.emdb_id = emdb_id
+
     def get_local_ftp_path(self):
         return self.__local_ftp.get_ftp_emdb()
 

@@ -32,6 +32,9 @@ class getFilesReleaseFtpPDB(object):
         if not self.__local_ftp.get_ftp_pdb():
             self.grf = GetRemoteFiles(server=self.server, cache=self.__cache)
 
+    def set_id(self, pdb_id):
+        self.pdb_id = pdb_id
+
     @staticmethod
     def check_filename(file_name):
         """

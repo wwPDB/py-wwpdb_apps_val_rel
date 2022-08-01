@@ -22,6 +22,10 @@ class getFilesReleaseOneDep:
         self.mr_current = False
         self.em_xml_current = False
 
+    def set_ids(self, pdb_id, emdb_id):
+        self.pdb_id = pdb_id
+        self.emdb_id = emdb_id
+
     def _get_onedep_pdb_folder_paths(self):
         ret_list = [
             self.__rp.get_added_path(),
