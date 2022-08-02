@@ -64,7 +64,7 @@ class GetRemoteFiles(object):
             except ftplib.error_temp as e:
                 ecode = str(e)[:3]
                 if ecode == "421":
-                    if retry > 5:
+                    if retry > 7:
                         raise
                     logger.error("Remote resource unavailable - sleep %s and retry %s", sleep, str(e))
                     time.sleep(sleep)

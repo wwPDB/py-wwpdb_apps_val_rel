@@ -73,6 +73,8 @@ class runValidation:
         self.__setupRelFiles()
 
     def __setupRelFiles(self):
+        if self.__rel_files:
+            self.__rel_files.close_connections()
         self.__rel_files = getFilesRelease(siteID=self.siteID, cache=self.__cachedir)
 
     def setOutputRoot(self, outdir):

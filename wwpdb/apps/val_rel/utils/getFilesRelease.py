@@ -43,6 +43,9 @@ class getFilesRelease:
             self.__release_file_from_onedep = getFilesReleaseOneDep(siteID=self.__siteID,
                                                                     pdb_id=self.pdb_id,
                                                                     emdb_id=self.emdb_id)
+            if self.__release_file_from_ftp_pdb  is not None:
+                self.__release_file_from_ftp_pdb.close_connection()
+
             self.__release_file_from_ftp_pdb = getFilesReleaseFtpPDB(site_id=self.__siteID, pdbid=pdb_id, cache=self.__cache)
 
     def set_emdb_id(self, emdb_id):
@@ -54,6 +57,10 @@ class getFilesRelease:
             self.__release_file_from_onedep = getFilesReleaseOneDep(siteID=self.__siteID,
                                                                     pdb_id=self.pdb_id,
                                                                     emdb_id=emdb_id)
+
+            if self.__release_file_from_ftp_emdb is not None:
+                self.__release_file_from_ftp_emdb.close_connection()
+
             self.__release_file_from_ftp_emdb = getFilesReleaseFtpEMDB(site_id=self.__siteID, emdbid=emdb_id, cache=self.__cache)
 
     def remove_local_temp_files(self):
