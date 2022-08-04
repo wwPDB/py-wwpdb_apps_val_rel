@@ -40,7 +40,7 @@ class runValidation:
         self.__alternativeOutputFolder = False
         self.__entry_id = None
         self.__modelPath = None
-        self.__csPath = None
+        self.__csPath = None  # overloaded.  Sometime CS fie, sometimes nmr-data
         self.__resPath = None
         self.__sfPath = None
         self.__emXmlPath = None
@@ -153,7 +153,7 @@ class runValidation:
             if self.__rel_files.is_sf_current():
                 if not already_run(self.__sfPath, self.__pdb_output_folder):
                     modified = True
-        if self.__csPath:
+        if self.__csPath:  # CS or nmr-data. The get_nmr_data() side affects to set is_cs_current
             if self.__rel_files.is_cs_current():
                 if not already_run(self.__csPath, self.__pdb_output_folder):
                     modified = True
@@ -248,11 +248,13 @@ class runValidation:
         self.__rel_files.set_pdb_id(self.__pdbid)
         self.set_model_file()
         self.__sfPath = self.__rel_files.get_sf()
-        self.__csPath = self.__rel_files.get_cs()
+        nmrDataPath = self.__rel_files.get_nmr_data()  # sets is_cs_current
         self.__resPath = None
-        if not self.__csPath:
-            self.__csPath = self.__rel_files.get_nmr_data()
+        if nmrDataPath:
+            self.__csPath = nmrDataPath
             self.__resPath = self.__csPath
+        else:
+            self.__csPath = self.__rel_files.get_cs()  # sets is_cs_current
 
     def set_xml_file(self):
         self.__rel_files.set_emdb_id(self.__emdbid)
@@ -498,11 +500,16 @@ class runValidation:
             if self.__pdbid:
                 self.__rel_files.set_pdb_id(self.__pdbid)
                 self.__sfPath = self.__rel_files.get_sf()
-                self.__csPath = self.__rel_files.get_cs()
+
+                nmrDataPath = self.__rel_files.get_nmr_data()  # sets is_cs_current
                 self.__resPath = None
-                if not self.__csPath:
-                    self.__csPath = self.__rel_files.get_nmr_data()
+
+                if nmrDataPath:
+                    self.__csPath = nmrDataPath
                     self.__resPath = self.__csPath
+                else:
+                    self.__csPath = self.__rel_files.get_cs()  # sets is_cs_current
+
 
             # check if any input files have changed and set output folders
             is_modified = self.check_modified()
@@ -538,7 +545,7 @@ class runValidation:
 
             csPath = None
             resPath = None
-            if self.__csPath:
+            if self.__csPath:  # CS or nmr-data
                 csPath = convert_cs_file(cs_file=self.__csPath, working_dir=sessTempDir)
                 if not csPath:
                     logger.error('CS star to cif conversion failed')
