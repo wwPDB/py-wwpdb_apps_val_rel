@@ -305,7 +305,7 @@ class runValidation:
 
         # If validation already running skip - will reschedule later
         self.__sds = ValDataStore(self.__entry_id, self.__statefolder)
-        if self.__sds.isValidationRunning is True:
+        if self.__sds.isValidationRunning() is True:
             logger.info("Skipping run of %s as run in progress", self.__entry_id)
             self.__cleanup()
             return True
