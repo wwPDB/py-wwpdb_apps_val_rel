@@ -247,6 +247,10 @@ class GetRemoteFiles(object):
         objects = self._ftp.nlst()
         if objects:
             for obj in objects:
+                # Skip nfs turds...
+                if obj[:4] == ".nfs":
+                    logging.debug("Skipping NFS garbage: %s %s", directory, obj)
+                    continue
                 if self.is_file(obj):
                     self.get_file(obj, output_path)
                 else:
