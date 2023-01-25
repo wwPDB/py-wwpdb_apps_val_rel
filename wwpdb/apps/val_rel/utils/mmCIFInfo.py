@@ -1,26 +1,44 @@
 import logging
 
 from mmcif.io.IoAdapterCore import IoAdapterCore as IoAdapterCore
+from mmcif.api.PdbxContainers import CifName
+
 
 logger = logging.getLogger(__name__)
 
 def is_simple_modification(model_path):
     """if there are only simple changes based the audit - skip calculation of validation report
-    (currently, citation, citation_author, pdbx_audit_support and struct_ref_seq*)
+    (currently, citation, citation_author, pdbx_audit_support, pdbx_initial_refinement_model)
 
     returns True is only simple changes present
     """
 
     SKIP_LIST = ['citation', 'citation_author', 'pdbx_audit_support',
-                 'pdbx_contact_author', 'struct_site']
+                 'pdbx_contact_author', 'struct_site', 'pdbx_initial_refinement_model', 'database_2']
+
+    SKIP_ATTR = { 'database_2': ['pdbx_DOI', 'pdbx_database_accession'] }
 
     cf = mmCIFInfo(model_path)
-    modified_cats = cf.get_latest_modified_categories()
+    modified_cats, latest_ordinal = cf.get_latest_modified_categories()
+    attrs = cf.get_modified_items(latest_ordinal)
+
     if modified_cats:
         for item in modified_cats:
             if item not in SKIP_LIST:
                 return False
 
+            # For certain categories - check specific changes
+            if item in SKIP_ATTR:
+                # Get list of modifications for category item:
+                if item not in attrs:
+                    logger.error("%s audit history messed up", model_path)
+                    return False
+
+                # All modified items in this category must be in allowed list
+                for attr in attrs[item]:
+                    if attr not in SKIP_ATTR[item]:
+                        return False
+                    
         logger.debug('%s only a simple modification: %s', model_path, ','.join(modified_cats))
         return True
     return False
@@ -121,6 +139,7 @@ class mmCIFInfo:
         return None
 
     def get_latest_modified_categories(self):
+        '''Returns the latet modified categories and ordinal associated with it'''
         latest_audit_ordinal = None
         latest_audit_categories = []
         ret = self.get_category_list_of_dictionaries(category="pdbx_audit_revision_history")
@@ -142,4 +161,23 @@ class mmCIFInfo:
                     if revision_ordinal == latest_audit_ordinal:
                         latest_audit_categories.append(category)
 
-        return latest_audit_categories
+        return latest_audit_categories, latest_audit_ordinal
+
+    def get_modified_items(self, ordinal):
+        '''Returns the dictionary of latet modified attributes for ordinal keyed on category name'''
+        ret = {}
+        cdata = self.get_category_list_of_dictionaries(category="pdbx_audit_revision_item")
+
+        cn = CifName()
+        for c in cdata:
+            if "revision_ordinal" in c and "item" in c:
+                if c["revision_ordinal"] == ordinal:
+                    item = c["item"]
+                    cat = cn.categoryPart(item)
+                    iname = cn.attributePart(item)
+
+                    if cat not in ret:
+                        ret[cat] = []
+                    ret[cat].append(iname)
+
+        return ret
