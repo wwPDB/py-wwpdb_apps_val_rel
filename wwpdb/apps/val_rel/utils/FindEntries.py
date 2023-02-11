@@ -37,3 +37,30 @@ class FindEntries:
     def get_emdb_entries(self):
         """Return list of entries in the for_release/emd directory"""
         return self._get_release_entries(subfolder="emd")
+
+    def _get_release_paths(self, subfolder):
+        """Returns list of paths in for_release/subfolder directory.
+        Ignores directories that end in ".new" being created by release module.
+        """
+        entries = list()
+        rpi = ReleasePathInfo(self.siteID)
+        dirpath = rpi.getForReleasePath(subdir=subfolder)
+        full_entries = glob.glob(os.path.join(dirpath, "*"))
+        for full_entry in full_entries:
+            if ".new" not in full_entry:
+                # Ensure not some other random file
+                if os.path.isdir(full_entry):
+                    entries.append(full_entry)
+        return entries
+
+    def get_modified_pdb_paths(self):
+        """Returns list of paths in the for_release/modified directory"""
+        return self._get_release_paths(subfolder="modified")
+
+    def get_added_pdb_paths(self):
+        """Return list of paths in the for_release/added directory"""
+        return self._get_release_paths(subfolder="added")
+
+    def get_emdb_paths(self):
+        """Return list of paths in the for_release/emd directory"""
+        return self._get_release_paths(subfolder="emd")
