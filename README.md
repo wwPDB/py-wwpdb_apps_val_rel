@@ -78,3 +78,40 @@ then to read the temporary file and load the entries into the missing queue
         --pdbid - a single pdb id
         --emdbid - a single emdb id
         --output_root - to output to a path of your choice
+
+### 4) Publishing and consuming from a priority queue
+
+By default, the queues are not priority queues.
+
+To make priority queues, pass an argument of --priority to PopulateValidateRelease and ValidationReleaseServiceHandler.
+
+The priority values are determined automatically, with higher values having higher priority.
+
+- 10 missing
+- 8 new pdb
+- 6 new emdb
+- 4 modified pdb
+- 2 modified emdb
+- 0 default
+
+### 5) Subscription queues
+
+By default, the queues are persistent queues that store messages regardless of the existence of producers or consumers.
+
+However, even with priority queues, it's not possible to read a subset of messages with particular attributes, for example only emdb messages.
+
+Therefore, subscription queues have been built which, if necessary, enable higher specificity.
+
+Subscription queues publish to a larger number of exchanges and then subscribe to exchanges of choice.
+
+To make subscription queues, pass an argument of --subscribe to PopulateValidateRelease and ValidationReleaseServiceHandler.
+
+To publish to a subscription queue, invoke PopulateValidateRelease with an argument of --subscribe, after which the exchange name is automatically determined.
+
+As implemented, subscription queues will publish to an exchange name of 'pdb', 'emdb', or 'both', based on whether the options --pdb_release or --emdb_release were passed.
+
+To consume from a subscription queue, invoke ValidationReleaseServiceHandler with an argument of --subscribe followed by the exchange name to subscribe to, which must match one of the above.
+
+You must invoke the consumer before the producer or else the messages will be lost.
+
+A subscription queue is only temporary until the consumer closes, therefore they are not intended to be relied upon exclusively, rather as a supplement to already existing queues.

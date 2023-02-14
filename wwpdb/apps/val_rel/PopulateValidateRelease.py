@@ -21,7 +21,8 @@ class PopulateValidateRelease:
     def __init__(self, entry_string='', entry_list=[], entry_file='', keep_logs=False, output_root=None,
                  always_recalculate=False, skip_gzip=False, skip_emdb=False, validation_sub_dir='current',
                  pdb_release=False, emdb_release=False,
-                 site_id=getSiteId(), nocache=False):
+                 site_id=getSiteId(), nocache=False,
+                 priority=False, subscribe=False):
         self.entry_list = entry_list
         self.entry_string = entry_string
         self.entry_file = entry_file
@@ -40,6 +41,8 @@ class PopulateValidateRelease:
         self.skipGzip = skip_gzip
         self.skip_emdb = skip_emdb
         self.validation_sub_dir = validation_sub_dir
+        self.priority_queue = priority
+        self.subscribe = subscribe
         # Get cachedir
         of = outputFiles(siteID=site_id)
         self.__nocache = nocache
@@ -47,7 +50,7 @@ class PopulateValidateRelease:
             self.__cache = None
         else:
             self.__cache = of.get_ftp_cache_folder()
-        if not self.validation_sub_dir or self.validation_sub_dir != 'missing':
+        if self.priority_queue and (not self.validation_sub_dir or self.validation_sub_dir != 'missing'):
             # help find priorities
             fe = FindEntries(siteID=self.site_id)
             # absolute folder paths
@@ -68,7 +71,7 @@ class PopulateValidateRelease:
                 if output_path:
                     self.unmodifieds[key] = already_run(source_path, output_path)
                 else:
-                    print(f'error - no output path for {key}')
+                    logger.info('error - no output path for %s', key)
 
     def find_and_process_entries(self):
         fape = FindAndProcessEntries(entry_string=self.entry_string,
@@ -126,7 +129,8 @@ class PopulateValidateRelease:
             plogging = logging.getLogger('pika')
             plogging.setLevel(logging.ERROR)
             for message in self.messages:
-                priority = self.get_priority(message)
+                if self.priority_queue:
+                    priority = self.get_priority(message)
                 message["siteID"] = self.site_id
                 message["keepLog"] = self.keep_logs
                 message['subfolder'] = self.validation_sub_dir
@@ -142,16 +146,46 @@ class PopulateValidateRelease:
                     message['skip_emdb'] = self.skip_emdb
                 logger.info('MESSAGE req %s', message)
                 vc = ValConfig(self.site_id)
-                ok = MessagePublisher().publish(
-                    message=json.dumps(message),
-                    exchangeName=vc.exchange,
-                    queueName=vc.queue_name,
-                    routingKey=vc.routing_key,
-                    priority=priority
-                )
+                if self.emdb_release and self.pdb_release:
+                    subscribe_exchange_name = 'both'
+                elif self.emdb_release:
+                    subscribe_exchange_name = 'emdb'
+                else:
+                    subscribe_exchange_name = 'pdb'
+                if self.priority_queue:
+                    if not self.subscribe:
+                        ok = MessagePublisher().publish(
+                            message=json.dumps(message),
+                            exchangeName=vc.exchange,
+                            queueName=vc.queue_name,
+                            routingKey=vc.routing_key,
+                            priority=priority
+                        )
+                    else:
+                        ok = MessagePublisher().publishDirect(
+                            message=json.dumps(message),
+                            exchangeName=subscribe_exchange_name,
+                            priority=priority
+                        )
+                else:
+                    if not self.subscribe:
+                        ok = MessagePublisher().publish(
+                            message=json.dumps(message),
+                            exchangeName=vc.exchange,
+                            queueName=vc.queue_name,
+                            routingKey=vc.routing_key
+                        )
+                    else:
+                        ok = MessagePublisher().publishDirect(
+                            message=json.dumps(message),
+                            exchangeName=subscribe_exchange_name,
+                        )
                 logger.info('MESSAGE {}'.format(ok))
 
     def test(self):
+        if not self.priority_queue:
+            print('error - not a priority queue')
+            return None
         fape = FindAndProcessEntries(entry_string=self.entry_string,
                                      entry_file=self.entry_file,
                                      entry_list=self.entry_list,
@@ -162,7 +196,13 @@ class PopulateValidateRelease:
                                      nocache=self.__nocache)
         fape.find_onedep_entries()
         fape.process_pdb_entries()
-        fape.process_emdb_entries()
+        # fape.process_emdb_entries()
+        if self.emdb_release:
+            for emdb_entry in fape.emdb_entries:
+                if emdb_entry not in fape.added_entries:
+                    message = {"pdbID": emdb_entry}
+                    fape.messages.append(message)
+                    fape.added_entries.append(emdb_entry)
         self.messages = fape.get_found_entries()
         if self.messages:
             for message in self.messages:
@@ -234,7 +274,13 @@ def main():
         "--nocache", help="Do not use the FTP cache", action="store_true"
     )
     parser.add_argument(
-        "--test", help="Unit testing", action="store_true"
+        "--test", help="Testing priority values", action="store_true"
+    )
+    parser.add_argument(
+        "--priority", help="Make a priority queue", action='store_true'
+    )
+    parser.add_argument(
+        "--subscribe", help="Publish to a dedicated pdb or emdb exchange for a subscriber", action='store_true'
     )
     args = parser.parse_args()
     logger.setLevel(args.loglevel)
@@ -250,7 +296,9 @@ def main():
                                   skip_emdb=args.skip_emdb,
                                   validation_sub_dir=args.validation_subdir,
                                   output_root=args.output_root,
-                                  nocache=args.nocache)
+                                  nocache=args.nocache,
+                                  priority=args.priority,
+                                  subscribe=args.subscribe)
 
     if not args.test:
         pvr.run_process()
