@@ -109,3 +109,7 @@ To make subscription queues, pass an argument of --subscribe to PopulateValidate
 You must invoke the consumer before the producer or else the messages will be lost.
 
 A subscription queue is only temporary until the consumer closes, therefore they are not intended to be relied upon exclusively, rather as a supplement to already existing queues.
+
+For example, to relieve congestion in the emdb folder, stop the regular producers, then start selective consumers with exchange names 'pdb_production_exchange' and 'emdb_production_exchange', then start corresponding producers with the same exchange names, one with option '--pdb_release' and one with option '--emdb_release'.
+
+In the present system, subscription queues must not be run at the same time as the regular queues, at least not with the same options, or else they will both publish/consume the same files.
