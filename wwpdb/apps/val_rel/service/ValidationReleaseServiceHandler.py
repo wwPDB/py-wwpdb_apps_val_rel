@@ -271,7 +271,7 @@ def main():
     #
     parser.add_argument("--priority", action='store_true', dest='priority', help="make a priority queue")
     #
-    parser.add_argument("--subscribe", default=None, type=str, help="direct or topic exchange name for optional subscriber rather than default consumer")
+    parser.add_argument("--subscribe", default=None, type=str, help="exchange name for optional subscriber rather than standard consumer")
     # (options, args) = parser.parse_args()
 
     options = parser.parse_args()

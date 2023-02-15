@@ -22,7 +22,7 @@ class PopulateValidateRelease:
                  always_recalculate=False, skip_gzip=False, skip_emdb=False, validation_sub_dir='current',
                  pdb_release=False, emdb_release=False,
                  site_id=getSiteId(), nocache=False,
-                 priority=False, subscribe=False):
+                 priority=False, subscribe=None):
         self.entry_list = entry_list
         self.entry_string = entry_string
         self.entry_file = entry_file
@@ -146,12 +146,6 @@ class PopulateValidateRelease:
                     message['skip_emdb'] = self.skip_emdb
                 logger.info('MESSAGE req %s', message)
                 vc = ValConfig(self.site_id)
-                if self.emdb_release and self.pdb_release:
-                    subscribe_exchange_name = 'both'
-                elif self.emdb_release:
-                    subscribe_exchange_name = 'emdb'
-                else:
-                    subscribe_exchange_name = 'pdb'
                 if self.priority_queue:
                     if not self.subscribe:
                         ok = MessagePublisher().publish(
@@ -164,7 +158,7 @@ class PopulateValidateRelease:
                     else:
                         ok = MessagePublisher().publishDirect(
                             message=json.dumps(message),
-                            exchangeName=subscribe_exchange_name,
+                            exchangeName=self.subscribe,
                             priority=priority
                         )
                 else:
@@ -178,7 +172,7 @@ class PopulateValidateRelease:
                     else:
                         ok = MessagePublisher().publishDirect(
                             message=json.dumps(message),
-                            exchangeName=subscribe_exchange_name,
+                            exchangeName=self.subscribe,
                         )
                 logger.info('MESSAGE {}'.format(ok))
 
@@ -280,7 +274,7 @@ def main():
         "--priority", help="Make a priority queue", action='store_true'
     )
     parser.add_argument(
-        "--subscribe", help="Publish to a dedicated pdb or emdb exchange for a subscriber", action='store_true'
+        "--subscribe", help="Exchange name for optional subscriber rather than standard consumer", type=str, default=None
     )
     args = parser.parse_args()
     logger.setLevel(args.loglevel)

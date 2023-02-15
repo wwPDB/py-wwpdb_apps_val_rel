@@ -104,13 +104,7 @@ Therefore, subscription queues have been built which, if necessary, enable highe
 
 Subscription queues publish to a larger number of exchanges and then subscribe to exchanges of choice.
 
-To make subscription queues, pass an argument of --subscribe to PopulateValidateRelease and ValidationReleaseServiceHandler.
-
-To publish to a subscription queue, invoke PopulateValidateRelease with an argument of --subscribe, after which the exchange name is automatically determined.
-
-As implemented, subscription queues will publish to an exchange name of 'pdb', 'emdb', or 'both', based on whether the options --pdb_release or --emdb_release were passed.
-
-To consume from a subscription queue, invoke ValidationReleaseServiceHandler with an argument of --subscribe followed by the exchange name to subscribe to, which must match one of the above.
+To make subscription queues, pass an argument of --subscribe to PopulateValidateRelease and ValidationReleaseServiceHandler, followed by an exchange name.
 
 You must invoke the consumer before the producer or else the messages will be lost.
 
