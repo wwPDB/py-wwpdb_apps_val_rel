@@ -48,8 +48,8 @@ logging.getLogger("pika").setLevel(logging.INFO)
 
 
 class MessageConsumer(MessageConsumerBase):
-    def __init__(self, amqpUrl):
-        super(MessageConsumer, self).__init__(amqpUrl)
+    def __init__(self, amqpUrl, priority):
+        super(MessageConsumer, self).__init__(amqpUrl, priority)
 
     def workerMethod(self, msgBody, deliveryTag=None):
         try:
@@ -136,7 +136,7 @@ class MessageSubscriberWorker(object):
     def __setup(self):
         mqc = MessageQueueConnection()
         url = mqc._getDefaultConnectionUrl()
-        self.__subscriber = MessageSubscriber(amqpUrl=url,priority=self.__priority)
+        self.__subscriber = MessageSubscriber(amqpUrl=url)
         self.__subscriber.add_exchange(self.__exchange_name)
         #
 

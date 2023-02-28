@@ -92,7 +92,8 @@ The priority values are determined automatically, with higher values having high
 - 6 new emdb
 - 4 modified pdb
 - 2 modified emdb
-- 0 default
+- 1 default
+
 
 ### 5) Subscription queues
 
@@ -104,11 +105,15 @@ Therefore, subscription queues have been built which, if necessary, enable highe
 
 Subscription queues publish to a larger number of exchanges and then subscribe to exchanges of choice.
 
-To make subscription queues, pass an argument of --subscribe to PopulateValidateRelease and ValidationReleaseServiceHandler, followed by an exchange name.
+To make subscription queues, pass an argument of --subscribe to PopulateValidateRelease and ValidationReleaseServiceHandler, followed by an exchange name which should be the same for both.
 
 You must invoke the consumer before the producer or else the messages will be lost.
 
 A subscription queue is only temporary until the consumer closes, therefore they are not intended to be relied upon exclusively, rather as a supplement to already existing queues.
+
+Once the consumer is stopped, the queue and all of its contents will be deleted.
+
+Subscription queues may have advantages during service peaks.
 
 For example, to relieve congestion in the emdb folder, stop the regular producers, then start selective consumers with exchange names 'pdb_production_exchange' and 'emdb_production_exchange', then start corresponding producers with the same exchange names, one with option '--pdb_release' and one with option '--emdb_release'.
 

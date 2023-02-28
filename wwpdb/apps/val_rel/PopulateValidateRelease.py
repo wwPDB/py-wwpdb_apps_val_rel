@@ -96,9 +96,9 @@ class PopulateValidateRelease:
         new emdb - 6
         modified pdb - 4
         modified emdb - 2
-        default - 0
+        default - 1
         """
-        priority = 0
+        priority = 1
         if self.validation_sub_dir and self.validation_sub_dir == 'missing':
             # find_and_run_missing always runs Populate with validation_sub_dir = missing
             priority = 10
