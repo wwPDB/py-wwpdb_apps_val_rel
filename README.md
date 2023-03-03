@@ -115,6 +115,6 @@ Once the consumer is stopped, the queue and all of its contents will be deleted.
 
 Subscription queues may have advantages during service peaks.
 
-For example, to relieve congestion in the emdb folder, stop the regular producers, then start selective consumers with exchange names 'pdb_production_exchange' and 'emdb_production_exchange', then start corresponding producers with the same exchange names, one with option '--pdb_release' and one with option '--emdb_release'.
+For example, to relieve congestion in the emdb folder, stop the regular producer crons, then start selective consumers with exchange names 'pdb_production_exchange' and 'emdb_production_exchange', then start corresponding producers with the same exchange names, one with option '--pdb_release' and one with option '--emdb_release'.
 
 In the present system, subscription queues must not be run at the same time as the regular queues, at least not with the same options, or else they will both publish/consume the same files.

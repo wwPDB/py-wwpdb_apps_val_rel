@@ -55,7 +55,8 @@ class PopulateValidateRelease:
             fe = FindEntries(siteID=self.site_id)
             # absolute folder paths
             paths = fe.get_modified_pdb_paths()
-            paths.extend(fe.get_added_pdb_paths())
+            # fape does not run validation on the added folder
+            # paths.extend(fe.get_added_pdb_paths())
             paths.extend(fe.get_emdb_paths())
             self.unmodifieds = {}
             for source_path in paths:
