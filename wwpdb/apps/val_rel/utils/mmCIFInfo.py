@@ -13,8 +13,21 @@ def is_simple_modification(model_path):
     returns True is only simple changes present
     """
 
-    SKIP_LIST = ['citation', 'citation_author', 'pdbx_audit_support',
-                 'pdbx_contact_author', 'struct_site', 'pdbx_initial_refinement_model', 'database_2']
+    # database_2 is handled specially
+    SKIP_LIST = ['citation', 'citation_author', 'pdbx_audit_support', 'pdbx_contact_author',
+                 'database_PDB_caveat', 'diffrn', 'diffrn_detector', 'diffrn_radiation', 'diffrn_radiation_wavelength',
+                 'diffrn_source', 'entity_name_com', 'entity_src_gen', 'entity_src_nat', 'exptl_crystal', 'exptl_crystal_grow',
+                 'pdbx_audit_support', 'pdbx_contact_author', 'pdbx_entity_src_syn', 'pdbx_entry_details', 'pdbx_nmr_chem_shift_experiment',
+                 'pdbx_nmr_chem_shift_ref', 'pdbx_nmr_chem_shift_reference', 'pdbx_nmr_chem_shift_software', 'pdbx_nmr_computing',
+                 'pdbx_nmr_detail', 'pdbx_nmr_exptl', 'pdbx_nmr_exptl_sample', 'pdbx_nmr_exptl_sample_conditions',
+                 'pdbx_nmr_force_constants', 'pdbx_nmr_refine', 'pdbx_nmr_sample_details', 'pdbx_nmr_software_task', 'pdbx_nmr_spectral_dim',
+                 'pdbx_nmr_spectral_peak_list', 'pdbx_nmr_spectral_peak_software', 'pdbx_nmr_spectrometer', 'pdbx_nmr_systematic_chem_shift_offset',
+                 'pdbx_refine_tls', 'pdbx_refine_tls_group', 'pdbx_struct_assembly', 'pdbx_struct_assembly_auth_evidence',
+                 'pdbx_struct_assembly_gen', 'pdbx_struct_assembly_prop', 'pdbx_struct_oper_list', 'pdbx_struct_sheet_hbond',
+                 'refine_ls_restr', 'refine_ls_restr_ncs', 'refine_ls_shell', 'reflns_shell', 'struct_conf',
+                 'struct_conf_type', 'struct_keywords', 'struct_ncs_dom', 'struct_ncs_dom_lim', 'struct_ncs_ens',
+                 'struct_sheet', 'struct_sheet', 'struct_sheet_order', 'struct_sheet_order', 'struct_sheet_range',
+                 'struct_sheet_range', 'struct_site', 'pdbx_initial_refinement_model', 'database_2']
 
     SKIP_ATTR = { 'database_2': ['pdbx_DOI', 'pdbx_database_accession'] }
 
