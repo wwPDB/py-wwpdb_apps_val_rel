@@ -3,7 +3,6 @@ import json
 import logging
 import re
 import os
-import sys
 
 from wwpdb.apps.val_rel.config.ValConfig import ValConfig
 from wwpdb.utils.config.ConfigInfo import getSiteId
@@ -55,10 +54,9 @@ class PopulateValidateRelease:
             fe = FindEntries(siteID=self.site_id)
             # absolute folder paths
             paths = fe.get_modified_pdb_paths()
-            # fape does not run validation on the added folder
-            # paths.extend(fe.get_added_pdb_paths())
+            paths.extend(fe.get_added_pdb_paths())
             paths.extend(fe.get_emdb_paths())
-            self.unmodifieds = {}
+            self.already_ran = {}
             for source_path in paths:
                 # folder names
                 key = os.path.basename(source_path)
@@ -70,7 +68,7 @@ class PopulateValidateRelease:
                     of.set_pdb_id(key)
                     output_path = of.get_pdb_output_folder()
                 if output_path:
-                    self.unmodifieds[key] = already_run(source_path, output_path)
+                    self.already_ran[key] = already_run(source_path, output_path)
                 else:
                     logger.info('error - no output path for %s', key)
 
@@ -91,36 +89,34 @@ class PopulateValidateRelease:
         self.process_messages()
 
     def get_priority(self, message):
-        """priority
-        missing - 10
-        new pdb - 8
-        new emdb - 6
-        modified pdb - 4
-        modified emdb - 2
-        default - 1
-        """
+        # missing - 10
+        # validated pdb - 8
+        # validated emdb - 6
+        # unvalidated pdb - 4
+        # unvalidated emdb - 2
+        # default - 1
+
         priority = 1
         if self.validation_sub_dir and self.validation_sub_dir == 'missing':
             # find_and_run_missing always runs Populate with validation_sub_dir = missing
             priority = 10
         else:
-            # already run = new
-            # not already run = modified
-            # always_recalculate = modified
-            mod = False
+            validate = False
             if self.always_recalculate:
-                mod = True
-            elif message["pdbID"] and message["pdbID"] in self.unmodifieds:
-                mod = not self.unmodifieds[message["pdbID"]]
-            emd = (self.validation_sub_dir and self.validation_sub_dir == 'emd') or (message["pdbID"] and message["pdbID"].startswith("EMD"))
+                validate = True
+            elif "pdbID" in message and message["pdbID"] in self.already_ran:
+                validate = not self.already_ran[message["pdbID"]]
+            elif "emdbID" in message and message["emdbID"] in self.already_ran:
+                validate = not self.already_ran[message["emdbID"]]
+            emd = "emdbID" in message or ("pdbID" in message and message["pdbID"].startswith("EMD") or (self.validation_sub_dir and self.validation_sub_dir == 'emd'))
             pdb = not emd
-            if pdb and not mod:
+            if pdb and not validate:
                 priority = 8
-            elif emd and not mod:
+            elif emd and not validate:
                 priority = 6
-            elif pdb and mod:
+            elif pdb and validate:
                 priority = 4
-            elif emd and mod:
+            elif emd and validate:
                 priority = 2
         return priority
 
@@ -191,7 +187,7 @@ class PopulateValidateRelease:
                                      nocache=self.__nocache)
         fape.find_onedep_entries()
         fape.process_pdb_entries()
-        # fape.process_emdb_entries()
+        fape.process_emdb_entries()
         if self.emdb_release:
             for emdb_entry in fape.emdb_entries:
                 if emdb_entry not in fape.added_entries:
