@@ -88,10 +88,10 @@ To make priority queues, pass an argument of --priority to PopulateValidateRelea
 The priority values are determined automatically, with higher values having higher priority.
 
 - 10 missing
-- 8 validated pdb
-- 6 validated emdb
-- 4 unvalidated pdb
-- 2 unvalidated emdb
+- 8 new pdb
+- 6 new emdb
+- 4 modified pdb
+- 2 modified emdb
 - 1 default
 
 

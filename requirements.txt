@@ -9,6 +9,7 @@ future==0.18.3
 gemmi==0.5.8
 idna==3.4
 iso8601==1.1.0
+lxml==4.9.2
 mmcif==0.80.1
 mmcif.utils==0.25
 msgpack==1.0.4

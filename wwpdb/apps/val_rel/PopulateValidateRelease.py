@@ -1,9 +1,12 @@
 import argparse
+import glob
 import json
 import logging
 import re
 import os
+import datetime
 
+from lxml import etree
 from wwpdb.apps.val_rel.config.ValConfig import ValConfig
 from wwpdb.utils.config.ConfigInfo import getSiteId
 from wwpdb.apps.val_rel.utils.outputFiles import outputFiles
@@ -49,28 +52,10 @@ class PopulateValidateRelease:
             self.__cache = None
         else:
             self.__cache = of.get_ftp_cache_folder()
-        if self.priority_queue and (not self.validation_sub_dir or self.validation_sub_dir != 'missing'):
-            # help find priorities
-            fe = FindEntries(siteID=self.site_id)
-            # absolute folder paths
-            paths = fe.get_modified_pdb_paths()
-            paths.extend(fe.get_added_pdb_paths())
-            paths.extend(fe.get_emdb_paths())
-            self.already_ran = {}
-            for source_path in paths:
-                # folder names
-                key = os.path.basename(source_path)
-                output_path = None
-                if key.startswith('EMD'):
-                    of.set_emdb_id(key)
-                    output_path = of.get_emdb_output_folder()
-                elif re.match(r'^\d{1}\w{3}$', key):
-                    of.set_pdb_id(key)
-                    output_path = of.get_pdb_output_folder()
-                if output_path:
-                    self.already_ran[key] = already_run(source_path, output_path)
-                else:
-                    logger.info('error - no output path for %s', key)
+        # for priority queues
+        if self.priority_queue:
+            self.make_priorities()
+
 
     def find_and_process_entries(self):
         fape = FindAndProcessEntries(entry_string=self.entry_string,
@@ -88,14 +73,120 @@ class PopulateValidateRelease:
         self.find_and_process_entries()
         self.process_messages()
 
+
+    def make_priorities(self):
+        fe = FindEntries(siteID=self.site_id)
+        # build lists of absolute input file paths and associated entries
+        self.modified_priority_paths = fe.get_modified_pdb_paths()
+        self.modified_priorities = [os.path.basename(path) for path in self.modified_priority_paths]
+        self.added_priority_paths = fe.get_added_pdb_paths()
+        self.added_priorities = [os.path.basename(path) for path in self.added_priority_paths]
+        self.emdb_priority_paths = fe.get_emdb_paths()
+        self.emdb_priorities = [os.path.basename(path) for path in self.emdb_priority_paths]
+
+
     def get_priority(self, message):
         # missing - 10
-        # validated pdb - 8
-        # validated emdb - 6
-        # unvalidated pdb - 4
-        # unvalidated emdb - 2
+        # new pdb - 8
+        # new emdb - 6
+        # modified pdb - 4
+        # modified emdb - 2
         # default - 1
+        priority = 1
+        if self.validation_sub_dir and self.validation_sub_dir == 'missing':
+            # find_and_run_missing always runs Populate with validation_sub_dir = missing
+            priority = 10
+        else:
+            emd = "emdbID" in message
+            pdb = "pdbID" in message
+            if not emd and not pdb:
+                logger.warning(f"error - neither pdb or emdb {message}")
+                return 1
+            elif emd and pdb:
+                logger.warning(f"error - both pdb and emdb {message}")
+                pdb = False
+                emd = True
+            modified = None
+            if self.always_recalculate:
+                modified = True
+            elif pdb and message["pdbID"] in self.modified_priorities:
+                modified = True
+            elif pdb and message["pdbID"] in self.added_priorities:
+                modified = False
+            elif emd and message["emdbID"] in self.emdb_priorities:
+                path = None
+                for p in self.emdb_priority_paths:
+                    if os.path.basename(p) == message["emdbID"]:
+                        path = p
+                        break
+                if path:
+                    header_dir = os.path.join(path, "header")
+                    map_dir = os.path.join(path, "map")
+                    if not os.path.exists(header_dir):
+                        logger.warning(f"error - could not find header directory for {path}")
+                        return 1
+                    xml_file_path = os.path.join(header_dir, "*.xml")
+                    for xmlfile in glob.glob(xml_file_path):
+                        tree = etree.parse(xmlfile)
+                        root = tree.getroot()
+                        # date as yyyy-mm-dd
+                        map_release = root.find("admin").find("key_dates").findtext("map_release")
+                        s = map_release.split("-")
+                        map_release_date = datetime.date(int(s[0]), int(s[1]), int(s[2]))
+                        if map_release_date < datetime.date.today():
+                            modified = True
+                        elif not os.path.exists(map_dir):
+                            modified = True
+                        else:
+                            modified = False
+                        # should only have one xml file in header directory
+                        break
+            if modified is None:
+                logger.warning(f"error - could not get priority for {message}")
+                return 1
+            if pdb and not modified:
+                priority = 8
+            elif emd and not modified:
+                priority = 6
+            elif pdb and modified:
+                priority = 4
+            elif emd and modified:
+                priority = 2
+        return priority
 
+
+    def make_priorities_from_already_ran(self, of):
+        self.already_ran = {}
+        if self.priority_queue and (not self.validation_sub_dir or self.validation_sub_dir != 'missing'):
+            # help find priorities
+            fe = FindEntries(siteID=self.site_id)
+            # input folder paths
+            paths = fe.get_modified_pdb_paths()
+            paths.extend(fe.get_added_pdb_paths())
+            paths.extend(fe.get_emdb_paths())
+            # find output path to val-reports folder and sub-folder
+            for source_path in paths:
+                key = os.path.basename(source_path)
+                output_path = None
+                if key.startswith('EMD'):
+                    of.set_emdb_id(key)
+                    output_path = of.get_emdb_output_folder()
+                elif re.match(r'^\d{1}\w{3}$', key):
+                    of.set_pdb_id(key)
+                    output_path = of.get_pdb_output_folder()
+                if output_path:
+                    self.already_ran[key] = already_run(source_path, output_path)
+                else:
+                    logger.info('error - no output path for %s', key)
+
+
+    def get_priority_from_already_ran(self, message):
+        # missing - 10
+        # new pdb - 8
+        # new emdb - 6
+        # modified pdb - 4
+        # modified emdb - 2
+        # default - 1
         priority = 1
         if self.validation_sub_dir and self.validation_sub_dir == 'missing':
             # find_and_run_missing always runs Populate with validation_sub_dir = missing
