@@ -52,7 +52,7 @@ class PopulateValidateRelease:
             self.__cache = None
         else:
             self.__cache = of.get_ftp_cache_folder()
-        # for priority queues
+        # priority queues
         if self.priority_queue:
             self.make_priorities()
 
@@ -120,27 +120,31 @@ class PopulateValidateRelease:
                         path = p
                         break
                 if path:
-                    header_dir = os.path.join(path, "header")
                     map_dir = os.path.join(path, "map")
-                    if not os.path.exists(header_dir):
-                        logger.warning(f"error - could not find header directory for {path}")
-                        return 1
-                    xml_file_path = os.path.join(header_dir, "*.xml")
-                    for xmlfile in glob.glob(xml_file_path):
-                        tree = etree.parse(xmlfile)
-                        root = tree.getroot()
-                        # date as yyyy-mm-dd
-                        map_release = root.find("admin").find("key_dates").findtext("map_release")
-                        s = map_release.split("-")
-                        map_release_date = datetime.date(int(s[0]), int(s[1]), int(s[2]))
-                        if map_release_date < datetime.date.today():
-                            modified = True
-                        elif not os.path.exists(map_dir):
-                            modified = True
-                        else:
-                            modified = False
-                        # should only have one xml file in header directory
-                        break
+                    if os.path.exists(map_dir):
+                        modified = False
+                    else:
+                        header_dir = os.path.join(path, "header")
+                        if not os.path.exists(header_dir):
+                            logger.warning(f"error - could not find header directory for {path}")
+                            return 1
+                        xml_file_path = os.path.join(header_dir, "*.xml")
+                        for xmlfile in glob.glob(xml_file_path):
+                            tree = etree.parse(xmlfile)
+                            root = tree.getroot()
+                            # date as yyyy-mm-dd
+                            map_release = root.find("admin").find("key_dates").findtext("map_release")
+                            s = map_release.split("-")
+                            map_release_date = datetime.date(int(s[0]), int(s[1]), int(s[2]))
+                            day_of_week = datetime.date.today().weekday()  # Mon-Sun = 0..6
+                            days_to_next_thurs = 6 - day_of_week + 4
+                            next_thurs = datetime.date.today() + datetime.timedelta(days=days_to_next_thurs)
+                            if map_release_date < next_thurs:
+                                modified = True
+                            else:
+                                modified = False
+                            # should only have one xml file in header directory
+                            break
             if modified is None:
                 logger.warning(f"error - could not get priority for {message}")
                 return 1
@@ -153,7 +157,6 @@ class PopulateValidateRelease:
             elif emd and modified:
                 priority = 2
         return priority
-
 
     def make_priorities_from_already_ran(self, of):
         self.already_ran = {}

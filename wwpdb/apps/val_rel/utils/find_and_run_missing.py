@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 class FindAndRunMissing:
 
-    def __init__(self, write_missing=False, read_missing=True, siteID=None):
+    def __init__(self, write_missing=False, read_missing=True, siteID=None, priority=False):
         self.__siteid = siteID
         self.ce = CheckEntries(siteID=self.__siteid)
         self.missing_ids = []
@@ -21,6 +21,7 @@ class FindAndRunMissing:
         self.rpi = ReleasePathInfo(siteId=self.__siteid)
         self.write_missing = write_missing
         self.read_missing = read_missing
+        self.priority = priority
 
     def find_missing(self):
         self.ce.get_entries()
@@ -45,7 +46,8 @@ class FindAndRunMissing:
                                           validation_sub_dir='missing',
                                           site_id=self.__siteid,
                                           always_recalculate=True,
-                                          nocache=True
+                                          nocache=True,
+                                          priority=self.priority
                                           )
             pvr.run_process()
 
@@ -81,12 +83,15 @@ def main():
 
     parser.add_argument("--site_id", help="site id to get files from", type=str)
 
+    parser.add_argument("--priority", action="store_true", help="queues are priority queues")
+
     args = parser.parse_args()
     logger.setLevel(args.loglevel)
 
     frm = FindAndRunMissing(write_missing=args.write_missing,
                             read_missing=args.read_missing,
-                            siteID=args.site_id)
+                            siteID=args.site_id,
+                            priority=args.priority)
     frm.run_process()
 
 

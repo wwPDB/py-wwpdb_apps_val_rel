@@ -10,7 +10,7 @@
 #       10-Jul-2018 ep  use default connection URL instead of SSL exclusive
 #
 ##
-
+import glob
 import sys
 import os
 import platform
@@ -272,6 +272,9 @@ def main():
     parser.add_argument("--priority", action='store_true', dest='priority', help="make a priority queue")
     #
     parser.add_argument("--subscribe", default=None, type=str, help="exchange name for optional subscriber rather than standard consumer")
+    #
+    parser.add_argument("--list", action='store_true', dest='list', help="list all running process ids")
+
     # (options, args) = parser.parse_args()
 
     options = parser.parse_args()
@@ -329,7 +332,16 @@ def main():
     else:
         logger.setLevel(logging.ERROR)
     #
+    if args.list:
+        pidfiledir = os.path.dirname(pidFilePath)
+        logpath = os.path.join(pidfiledir, "*.pid")
+        logger.info("consumer process ids from %s", logpath)
+        for path in glob.glob(logpath):
+            with open(path, "r") as r:
+                logger.info(r.read())
+        sys.exit()
     #
+    logger.info("launching process with pid file %s", pidFilePath)
     myDP = MyDetachedProcess(
         pidFile=pidFilePath,
         stdout=stdoutFilePath,
@@ -364,8 +376,6 @@ def main():
             % lt
         )
         sys.stdout.write(myDP.status())
-    else:
-        pass
 
 
 if __name__ == "__main__":

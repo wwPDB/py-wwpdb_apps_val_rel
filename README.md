@@ -83,7 +83,9 @@ then to read the temporary file and load the entries into the missing queue
 
 By default, the queues are not priority queues.
 
-To make priority queues, pass an argument of --priority to PopulateValidateRelease and ValidationReleaseServiceHandler.
+To make priority queues, pass an argument of --priority to PopulateValidateRelease, ValidationReleaseServiceHandler, and find_and_run_missing.
+
+All of them must have an argument of --priority for any particular priority queue.
 
 The priority values are determined automatically, with higher values having higher priority.
 
@@ -118,3 +120,17 @@ Subscription queues may have advantages during service peaks.
 For example, to relieve congestion in the emdb folder, stop the regular producer crons, then start selective consumers with exchange names 'pdb_production_exchange' and 'emdb_production_exchange', then start corresponding producers with the same exchange names, one with option '--pdb_release' and one with option '--emdb_release'.
 
 In the present system, subscription queues must not be run at the same time as the regular queues, at least not with the same options, or else they will both publish/consume the same files.
+
+### 6) Debugging
+
+ValidationReleaseServiceHandler runs a background process which is difficult to get debugging information from.
+
+If errors occur from mixing of priority and non-priority queues, ValidationReleaseServiceHandler will not report them.
+
+One possible side effect is that consumers will not stop when attempting to stop them with ValidationReleaseServiceHandler.
+
+If consumers will not stop, pass an argument of --list to ValidationReleaseServiceHandler.
+
+The running consumer process ids will be listed.
+
+If it's possible to detect the processes that are responsible, delete all or some of the running process ids and their associated pid files.
