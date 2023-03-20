@@ -38,7 +38,9 @@ Entries are found by a script which searches the for_release folder
         --output_root - to output to a path of your choice
         --help for other options
 
-This should be run on a cron every few hours
+This should be run on a cron every few hours.
+
+If a priority queue is required, add the option --priority.
 
 ### 2) validation report workers
     
@@ -47,6 +49,8 @@ To start one worker
 
     python -m wwpdb.apps.val_rel.service.ValidationReleaseServiceHandler --start
     
+To read from a priority queue, add the option --priority.
+
 To start several workers - below example starts 50 workers 
 
     for i in {1..50}
@@ -66,10 +70,12 @@ To start several workers - below example starts 50 workers
 To find missing entries and write them out to a temporary file 
 
     python -m wwpdb.apps.val_rel.utils.find_and_run_missing --write_missing
-    
+
 then to read the temporary file and load the entries into the missing queue
     
     python -m wwpdb.apps.val_rel.utils.find_and_run_missing --read_missing
+
+For priority queues, add --priority along with --read_missing.
 
 ### to run on a single entry without the rabbitMQ queue
 
@@ -85,7 +91,9 @@ By default, the queues are not priority queues.
 
 To make priority queues, pass an argument of --priority to PopulateValidateRelease, ValidationReleaseServiceHandler, and find_and_run_missing.
 
-All of them must have an argument of --priority for any particular priority queue.
+Priority queues cannot write to or read from non-priority queues, and an error is thrown if you attempt to mix them.
+
+Therefore, an argument of --priority is always specified for priority queues.
 
 The priority values are determined automatically, with higher values having higher priority.
 
@@ -134,3 +142,5 @@ If consumers will not stop, pass an argument of --list to ValidationReleaseServi
 The running consumer process ids will be listed.
 
 If it's possible to detect the processes that are responsible, delete all or some of the running process ids and their associated pid files.
+
+The path to the pids file directory is printed out with each invocation of ValidationReleaseServiceHandler.

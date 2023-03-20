@@ -127,10 +127,9 @@ class MessageConsumerWorker(object):
 
 
 class MessageSubscriberWorker(object):
-    def __init__(self, siteID, exchange_name, priority=False):
+    def __init__(self, siteID, exchange_name):
         self.__siteID = siteID
         self.__exchange_name = exchange_name
-        self.__priority = priority
         self.__setup()
 
     def __setup(self):
@@ -193,7 +192,7 @@ class MyDetachedProcess(DetachedProcessBase):
         if not subscribe:
             self.__mcw = MessageConsumerWorker(siteID,priority=priority)
         else:
-            self.__mcw = MessageSubscriberWorker(siteID,priority=priority,exchange_name=subscribe)
+            self.__mcw = MessageSubscriberWorker(siteID,exchange_name=subscribe)
 
     def run(self):
         logger.info("STARTING detached run method")

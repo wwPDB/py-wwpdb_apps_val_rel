@@ -1,19 +1,15 @@
 import argparse
-import glob
 import json
 import logging
-import re
 import os
-import datetime
+import sys
 
-from lxml import etree
 from wwpdb.apps.val_rel.config.ValConfig import ValConfig
 from wwpdb.utils.config.ConfigInfo import getSiteId
 from wwpdb.apps.val_rel.utils.outputFiles import outputFiles
 from wwpdb.utils.message_queue.MessagePublisher import MessagePublisher
 from wwpdb.apps.val_rel.utils.FindAndProcessEntries import FindAndProcessEntries
 from wwpdb.apps.val_rel.utils.FindEntries import FindEntries
-from wwpdb.apps.val_rel.utils.checkModifications import already_run
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +41,9 @@ class PopulateValidateRelease:
         self.validation_sub_dir = validation_sub_dir
         self.priority_queue = priority
         self.subscribe = subscribe
+        if self.priority_queue and self.subscribe:
+            logger.critical('error - mixing of priority queues and subscriber queues')
+            sys.exit()
         # Get cachedir
         of = outputFiles(siteID=site_id)
         self.__nocache = nocache
@@ -124,27 +123,7 @@ class PopulateValidateRelease:
                     if os.path.exists(map_dir):
                         modified = False
                     else:
-                        header_dir = os.path.join(path, "header")
-                        if not os.path.exists(header_dir):
-                            logger.warning(f"error - could not find header directory for {path}")
-                            return 1
-                        xml_file_path = os.path.join(header_dir, "*.xml")
-                        for xmlfile in glob.glob(xml_file_path):
-                            tree = etree.parse(xmlfile)
-                            root = tree.getroot()
-                            # date as yyyy-mm-dd
-                            map_release = root.find("admin").find("key_dates").findtext("map_release")
-                            s = map_release.split("-")
-                            map_release_date = datetime.date(int(s[0]), int(s[1]), int(s[2]))
-                            day_of_week = datetime.date.today().weekday()  # Mon-Sun = 0..6
-                            days_to_next_thurs = 6 - day_of_week + 4
-                            next_thurs = datetime.date.today() + datetime.timedelta(days=days_to_next_thurs)
-                            if map_release_date < next_thurs:
-                                modified = True
-                            else:
-                                modified = False
-                            # should only have one xml file in header directory
-                            break
+                        modified = True
             if modified is None:
                 logger.warning(f"error - could not get priority for {message}")
                 return 1
@@ -155,62 +134,6 @@ class PopulateValidateRelease:
             elif pdb and modified:
                 priority = 4
             elif emd and modified:
-                priority = 2
-        return priority
-
-    def make_priorities_from_already_ran(self, of):
-        self.already_ran = {}
-        if self.priority_queue and (not self.validation_sub_dir or self.validation_sub_dir != 'missing'):
-            # help find priorities
-            fe = FindEntries(siteID=self.site_id)
-            # input folder paths
-            paths = fe.get_modified_pdb_paths()
-            paths.extend(fe.get_added_pdb_paths())
-            paths.extend(fe.get_emdb_paths())
-            # find output path to val-reports folder and sub-folder
-            for source_path in paths:
-                key = os.path.basename(source_path)
-                output_path = None
-                if key.startswith('EMD'):
-                    of.set_emdb_id(key)
-                    output_path = of.get_emdb_output_folder()
-                elif re.match(r'^\d{1}\w{3}$', key):
-                    of.set_pdb_id(key)
-                    output_path = of.get_pdb_output_folder()
-                if output_path:
-                    self.already_ran[key] = already_run(source_path, output_path)
-                else:
-                    logger.info('error - no output path for %s', key)
-
-
-    def get_priority_from_already_ran(self, message):
-        # missing - 10
-        # new pdb - 8
-        # new emdb - 6
-        # modified pdb - 4
-        # modified emdb - 2
-        # default - 1
-        priority = 1
-        if self.validation_sub_dir and self.validation_sub_dir == 'missing':
-            # find_and_run_missing always runs Populate with validation_sub_dir = missing
-            priority = 10
-        else:
-            validate = False
-            if self.always_recalculate:
-                validate = True
-            elif "pdbID" in message and message["pdbID"] in self.already_ran:
-                validate = not self.already_ran[message["pdbID"]]
-            elif "emdbID" in message and message["emdbID"] in self.already_ran:
-                validate = not self.already_ran[message["emdbID"]]
-            emd = "emdbID" in message or ("pdbID" in message and message["pdbID"].startswith("EMD") or (self.validation_sub_dir and self.validation_sub_dir == 'emd'))
-            pdb = not emd
-            if pdb and not validate:
-                priority = 8
-            elif emd and not validate:
-                priority = 6
-            elif pdb and validate:
-                priority = 4
-            elif emd and validate:
                 priority = 2
         return priority
 
@@ -238,38 +161,31 @@ class PopulateValidateRelease:
                 logger.info('MESSAGE req %s', message)
                 vc = ValConfig(self.site_id)
                 if self.priority_queue:
-                    if not self.subscribe:
-                        ok = MessagePublisher().publish(
-                            message=json.dumps(message),
-                            exchangeName=vc.exchange,
-                            queueName=vc.queue_name,
-                            routingKey=vc.routing_key,
-                            priority=priority
-                        )
-                    else:
-                        ok = MessagePublisher().publishDirect(
-                            message=json.dumps(message),
-                            exchangeName=self.subscribe,
-                            priority=priority
-                        )
+                    ok = MessagePublisher().publish(
+                        message=json.dumps(message),
+                        exchangeName=vc.exchange,
+                        queueName=vc.queue_name,
+                        routingKey=vc.routing_key,
+                        priority=priority
+                    )
+                elif self.subscribe:
+                    ok = MessagePublisher().publishDirect(
+                        message=json.dumps(message),
+                        exchangeName=self.subscribe,
+                    )
                 else:
-                    if not self.subscribe:
-                        ok = MessagePublisher().publish(
-                            message=json.dumps(message),
-                            exchangeName=vc.exchange,
-                            queueName=vc.queue_name,
-                            routingKey=vc.routing_key
-                        )
-                    else:
-                        ok = MessagePublisher().publishDirect(
-                            message=json.dumps(message),
-                            exchangeName=self.subscribe,
-                        )
+                    ok = MessagePublisher().publish(
+                        message=json.dumps(message),
+                        exchangeName=vc.exchange,
+                        queueName=vc.queue_name,
+                        routingKey=vc.routing_key
+                    )
+
                 logger.info('MESSAGE {}'.format(ok))
 
     def test(self):
         if not self.priority_queue:
-            print('error - not a priority queue')
+            logger.info('error - not a priority queue')
             return None
         fape = FindAndProcessEntries(entry_string=self.entry_string,
                                      entry_file=self.entry_file,
@@ -305,9 +221,9 @@ class PopulateValidateRelease:
                     message["skipGzip"] = self.skipGzip
                 if self.skip_emdb:
                     message['skip_emdb'] = self.skip_emdb
-                print('priority %s msg %s' % (priority, message))
+                logger.info('priority %s msg %s' % (priority, message))
                 vc = ValConfig(self.site_id)
-                print(f'exchangeName {vc.exchange} queueName {vc.queue_name} routingKey {vc.routing_key}')
+                logger.info(f'exchangeName {vc.exchange} queueName {vc.queue_name} routingKey {vc.routing_key}')
 
 def main():
     # Create logger -
@@ -388,7 +304,7 @@ def main():
     if not args.test:
         pvr.run_process()
     elif args.test:
-        print('running unit test')
+        logger.info('running unit test')
         pvr.test()
 
 
