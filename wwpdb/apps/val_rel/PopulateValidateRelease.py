@@ -180,8 +180,10 @@ class PopulateValidateRelease:
                         queueName=vc.queue_name,
                         routingKey=vc.routing_key
                     )
-
                 logger.info('MESSAGE {}'.format(ok))
+                if not ok:
+                    logger.critical('error - could not publish')
+                    break
 
     def test(self):
         if not self.priority_queue:
