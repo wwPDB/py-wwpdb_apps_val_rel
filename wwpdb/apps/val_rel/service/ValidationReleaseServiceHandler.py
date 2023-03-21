@@ -152,6 +152,7 @@ class MessageSubscriberWorker(object):
                 self.__subscriber.stop()
         except Exception as e:
             logger.exception("MessageConsumer failing %r", str(e))
+            raise Exception
 
         endTime = time.time()
         logger.info("Completed (%f seconds)", (endTime - startTime))
@@ -189,6 +190,7 @@ class MyDetachedProcess(DetachedProcessBase):
             gid=gid,
             uid=uid,
         )
+        self.pidFile = pidFile
         if not subscribe:
             self.__mcw = MessageConsumerWorker(siteID,priority=priority)
         else:
