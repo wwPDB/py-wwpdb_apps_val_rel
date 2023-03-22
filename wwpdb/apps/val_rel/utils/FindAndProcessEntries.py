@@ -94,44 +94,47 @@ class FindAndProcessEntries:
             if emdb_entry not in self.added_entries:
                 # stop duplication of making EM validation reports twice
                 logger.debug(emdb_entry)
-                re = getFilesRelease(siteID=self.site_id, emdb_id=emdb_entry, pdb_id=None,
-                                     cache=self.__cache)
-                em_xml = re.get_emdb_xml()
+                try:
+                    re = getFilesRelease(siteID=self.site_id, emdb_id=emdb_entry, pdb_id=None,
+                                         cache=self.__cache)
+                    em_xml = re.get_emdb_xml()
 
-                em_vol = re.get_emdb_volume()
-                if em_vol:
-                    logger.debug('using XML: %s', em_xml)
-                    pdbids = XmlInfo(em_xml).get_pdbids_from_xml()
-                    if pdbids:
-                        logger.info(
-                            "PDB entries associated with %s: %s", emdb_entry, ",".join(pdbids)
-                        )
-                        for pdbid in pdbids:
-                            pdbid = pdbid.lower()
-                            re.set_pdb_id(pdb_id=pdbid)
-                            pdb_file = re.get_model()
-                            if pdb_file:
-                                cf = mmCIFInfo(pdb_file)
-                                associated_emdb = cf.get_associated_emdb()
-                                if associated_emdb == emdb_entry:
+                    em_vol = re.get_emdb_volume()
+                    if em_vol:
+                        logger.debug('using XML: %s', em_xml)
+                        pdbids = XmlInfo(em_xml).get_pdbids_from_xml()
+                        if pdbids:
+                            logger.info(
+                                "PDB entries associated with %s: %s", emdb_entry, ",".join(pdbids)
+                            )
+                            for pdbid in pdbids:
+                                pdbid = pdbid.lower()
+                                re.set_pdb_id(pdb_id=pdbid)
+                                pdb_file = re.get_model()
+                                if pdb_file:
+                                    cf = mmCIFInfo(pdb_file)
+                                    associated_emdb = cf.get_associated_emdb()
+                                    if associated_emdb == emdb_entry:
+                                        if pdbid in self.pdb_entries:
+                                            logger.info(
+                                                "removing %s from the PDB queue to stop duplication of report generation",
+                                                pdbid
+                                            )
+                                            self.pdb_entries.remove(pdbid)
+                                        else:
+                                            self.all_pdb_entries.add(pdbid)
+                                    # what if its not? should it be added to the queue?
+                                else:
                                     if pdbid in self.pdb_entries:
-                                        logger.info(
-                                            "removing %s from the PDB queue to stop duplication of report generation",
-                                            pdbid
-                                        )
+                                        logger.info('removing %s as pdb file does not exist', pdbid)
                                         self.pdb_entries.remove(pdbid)
-                                    else:
-                                        self.all_pdb_entries.add(pdbid)
-                                # what if its not? should it be added to the queue?
-                            else:
-                                if pdbid in self.pdb_entries:
-                                    logger.info('removing %s as pdb file does not exist', pdbid)
-                                    self.pdb_entries.remove(pdbid)
 
-                    message = {"emdbID": emdb_entry}
-                    self.messages.append(message)
-                    self.added_entries.append(emdb_entry)
-                re.remove_local_temp_files()
+                        message = {"emdbID": emdb_entry}
+                        self.messages.append(message)
+                        self.added_entries.append(emdb_entry)
+                    re.remove_local_temp_files()
+                except:
+                    logger.exception("ERROR processing %s", emdb_entry)
 
     def process_pdb_entries(self):
         for pdb_entry in self.pdb_entries:

@@ -46,7 +46,8 @@ setup(
     install_requires=['wwpdb.utils.config ~= 0.24', 'wwpdb.utils.detach',
                       'wwpdb.utils.dp', 'wwpdb.utils.message_queue',
                       'wwpdb.apps.validation', 'wwpdb.io~=0.15',
-                      'wwpdb.utils.ws_utils', 'oslo_concurrency'
+                      'wwpdb.utils.ws_utils', 'oslo_concurrency',
+                      'wwpdb.utils.nmr'
                       ],
     packages=find_packages(exclude=['wwpdb.apps.tests-val_rel',
                                     'mock-data']),
