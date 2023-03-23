@@ -168,6 +168,7 @@ class PopulateValidateRelease:
                         routingKey=vc.routing_key,
                         priority=priority
                     )
+
                 elif self.subscribe:
                     ok = MessagePublisher().publishDirect(
                         message=json.dumps(message),
@@ -180,7 +181,10 @@ class PopulateValidateRelease:
                         queueName=vc.queue_name,
                         routingKey=vc.routing_key
                     )
-                logger.info('MESSAGE {}'.format(ok))
+                if self.priority_queue:
+                    logger.info('MESSAGE {} PRIORITY {}'.format(ok, priority))
+                else:
+                    logger.info('MESSAGE {}'.format(ok))
                 if not ok:
                     logger.critical('error - could not publish')
                     break
