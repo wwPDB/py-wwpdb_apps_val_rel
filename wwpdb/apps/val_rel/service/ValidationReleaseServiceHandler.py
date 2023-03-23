@@ -10,7 +10,7 @@
 #       10-Jul-2018 ep  use default connection URL instead of SSL exclusive
 #
 ##
-
+import glob
 import sys
 import os
 import platform
@@ -28,6 +28,7 @@ except ImportError:
 
 from wwpdb.utils.detach.DetachedProcessBase import DetachedProcessBase
 from wwpdb.utils.message_queue.MessageConsumerBase import MessageConsumerBase
+from wwpdb.utils.message_queue.MessageSubscriberBase import MessageSubscriberBase
 from wwpdb.utils.message_queue.MessageQueueConnection import MessageQueueConnection
 from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
 from wwpdb.apps.val_rel.config.ValConfig import ValConfig
@@ -47,8 +48,8 @@ logging.getLogger("pika").setLevel(logging.INFO)
 
 
 class MessageConsumer(MessageConsumerBase):
-    def __init__(self, amqpUrl):
-        super(MessageConsumer, self).__init__(amqpUrl)
+    def __init__(self, amqpUrl, priority):
+        super(MessageConsumer, self).__init__(amqpUrl, priority)
 
     def workerMethod(self, msgBody, deliveryTag=None):
         try:
@@ -67,16 +68,37 @@ class MessageConsumer(MessageConsumerBase):
 
         return successFlag
 
+class MessageSubscriber(MessageSubscriberBase):
+    def __init__(self, amqpUrl):
+        super(MessageSubscriber, self).__init__(amqpUrl)
+
+    def workerMethod(self, msgBody, deliveryTag=None):
+        try:
+            logger.debug("Message body %r", msgBody)
+            pD = json.loads(msgBody)
+        except Exception as e:
+            logger.error("Message format error - discarding %r", str(e))
+            return False
+        #
+        successFlag = True
+        try:
+            logger.info("Message body %r", pD)
+            runValidation().run_process(pD)
+        except Exception as e:
+            logger.exception("Failed service execution %r", str(e))
+
+        return successFlag
 
 class MessageConsumerWorker(object):
-    def __init__(self, siteID):
+    def __init__(self, siteID, priority=False):
         self.__siteID = siteID
+        self.__priority = priority
         self.__setup()
 
     def __setup(self):
         mqc = MessageQueueConnection()
         url = mqc._getDefaultConnectionUrl()
-        self.__mc = MessageConsumer(amqpUrl=url)
+        self.__mc = MessageConsumer(amqpUrl=url,priority=self.__priority)
         vc = ValConfig(self.__siteID)
         self.__mc.setQueue(queueName=vc.queue_name, routingKey=vc.routing_key)
         self.__mc.setExchange(exchange=vc.exchange, exchangeType="topic")
@@ -104,6 +126,42 @@ class MessageConsumerWorker(object):
         self.__mc.stop()
 
 
+class MessageSubscriberWorker(object):
+    def __init__(self, siteID, exchange_name):
+        self.__siteID = siteID
+        self.__exchange_name = exchange_name
+        self.__setup()
+
+    def __setup(self):
+        mqc = MessageQueueConnection()
+        url = mqc._getDefaultConnectionUrl()
+        self.__subscriber = MessageSubscriber(amqpUrl=url)
+        self.__subscriber.add_exchange(self.__exchange_name)
+        #
+
+    def run(self):
+        """  Run async consumer
+        """
+        startTime = time.time()
+        logger.info("Starting ")
+        try:
+            try:
+                logger.info("Run consumer worker starts")
+                self.__subscriber.run()
+            except KeyboardInterrupt:
+                self.__subscriber.stop()
+        except Exception as e:
+            logger.exception("MessageConsumer failing %r", str(e))
+            raise Exception
+
+        endTime = time.time()
+        logger.info("Completed (%f seconds)", (endTime - startTime))
+
+    def suspend(self):
+        logger.info("Suspending consumer worker... ")
+        self.__subscriber.stop()
+
+
 class MyDetachedProcess(DetachedProcessBase):
     """  This class implements the run() method of the DetachedProcessBase() utility class.
 
@@ -119,7 +177,9 @@ class MyDetachedProcess(DetachedProcessBase):
             wrkDir="/",
             siteID=None,
             gid=None,
-            uid=None
+            uid=None,
+            priority=False,
+            subscribe=None
     ):
         super(MyDetachedProcess, self).__init__(
             pidFile=pidFile,
@@ -130,7 +190,11 @@ class MyDetachedProcess(DetachedProcessBase):
             gid=gid,
             uid=uid,
         )
-        self.__mcw = MessageConsumerWorker(siteID)
+        self.pidFile = pidFile
+        if not subscribe:
+            self.__mcw = MessageConsumerWorker(siteID,priority=priority)
+        else:
+            self.__mcw = MessageSubscriberWorker(siteID,exchange_name=subscribe)
 
     def run(self):
         logger.info("STARTING detached run method")
@@ -206,6 +270,12 @@ def main():
     )
     parser.add_argument("--siteID", default=getSiteId(), type=str, help="wwPDB site ID")
     #
+    parser.add_argument("--priority", action='store_true', dest='priority', help="make a priority queue")
+    #
+    parser.add_argument("--subscribe", default=None, type=str, help="exchange name for optional subscriber rather than standard consumer")
+    #
+    parser.add_argument("--list", action='store_true', dest='list', help="list all running process ids")
+
     # (options, args) = parser.parse_args()
 
     options = parser.parse_args()
@@ -218,6 +288,7 @@ def main():
     # siteId = getSiteId(defaultSiteId=None)
     siteId = args.siteID
     cI = ConfigInfo(siteId)
+    exchange_name = args.subscribe
 
     #    topPath = cI.get('SITE_WEB_APPS_TOP_PATH')
     topSessionPath = cI.get("SITE_WEB_APPS_TOP_SESSIONS_PATH")
@@ -262,13 +333,24 @@ def main():
     else:
         logger.setLevel(logging.ERROR)
     #
+    if args.list:
+        pidfiledir = os.path.dirname(pidFilePath)
+        logpath = os.path.join(pidfiledir, "*.pid")
+        logger.info("consumer process ids from %s", logpath)
+        for path in glob.glob(logpath):
+            with open(path, "r") as r:
+                logger.info(r.read())
+        sys.exit()
     #
+    logger.info("launching process with pid file %s", pidFilePath)
     myDP = MyDetachedProcess(
         pidFile=pidFilePath,
         stdout=stdoutFilePath,
         stderr=stderrFilePath,
         wrkDir=wsLogDirPath,
-        siteID=siteId
+        siteID=siteId,
+        priority=args.priority,
+        subscribe=args.subscribe
     )
 
     if args.startOp:
@@ -295,8 +377,6 @@ def main():
             % lt
         )
         sys.stdout.write(myDP.status())
-    else:
-        pass
 
 
 if __name__ == "__main__":
