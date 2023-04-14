@@ -37,9 +37,9 @@ def convert_cs_file(cs_file, working_dir):
 
 
                 # Until ftp archive remediated, we need to handle legacy CS files
-                tempd = tempfile.TemporaryDirectory(dir=os.path.dirname(temp_cif_cs_file))
-                tempnmrstarPath = os.path.join(tempd.name, "working_cs.str")
-                newcsPath = os.path.join(tempd.name, "working_cs.cif")
+                tempdPath = tempfile.mkdtemp(dir=os.path.dirname(temp_cif_cs_file))
+                tempnmrstarPath = os.path.join(tempdPath, "working_cs.str")
+                newcsPath = os.path.join(tempdPath, "working_cs.cif")
                 __remediate_cs_file(temp_cif_cs_file, tempnmrstarPath)
                 if os.path.exists(tempnmrstarPath):
 
