@@ -27,7 +27,8 @@ def is_simple_modification(model_path):
                  'refine_ls_restr', 'refine_ls_restr_ncs', 'refine_ls_shell', 'reflns_shell', 'struct_conf',
                  'struct_conf_type', 'struct_keywords', 'struct_ncs_dom', 'struct_ncs_dom_lim', 'struct_ncs_ens',
                  'struct_sheet', 'struct_sheet', 'struct_sheet_order', 'struct_sheet_order', 'struct_sheet_range',
-                 'struct_sheet_range', 'struct_site', 'pdbx_initial_refinement_model', 'database_2']
+                 'struct_sheet_range', 'struct_site', 'pdbx_initial_refinement_model', 'database_2',
+                 'chem_comp_atom', 'chem_comp_bond', 'chem_comp_angle']
 
     SKIP_ATTR = { 'database_2': ['pdbx_DOI', 'pdbx_database_accession'] }
 
