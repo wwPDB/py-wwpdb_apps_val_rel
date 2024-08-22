@@ -1,12 +1,19 @@
 import logging
-
 from wwpdb.utils.config.ConfigInfo import getSiteId
-
-from wwpdb.apps.val_rel.utils.getFilesReleaseFTP_EMDB import getFilesReleaseFtpEMDB
-from wwpdb.apps.val_rel.utils.getFilesReleaseFTP_PDB import getFilesReleaseFtpPDB
+from wwpdb.apps.val_rel.config.ValConfig import ValConfig
 from wwpdb.apps.val_rel.utils.getFilesReleaseOneDep import getFilesReleaseOneDep
 
+config = ValConfig()
+
+if config.val_rel_protocol == 'http' or config.val_rel_protocol == 'https':
+    from wwpdb.apps.val_rel.http.getFilesReleaseHTTP_EMDB import getFilesReleaseHttpEMDB as getFilesReleaseFtpEMDB
+    from wwpdb.apps.val_rel.http.getFilesReleaseHTTP_PDB import getFilesReleaseHttpPDB as getFilesReleaseFtpPDB
+else:
+    from wwpdb.apps.val_rel.utils.getFilesReleaseFTP_EMDB import getFilesReleaseFtpEMDB
+    from wwpdb.apps.val_rel.utils.getFilesReleaseFTP_PDB import getFilesReleaseFtpPDB
+
 logger = logging.getLogger(__name__)
+
 
 
 class getFilesRelease:
@@ -143,3 +150,4 @@ class getFilesRelease:
 
     def set_cache(self, fpath):
         self.__cache = fpath
+

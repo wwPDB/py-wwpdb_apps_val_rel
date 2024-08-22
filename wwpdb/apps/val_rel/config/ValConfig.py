@@ -3,7 +3,7 @@
 # File:    ValConfig.py
 # Author:  E. Peisach
 # Date:    15-Dev-2019
-# Updates:
+# Updates: James Smith 7/2024
 #
 ##
 """
@@ -11,7 +11,8 @@ Contains settings pertinent to configuring the behaviour of the Validation Servi
 """
 from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
 from wwpdb.utils.config.ConfigInfoApp import ConfigInfoAppCommon
-
+import logging
+logging.basicConfig(level=logging.INFO)
 
 class ValConfig(object):
     def __init__(self, site_id=None):
@@ -20,6 +21,26 @@ class ValConfig(object):
         self.__site_id = site_id
         self.__cI = ConfigInfo(self.__site_id)
         self.__cICommon = ConfigInfoAppCommon(self.__site_id)
+        self._val_rel_protocol = self.__cI.get('VAL_REL_PROTOCOL', 'ftp')
+        if self._val_rel_protocol not in ['ftp', 'sftp', 'http', 'https']:
+            logging.warning('Error - invalid protocol %s, setting to ftp' % self._val_rel_protocol)
+            self._val_rel_protocol = 'ftp'
+        # http settings
+        self.connection_timeout = 60
+        self.read_timeout = 60
+        self.retries = 3
+        self.backoff_factor = 15
+        self.status_force_list = [429, 500, 502, 503, 504]
+        # array of admin emails
+        self._admin_list = []
+        # interval in seconds
+        self._email_interval = 60 * 60 * 24
+        # max number of emails per recipient within the interval
+        self._max_per_interval = 10
+
+    @property
+    def val_rel_protocol(self):
+        return self._val_rel_protocol
 
     @property
     def queue_name(self):
@@ -36,9 +57,17 @@ class ValConfig(object):
         return "val_release_exchange_{}".format(self.__site_id)
 
     @property
+    def http_server(self):
+        return self.ftp_server.replace('ftp', 'files')
+
+    @property
     def ftp_server(self):
         server = self.__cI.get('SITE_FTP_SERVER') if self.__cI.get('SITE_FTP_SERVER') else 'ftp.wwpdb.org'
         return server
+
+    @property
+    def http_prefix(self):
+        return self.ftp_prefix
 
     @property
     def ftp_prefix(self):
@@ -56,3 +85,4 @@ class ValConfig(object):
     @property
     def val_cut_off(self):
         return self.__cI.get("PROJECT_VAL_REL_CUTOFF")
+
