@@ -1,7 +1,7 @@
 import os
 import logging
 from wwpdb.apps.val_rel.config.ValConfig import ValConfig
-from wwpdb.apps.val_rel.http.getRemoteFilesHTTP import GetRemoteFiles, setup_local_temp_ftp, remove_local_temp_ftp
+from wwpdb.apps.val_rel.utils.http_protocol.getRemoteFilesHTTP import GetRemoteFiles, setup_local_temp_ftp, remove_local_temp_ftp
 from wwpdb.io.locator.ReleaseFileNames import ReleaseFileNames
 from wwpdb.io.locator.localFTPPathInfo import LocalFTPPathInfo
 from wwpdb.utils.config.ConfigInfo import getSiteId

@@ -6,8 +6,8 @@ from wwpdb.apps.val_rel.utils.getFilesReleaseOneDep import getFilesReleaseOneDep
 config = ValConfig()
 
 if config.val_rel_protocol == 'http' or config.val_rel_protocol == 'https':
-    from wwpdb.apps.val_rel.http.getFilesReleaseHTTP_EMDB import getFilesReleaseHttpEMDB as getFilesReleaseFtpEMDB
-    from wwpdb.apps.val_rel.http.getFilesReleaseHTTP_PDB import getFilesReleaseHttpPDB as getFilesReleaseFtpPDB
+    from wwpdb.apps.val_rel.utils.http_protocol.getFilesReleaseHTTP_EMDB import getFilesReleaseHttpEMDB as getFilesReleaseFtpEMDB
+    from wwpdb.apps.val_rel.utils.http_protocol.getFilesReleaseHTTP_PDB import getFilesReleaseHttpPDB as getFilesReleaseFtpPDB
 else:
     from wwpdb.apps.val_rel.utils.getFilesReleaseFTP_EMDB import getFilesReleaseFtpEMDB
     from wwpdb.apps.val_rel.utils.getFilesReleaseFTP_PDB import getFilesReleaseFtpPDB
