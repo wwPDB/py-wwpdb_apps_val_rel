@@ -1,6 +1,5 @@
 import os
 import logging
-from wwpdb.utils.config.ConfigInfo import getSiteId
 from wwpdb.io.locator.ReleaseFileNames import ReleaseFileNames
 from wwpdb.io.locator.localFTPPathInfo import LocalFTPPathInfo
 from wwpdb.apps.val_rel.config.ValConfig import ValConfig
@@ -10,13 +9,12 @@ logger = logging.getLogger(__name__)
 
 
 class getFilesReleaseHttpPDB(object):
-    def __init__(self, pdbid, site_id=getSiteId(), cache=None):
-        self.__site_id = site_id
+    def __init__(self, pdbid, site_id=None, cache=None):
         self.__cache = cache
         self.__rf = ReleaseFileNames()
         self.__local_ftp = LocalFTPPathInfo()
         self.__temp_local_ftp = None
-        vc = ValConfig(self.__site_id)
+        vc = ValConfig(site_id)
         self.server = vc.http_server
         self.session_path = vc.session_path
         self.ftp_prefix = vc.http_prefix
