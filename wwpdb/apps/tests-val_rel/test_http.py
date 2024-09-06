@@ -5,9 +5,9 @@ import shutil
 import gzip
 import logging
 
-from wwpdb.apps.val_rel.http.getFilesReleaseHTTP_EMDB import getFilesReleaseHttpEMDB
-from wwpdb.apps.val_rel.http.getFilesReleaseHTTP_PDB import getFilesReleaseHttpPDB
-from wwpdb.apps.val_rel.http.getRemoteFilesHTTP import GetRemoteFiles
+from wwpdb.apps.val_rel.utils.http_protocol.getFilesReleaseHTTP_EMDB import getFilesReleaseHttpEMDB
+from wwpdb.apps.val_rel.utils.http_protocol.getFilesReleaseHTTP_PDB import getFilesReleaseHttpPDB
+from wwpdb.apps.val_rel.utils.http_protocol.getRemoteFilesHTTP import GetRemoteFiles
 from wwpdb.apps.val_rel.utils.XmlInfo import XmlInfo
 from wwpdb.apps.val_rel.config.ValConfig import ValConfig
 
