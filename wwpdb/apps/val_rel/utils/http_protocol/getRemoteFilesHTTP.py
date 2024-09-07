@@ -34,15 +34,14 @@ def remove_local_temp_ftp(temp_dir, require_empty=False):
         if require_empty:
             dlist = os.listdir(temp_dir)
             if len(dlist) > 0:
-                logger.info("Skipping removal of %s as not empty" % temp_dir)
+                logger.info("Skipping removal of %s as not empty", temp_dir)
                 return
         shutil.rmtree(temp_dir, ignore_errors=True)
 
 
 class GetRemoteFiles(object):
-    def __init__(self, server=None, cache=None):
+    def __init__(self, server=None, cache=None):  # pylint disable=unused-argument
         self.__cache = cache
-        self.__site_id = getSiteId()
         vc = ValConfig()
         self.connection_timeout = vc.connection_timeout
         self.read_timeout = vc.read_timeout
@@ -54,8 +53,7 @@ class GetRemoteFiles(object):
         self.__email_interval = vc._email_interval
         self.__max_per_interval = vc._max_per_interval
         # warning - possible security risk
-        self.__ignore_certificate_on_last_try = False
-
+        # self.__ignore_certificate_on_last_try = False
 
     def get_url(self, *, url=None, output_path=None):
         if not url:
@@ -64,13 +62,11 @@ class GetRemoteFiles(object):
             self.get_file(url, output_path)
         return os.path.basename(url)
 
-
     def is_file(self, remote_file):
         r = requests.head(remote_file, timeout=self.__timeout, allow_redirects=True)
         if r.status_code < 400 and r.headers and 'content-length' in r.headers and int(r.headers['content-length']) > 0:
             return True
         return False
-
 
     def get_file(self, remote_file, output_path):
         """
@@ -105,11 +101,9 @@ class GetRemoteFiles(object):
                     pfc.add_file(temp_file_name, cache_file_path)
                     logger.debug("Adding %s to cache", cache_file_path)
 
-
     def _setup_output_path(self, output_path):
         if not os.path.exists(output_path):
             os.makedirs(output_path)
-
 
     def httpRequest(self, url, outfilepath):
         """ download to session directory """
@@ -120,28 +114,28 @@ class GetRemoteFiles(object):
             s.mount('https://', HTTPAdapter(max_retries=retries))
             s.mount('http://', HTTPAdapter(max_retries=retries))
             try:
-                r = s.get(url, timeout=(self.connection_timeout,self.read_timeout), stream=True, allow_redirects=True)
-            except MaxRetryError as e:
+                r = s.get(url, timeout=(self.connection_timeout, self.read_timeout), stream=True, allow_redirects=True)
+            except MaxRetryError as _e:  # noqa: F841
                 msg = "Max retries exceeded for %s" % os.path.basename(url)
                 self.handle_exception(msg)
                 return False
-            except requests.exceptions.ConnectionError as e:
-                msg = "Connection error for %s" % os.path.basename(url)
-                self.handle_exception(msg)
-                return False
-            except requests.exceptions.ConnectTimeout as e:
+            except requests.exceptions.ConnectTimeout as _e:  # noqa: F841
                 msg = "Connection timed out for %s" % os.path.basename(url)
                 self.handle_exception(msg)
                 return False
-            except requests.exceptions.ReadTimeout as e:
+            except requests.exceptions.ConnectionError as _e:  # noqa: F841
+                msg = "Connection error for %s" % os.path.basename(url)
+                self.handle_exception(msg)
+                return False
+            except requests.exceptions.ReadTimeout as _e:  # noqa: F841
                 msg = "Data reading timed out for %s" % os.path.basename(url)
                 self.handle_exception(msg)
                 return False
-            except requests.exceptions.RequestException as e:
+            except requests.exceptions.RequestException as _e:  # noqa: F841
                 msg = "Request for %s failed with status code %d" % (os.path.basename(url), status_code)
                 self.handle_exception(msg)
                 return False
-            except Exception as e:
+            except Exception as _e:  # noqa: F841
                 msg = "Request for %s failed with status code %d" % (os.path.basename(url), status_code)
                 self.handle_exception(msg)
                 return False
@@ -158,7 +152,7 @@ class GetRemoteFiles(object):
                 try:
                     with open(outfilepath, "wb") as w:
                         w.write(r.content)
-                except requests.exceptions.ReadTimeout as e:
+                except requests.exceptions.ReadTimeout as _e:  # noqa: F841
                     msg = "Data reading timed out for %s" % os.path.basename(url)
                     self.handle_exception(msg)
                     if os.path.exists(outfilepath):
@@ -175,17 +169,15 @@ class GetRemoteFiles(object):
                 return False
         return False
 
-
     def handle_exception(self, msg):
         for admin in self.__admin_list:
             self.send_email(msg, admin)
         logger.exception(msg)
 
-
     def send_email(self, txt, recipient):
         envar = os.getenv(recipient)
         if not envar:
-            os.environ[recipient] = "%d,%d" % (1,time.time())
+            os.environ[recipient] = "%d,%d" % (1, time.time())
         else:
             tokens = envar.split(",")
             count = int(tokens[0])
@@ -194,15 +186,14 @@ class GetRemoteFiles(object):
                 if count >= self.__max_per_interval:
                     return
                 count += 1
-                os.environ[recipient] = "%d,%d" % (count,msg_log_time)
+                os.environ[recipient] = "%d,%d" % (count, msg_log_time)
             else:
-                os.environ[recipient] = "%d,%d" % (1,time.time())
+                os.environ[recipient] = "%d,%d" % (1, time.time())
         content = """\
         The Val Rel application at {site_id} threw an exception!
         The following error output was retrieved:
         {txt}""".format(site_id=getSiteId(), txt=txt)
         self.email(content, recipient)
-
 
     def email(self, content, recipient):
         app = ConfigInfoAppCommunication(siteId=getSiteId())
@@ -216,9 +207,8 @@ class GetRemoteFiles(object):
         try:
             with smtplib.SMTP(server) as s:
                 s.send_message(msg)
-        except Exception as e:
+        except Exception as _e:  # noqa: F841
             logger.exception("unable to send to %s email %s", recipient, content)
-
 
     def disconnect(self):
         # maintained for backward compatibility with ftp version

@@ -48,7 +48,7 @@ class getFilesReleaseHttpEMDB(object):
         else:
             logger.info('trying local FTP')
             temp_file_path = self.get_emdb_local_ftp_file(filename=self.__rf.get_emdb_xml(self.emdb_id),
-                                                     emdb_path=self.emdb_xml_folder())
+                                                          emdb_path=self.emdb_xml_folder())
         logger.info('returning: {}'.format(temp_file_path))
         return temp_file_path
 
@@ -67,7 +67,7 @@ class getFilesReleaseHttpEMDB(object):
         else:
             logger.debug('trying local FTP')
             temp_file_path = self.get_emdb_local_ftp_file(filename=self.__rf.get_emdb_fsc(self.emdb_id),
-                                                     emdb_path=self.emdb_fsc_folder())
+                                                          emdb_path=self.emdb_fsc_folder())
         logger.debug('returning: {}'.format(temp_file_path))
         return temp_file_path
 
@@ -86,7 +86,7 @@ class getFilesReleaseHttpEMDB(object):
         else:
             logger.debug('trying local FTP')
             temp_file_path = self.get_emdb_local_ftp_file(filename=self.__rf.get_emdb_map(self.emdb_id),
-                                                     emdb_path=self.emdb_map_folder())
+                                                          emdb_path=self.emdb_map_folder())
         logger.debug('returning: {}'.format(temp_file_path))
         return temp_file_path
 
@@ -175,4 +175,3 @@ class getFilesReleaseHttpEMDB(object):
     def set_local_ftp_path(self, ftp_path):
         self.__local_ftp.set_ftp_emdb_root(ftp_path)
         self.__local_ftp_emdb_path = ftp_path
-

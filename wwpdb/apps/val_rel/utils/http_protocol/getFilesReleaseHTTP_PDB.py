@@ -11,7 +11,6 @@ logger = logging.getLogger(__name__)
 class getFilesReleaseHttpPDB(object):
     def __init__(self, pdbid, site_id=None, cache=None):
         self.__cache = cache
-        self.__rf = ReleaseFileNames()
         self.__local_ftp = LocalFTPPathInfo()
         self.__temp_local_ftp = None
         vc = ValConfig(site_id)
@@ -19,7 +18,7 @@ class getFilesReleaseHttpPDB(object):
         self.session_path = vc.session_path
         self.ftp_prefix = vc.http_prefix
         protocol = vc.val_rel_protocol
-        self.url_prefix = "%s://%s%s" % (protocol, self.server,self.ftp_prefix)
+        self.url_prefix = "%s://%s%s" % (protocol, self.server, self.ftp_prefix)
         self.__remote_ftp = LocalFTPPathInfo()
         self.__remote_ftp.set_ftp_pdb_root(self.url_prefix)
         self.url_prefix = self.__remote_ftp.get_ftp_pdb()
@@ -162,4 +161,3 @@ class getFilesReleaseHttpPDB(object):
         if self.grf is not None:
             self.grf.disconnect()
             self.grf = None
-
