@@ -145,12 +145,15 @@ class GetRemoteFiles(object):
                 msg = "Request for %s failed with status code %d" % (os.path.basename(url), status_code)
                 self.handle_exception(msg)
                 return False
+
+            content_length = None
             if r is not None:
                 status_code = r.status_code
                 # does not return correct length for text files
                 if r.headers and 'content-length' in r.headers:
                     content_length = int(r.headers['content-length'])
                 logger.info("%s status code %d", os.path.basename(url), status_code)
+
             if 0 < status_code < 400:
                 try:
                     with open(outfilepath, "wb") as w:
@@ -162,7 +165,7 @@ class GetRemoteFiles(object):
                         os.unlink(outfilepath)
                     return False
                 filesize = os.path.getsize(outfilepath)
-                if ("content_length" in locals() or "content_length" in globals) and filesize != content_length:
+                if content_length is not None and filesize != content_length:
                     logger.warning("File size mismatch: %s != %s", filesize, content_length)
                 logger.info("downloaded %s size %d", os.path.basename(url), filesize)
                 return True
