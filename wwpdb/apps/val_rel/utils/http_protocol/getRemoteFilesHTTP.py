@@ -17,7 +17,7 @@ from wwpdb.utils.config.ConfigInfoApp import ConfigInfoAppCommunication
 logger = logging.getLogger(__name__)
 
 
-def setup_local_temp_ftp(temp_dir, suffix, session_path):
+def setup_local_temp_http(temp_dir, suffix, session_path):
     if not temp_dir:
         if not os.path.exists(session_path):
             os.makedirs(session_path)
@@ -28,7 +28,7 @@ def setup_local_temp_ftp(temp_dir, suffix, session_path):
     return temp_dir
 
 
-def remove_local_temp_ftp(temp_dir, require_empty=False):
+def remove_local_temp_http(temp_dir, require_empty=False):
     """Removes the temporary directory. If require_empty true, will skip if not"""
     if temp_dir and os.path.exists(temp_dir):
         if require_empty:
@@ -39,8 +39,8 @@ def remove_local_temp_ftp(temp_dir, require_empty=False):
         shutil.rmtree(temp_dir, ignore_errors=True)
 
 
-class GetRemoteFiles(object):
-    def __init__(self, server=None, cache=None):  # pylint disable=unused-argument
+class GetRemoteFilesHttp(object):
+    def __init__(self, server=None, cache=None):  # pylint: disable=unused-argument
         self.__cache = cache
         vc = ValConfig()
         self.connection_timeout = vc.connection_timeout
