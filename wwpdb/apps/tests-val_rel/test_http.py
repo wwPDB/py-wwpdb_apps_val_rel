@@ -7,7 +7,7 @@ import logging
 
 from wwpdb.apps.val_rel.utils.http_protocol.getFilesReleaseHTTP_EMDB import getFilesReleaseHttpEMDB
 from wwpdb.apps.val_rel.utils.http_protocol.getFilesReleaseHTTP_PDB import getFilesReleaseHttpPDB
-from wwpdb.apps.val_rel.utils.http_protocol.getRemoteFilesHTTP import GetRemoteFiles
+from wwpdb.apps.val_rel.utils.http_protocol.getRemoteFilesHTTP import GetRemoteFilesHttp
 from wwpdb.apps.val_rel.utils.XmlInfo import XmlInfo
 from wwpdb.apps.val_rel.config.ValConfig import ValConfig
 
@@ -67,7 +67,7 @@ class TestHTTP(unittest.TestCase):
 
     def test_is_file(self):
         logging.info("testing is_file")
-        grf = GetRemoteFiles()
+        grf = GetRemoteFilesHttp()
         grf.read_timeout = 60
         grf.use_read_timeout = True
         # test status code 200
@@ -81,7 +81,7 @@ class TestHTTP(unittest.TestCase):
 
     def test_streaming_http_request(self):
         logging.info("testing streaming http_request")
-        grf = GetRemoteFiles()
+        grf = GetRemoteFilesHttp()
         grf.read_timeout = 60
         grf.use_read_timeout = True
         logging.info("saving files to %s", self.temp_dir)
@@ -100,7 +100,7 @@ class TestHTTP(unittest.TestCase):
 
     def test_non_streaming_http_request(self):
         logging.info("testing non-streaming http_request")
-        grf = GetRemoteFiles()
+        grf = GetRemoteFilesHttp()
         grf.use_read_timeout = False
         logging.info("saving files to %s", self.temp_dir)
         # test download
@@ -118,7 +118,7 @@ class TestHTTP(unittest.TestCase):
 
     def test_xml_header_file(self):
         logging.info("testing xml header file")
-        grf = GetRemoteFiles()
+        grf = GetRemoteFilesHttp()
         grf.read_timeout = 60
         grf.use_read_timeout = True
         logging.info("saving files to %s", self.temp_dir)

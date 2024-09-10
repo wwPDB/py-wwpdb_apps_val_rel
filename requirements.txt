@@ -8,3 +8,4 @@ wwpdb.utils.ws_utils
 oslo_concurrency
 wwpdb.utils.nmr
 urllib3>=1.26.12
+filelock

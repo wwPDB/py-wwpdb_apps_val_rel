@@ -13,6 +13,7 @@ from wwpdb.apps.val_rel.utils.PersistFileCache import PersistFileCache
 from wwpdb.apps.val_rel.config.ValConfig import ValConfig
 from wwpdb.utils.config.ConfigInfo import getSiteId
 from wwpdb.utils.config.ConfigInfoApp import ConfigInfoAppCommunication
+from wwpdb.apps.val_rel.utils.emailHandler import EmailHandler
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +53,7 @@ class GetRemoteFilesHttp(object):
         self.__admin_list = vc._admin_list
         self.__email_interval = vc._email_interval
         self.__max_per_interval = vc._max_per_interval
+        self.emailHandler = EmailHandler(self.__admin_list, self.__email_interval, self.__max_per_interval)
         # warning - possible security risk
         # self.__ignore_certificate_on_last_try = False
 
@@ -171,44 +173,9 @@ class GetRemoteFilesHttp(object):
 
     def handle_exception(self, msg):
         for admin in self.__admin_list:
-            self.send_email(msg, admin)
+            self.emailHandler.send_email(msg, admin)
         logger.exception(msg)
 
-    def send_email(self, txt, recipient):
-        envar = os.getenv(recipient)
-        if not envar:
-            os.environ[recipient] = "%d,%d" % (1, time.time())
-        else:
-            tokens = envar.split(",")
-            count = int(tokens[0])
-            msg_log_time = int(tokens[1])
-            if msg_log_time + self.__email_interval > time.time():
-                if count >= self.__max_per_interval:
-                    return
-                count += 1
-                os.environ[recipient] = "%d,%d" % (count, msg_log_time)
-            else:
-                os.environ[recipient] = "%d,%d" % (1, time.time())
-        content = """\
-        The Val Rel application at {site_id} threw an exception!
-        The following error output was retrieved:
-        {txt}""".format(site_id=getSiteId(), txt=txt)
-        self.email(content, recipient)
-
-    def email(self, content, recipient):
-        app = ConfigInfoAppCommunication(siteId=getSiteId())
-        server = app.get_mailserver_name()
-        no_reply = app.get_noreply_address()
-        msg = EmailMessage()
-        msg.set_content(content)
-        msg['Subject'] = "WWPDB Val Rel Exception"
-        msg['From'] = no_reply
-        msg['To'] = recipient
-        try:
-            with smtplib.SMTP(server) as s:
-                s.send_message(msg)
-        except Exception as _e:  # noqa: F841
-            logger.exception("unable to send to %s email %s", recipient, content)
 
     def disconnect(self):
         # maintained for backward compatibility with ftp version
