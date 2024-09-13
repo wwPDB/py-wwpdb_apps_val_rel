@@ -3,14 +3,10 @@ from wwpdb.utils.config.ConfigInfo import getSiteId
 from wwpdb.apps.val_rel.config.ValConfig import ValConfig
 from wwpdb.apps.val_rel.utils.getFilesReleaseOneDep import getFilesReleaseOneDep
 
-config = ValConfig()
-
-if config.val_rel_protocol == 'http' or config.val_rel_protocol == 'https':
-    from wwpdb.apps.val_rel.utils.http_protocol.getFilesReleaseHTTP_EMDB import getFilesReleaseHttpEMDB as getFilesReleaseFtpEMDB
-    from wwpdb.apps.val_rel.utils.http_protocol.getFilesReleaseHTTP_PDB import getFilesReleaseHttpPDB as getFilesReleaseFtpPDB
-else:
-    from wwpdb.apps.val_rel.utils.getFilesReleaseFTP_EMDB import getFilesReleaseFtpEMDB
-    from wwpdb.apps.val_rel.utils.getFilesReleaseFTP_PDB import getFilesReleaseFtpPDB
+from wwpdb.apps.val_rel.utils.http_protocol.getFilesReleaseHTTP_EMDB import getFilesReleaseHttpEMDB
+from wwpdb.apps.val_rel.utils.http_protocol.getFilesReleaseHTTP_PDB import getFilesReleaseHttpPDB
+from wwpdb.apps.val_rel.utils.getFilesReleaseFTP_EMDB import getFilesReleaseFtpEMDB
+from wwpdb.apps.val_rel.utils.getFilesReleaseFTP_PDB import getFilesReleaseFtpPDB
 
 logger = logging.getLogger(__name__)
 
@@ -24,9 +20,6 @@ class getFilesRelease:
         self.pdb_id = pdb_id
         self.emdb_id = emdb_id
         self.__cache = cache
-        self.__release_file_from_onedep = getFilesReleaseOneDep(siteID=self.__siteID, pdb_id=pdb_id, emdb_id=emdb_id)
-        self.__release_file_from_ftp_emdb = getFilesReleaseFtpEMDB(site_id=self.__siteID, emdbid=emdb_id, cache=self.__cache)
-        self.__release_file_from_ftp_pdb = getFilesReleaseFtpPDB(site_id=self.__siteID, pdbid=pdb_id, cache=self.__cache)
         self.model_current = False
         self.sf_current = False
         self.cs_current = False
@@ -34,12 +27,26 @@ class getFilesRelease:
         self.em_xml_current = False
         self.__tempFTP = None
 
+        # Determine which routing
+        config = ValConfig(site_id=siteID)
+        if config.val_rel_protocol in ["http", "https"]:
+            self.__files_pdb_func = getFilesReleaseHttpPDB
+            self.__files_emdb_func = getFilesReleaseHttpEMDB
+        else:
+            self.__files_pdb_func = getFilesReleaseFtpPDB
+            self.__files_emdb_func = getFilesReleaseFtpEMDB
+
+        self.__release_file_from_onedep = getFilesReleaseOneDep(siteID=self.__siteID, pdb_id=pdb_id, emdb_id=emdb_id)
+        self.__release_file_from_remote_emdb = self.__files_emdb_func(site_id=self.__siteID, emdbid=emdb_id, cache=self.__cache)
+        self.__release_file_from_remote_pdb = self.__files_pdb_func(site_id=self.__siteID, pdbid=pdb_id, cache=self.__cache)
+
+
     def close_connections(self):
         """This method should be used to close all open
         connections in subclasses.
         """
-        self.__release_file_from_ftp_pdb.close_connection()
-        self.__release_file_from_ftp_emdb.close_connection()
+        self.__release_file_from_remote_pdb.close_connection()
+        self.__release_file_from_remote_emdb.close_connection()
 
     def set_pdb_id(self, pdb_id):
         """Sets up pdb_id for processing release files"""
@@ -50,10 +57,10 @@ class getFilesRelease:
             self.__release_file_from_onedep = getFilesReleaseOneDep(siteID=self.__siteID,
                                                                     pdb_id=self.pdb_id,
                                                                     emdb_id=self.emdb_id)
-            if self.__release_file_from_ftp_pdb  is not None:
-                self.__release_file_from_ftp_pdb.close_connection()
+            if self.__release_file_from_remote_pdb  is not None:
+                self.__release_file_from_remote_pdb.close_connection()
 
-            self.__release_file_from_ftp_pdb = getFilesReleaseFtpPDB(site_id=self.__siteID, pdbid=pdb_id, cache=self.__cache)
+            self.__release_file_from_remote_pdb = self.__files_pdb_func(site_id=self.__siteID, pdbid=pdb_id, cache=self.__cache)
 
     def set_emdb_id(self, emdb_id):
         """Sets up emdb_id for processing release files"""
@@ -65,15 +72,15 @@ class getFilesRelease:
                                                                     pdb_id=self.pdb_id,
                                                                     emdb_id=emdb_id)
 
-            if self.__release_file_from_ftp_emdb is not None:
-                self.__release_file_from_ftp_emdb.close_connection()
+            if self.__release_file_from_remote_emdb is not None:
+                self.__release_file_from_remote_emdb.close_connection()
 
-            self.__release_file_from_ftp_emdb = getFilesReleaseFtpEMDB(site_id=self.__siteID, emdbid=emdb_id, cache=self.__cache)
+            self.__release_file_from_remote_emdb = self.__files_emdb_func(site_id=self.__siteID, emdbid=emdb_id, cache=self.__cache)
 
     def remove_local_temp_files(self):
         """Removes any temporary FTP directories"""
-        self.__release_file_from_ftp_pdb.remove_local_temp_files()
-        self.__release_file_from_ftp_emdb.remove_local_temp_files()
+        self.__release_file_from_remote_pdb.remove_local_temp_files()
+        self.__release_file_from_remote_emdb.remove_local_temp_files()
 
     def get_model(self):
         """
@@ -83,7 +90,7 @@ class getFilesRelease:
         """
         file_name, self.model_current = self.__release_file_from_onedep.get_model()
         if not file_name:
-            file_name = self.__release_file_from_ftp_pdb.get_model()
+            file_name = self.__release_file_from_remote_pdb.get_model()
         return file_name
 
     def get_sf(self):
@@ -94,7 +101,7 @@ class getFilesRelease:
         """
         file_name, self.sf_current = self.__release_file_from_onedep.get_sf()
         if not file_name:
-            file_name = self.__release_file_from_ftp_pdb.get_sf()
+            file_name = self.__release_file_from_remote_pdb.get_sf()
         return file_name
 
     def get_cs(self):
@@ -105,7 +112,7 @@ class getFilesRelease:
         """
         file_name, self.cs_current = self.__release_file_from_onedep.get_cs()
         if not file_name:
-            file_name = self.__release_file_from_ftp_pdb.get_cs()
+            file_name = self.__release_file_from_remote_pdb.get_cs()
         return file_name
 
     def get_nmr_data(self):
@@ -116,26 +123,26 @@ class getFilesRelease:
         """
         file_name, self.cs_current = self.__release_file_from_onedep.get_nmr_data()
         if not file_name:
-            file_name = self.__release_file_from_ftp_pdb.get_nmr_data()
+            file_name = self.__release_file_from_remote_pdb.get_nmr_data()
         return file_name
 
     def get_emdb_xml(self):
         file_name, self.em_xml_current = self.__release_file_from_onedep.get_emdb_xml()
         if not file_name:
-            file_name = self.__release_file_from_ftp_emdb.get_emdb_xml()
+            file_name = self.__release_file_from_remote_emdb.get_emdb_xml()
         return file_name
 
     def get_emdb_volume(self):
         file_name, _ = self.__release_file_from_onedep.get_emdb_volume()
         if not file_name:
-            file_name = self.__release_file_from_ftp_emdb.get_emdb_volume()
+            file_name = self.__release_file_from_remote_emdb.get_emdb_volume()
 
         return file_name
 
     def get_emdb_fsc(self):
         file_name, _ = self.__release_file_from_onedep.get_emdb_fsc()
         if not file_name:
-            file_name = self.__release_file_from_ftp_emdb.get_emdb_fsc()
+            file_name = self.__release_file_from_remote_emdb.get_emdb_fsc()
 
         return file_name
 

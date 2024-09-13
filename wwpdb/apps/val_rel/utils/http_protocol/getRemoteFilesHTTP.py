@@ -24,7 +24,7 @@ def setup_local_temp_http(temp_dir, suffix, session_path):
             os.makedirs(session_path)
         temp_dir = tempfile.mkdtemp(
             dir=session_path,
-            prefix="ftp_{}_".format(suffix)
+            prefix="http_{}_".format(suffix)
         )
     return temp_dir
 
@@ -41,9 +41,9 @@ def remove_local_temp_http(temp_dir, require_empty=False):
 
 
 class GetRemoteFilesHttp(object):
-    def __init__(self, server=None, cache=None):  # pylint: disable=unused-argument
+    def __init__(self, server=None, cache=None, site_id=None):  # pylint: disable=unused-argument
         self.__cache = cache
-        vc = ValConfig()
+        vc = ValConfig(site_id=site_id)
         self.connection_timeout = vc.connection_timeout
         self.read_timeout = vc.read_timeout
         self.__timeout = self.connection_timeout

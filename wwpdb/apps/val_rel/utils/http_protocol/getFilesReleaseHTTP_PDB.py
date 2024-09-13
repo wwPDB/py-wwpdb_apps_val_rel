@@ -13,6 +13,7 @@ class getFilesReleaseHttpPDB(object):
         self.__cache = cache
         self.__local_ftp = LocalFTPPathInfo()
         self.__temp_local_ftp = None
+        self.__site_id = site_id
 
         vc = ValConfig(site_id)
         self.server = vc.http_server
@@ -33,7 +34,7 @@ class getFilesReleaseHttpPDB(object):
         self.grf = None
 
         if not self.__local_ftp.get_ftp_pdb():
-            self.grf = GetRemoteFilesHttp(server=self.server, cache=self.__cache)
+            self.grf = GetRemoteFilesHttp(server=self.server, cache=self.__cache, site_id=self.__site_id)
 
     def get_model(self):
         """

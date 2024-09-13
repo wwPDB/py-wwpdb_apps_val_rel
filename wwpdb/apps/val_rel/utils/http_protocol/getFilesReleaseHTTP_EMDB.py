@@ -37,7 +37,7 @@ class getFilesReleaseHttpEMDB(object):
         self.__emdb_id = emdbid
         self.grf = None
         if not self.__local_ftp.get_ftp_emdb():
-            self.grf = GetRemoteFilesHttp(server=self.__server, cache=self.__cache)
+            self.grf = GetRemoteFilesHttp(server=self.__server, cache=self.__cache, site_id=self.__site_id)
 
     def get_emdb_xml(self):
         logger.info('EM XML')
@@ -133,7 +133,7 @@ class getFilesReleaseHttpEMDB(object):
         logger.debug('get remote file from {}'.format(url))
 
         if self.grf is None:
-            self.grf = GetRemoteFilesHttp(server=self.__server, cache=self.__cache)
+            self.grf = GetRemoteFilesHttp(server=self.__server, cache=self.__cache, site_id=self.__site_id)
         outpath = os.path.join(self.__get_temp_local_ftp_emdb_path(), subfolder)
         ret = self.grf.get_url(url=url, output_path=outpath)
         logger.debug(ret)
