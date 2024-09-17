@@ -90,6 +90,8 @@ class getFilesReleaseHttpEMDB(object):
             vol_file_name = self.__rf.get_emdb_map(self.__emdb_id)
             url = os.path.join(self.url_prefix, self.__emdb_map_folder(), vol_file_name)
             temp_file_path = self.__get_file_from_remote_http(url=url, subfolder=self.__emdb_map_folder())
+            self.get_emdb_half_maps()
+            self.get_emdb_masks()
             if not temp_file_path:
                 remove_local_temp_http(self.__setup_local_temp_http(), require_empty=True)
         else:
@@ -98,6 +100,55 @@ class getFilesReleaseHttpEMDB(object):
                                                             emdb_path=self.__emdb_map_folder())
         logger.debug('returning: {}'.format(temp_file_path))
         return temp_file_path
+
+    def get_emdb_half_maps(self):
+        logger.debug('retrieving half maps')
+        vol_file_name = self.__rf.get_emdb_map(self.__emdb_id)
+        vol_file_name = vol_file_name.replace(".gz", "")
+        half_map_name = vol_file_name.replace(".map", "_half_map.map")
+        map_1_name = half_map_name.replace("_map", "_map_1")
+        map_2_name = half_map_name.replace("_map", "_map_2")
+        half_maps = [map_1_name, map_2_name]
+        temp_file_paths = []
+        if self.grf is None:
+            self.grf = GetRemoteFilesHttp(server=self.__server, cache=self.__cache, site_id=self.__site_id)
+        for half_map in half_maps:
+            url = os.path.join(self.url_prefix, self.__emdb_half_map_folder(), half_map)
+            temp_file_path = None
+            if self.grf.is_file(url):
+                temp_file_path = self.__get_file_from_remote_http(url=url, subfolder=self.__emdb_half_map_folder())
+            else:
+                url += ".gz"
+                if self.grf.is_file(url):
+                    temp_file_path = self.__get_file_from_remote_http(url=url, subfolder=self.__emdb_half_map_folder())
+            temp_file_paths.append(temp_file_path)
+        return temp_file_paths[0], temp_file_paths[1]
+
+    def get_emdb_masks(self):
+        logger.debug('retrieving masks')
+        vol_file_name = self.__rf.get_emdb_map(self.__emdb_id)
+        vol_file_name = vol_file_name.replace(".gz", "")
+        mask_name = vol_file_name.replace(".map", "_msk.map")
+        if self.grf is None:
+            self.grf = GetRemoteFilesHttp(server=self.__server, cache=self.__cache, site_id=self.__site_id)
+        # set max number to prevent inf loop
+        max_masks = 100
+        temp_file_paths = []
+        for x in range(1, max_masks + 1):
+            mask_file_name = mask_name.replace("_msk", "_msk_%d" % x)
+            url = os.path.join(self.url_prefix, self.__emdb_mask_folder(), mask_file_name)
+            temp_file_path = None
+            if self.grf.is_file(url):
+                temp_file_path = self.__get_file_from_remote_http(url=url, subfolder=self.__emdb_mask_folder())
+            else:
+                url += ".gz"
+                if self.grf.is_file(url):
+                    temp_file_path = self.__get_file_from_remote_http(url=url, subfolder=self.__emdb_mask_folder())
+            if temp_file_path is None:
+                break
+            temp_file_paths.append(temp_file_path)
+
+        return temp_file_paths
 
     def __setup_local_temp_http(self, session_path=None):
         if not self.__temp_local_ftp:
@@ -120,6 +171,12 @@ class getFilesReleaseHttpEMDB(object):
     def __emdb_fsc_folder(self):
         """ Returns path in public archive to fsc subdir """
         return self.__get_emdb_subfolder(sub_folder='fsc')
+
+    def __emdb_half_map_folder(self):
+        return self.__get_emdb_subfolder(sub_folder='other')
+
+    def __emdb_mask_folder(self):
+        return self.__get_emdb_subfolder(sub_folder='masks')
 
     def __get_emdb_subfolder(self, sub_folder):
         """ Generic returns sub_folder in public archive layout"""
@@ -179,14 +236,3 @@ class getFilesReleaseHttpEMDB(object):
         if self.grf is not None:
             self.grf.disconnect()
             self.grf = None
-
-    # def set_temp_local_ftp_as_local_ftp_path(self):
-    #     self.__setup_local_temp_http()
-    #     self.__local_ftp_emdb_path = self.__temp_local_ftp
-
-    # def get_local_ftp_path(self):
-    #     return self.__local_ftp.get_ftp_emdb()
-
-    # def set_local_ftp_path(self, ftp_path):
-    #     self.__local_ftp.set_ftp_emdb_root(ftp_path)
-    #     self.__local_ftp_emdb_path = ftp_path

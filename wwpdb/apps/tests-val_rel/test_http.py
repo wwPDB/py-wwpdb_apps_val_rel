@@ -34,6 +34,8 @@ class TestHTTP(unittest.TestCase):
         self.pdb_non_existent = "0abc"
         self.emdb_id = "EMD-5030"
         self.emdb_fsc_id = "EMD-10294"
+        self.emdb_half_map_id = "EMD-0036"
+        self.emdb_mask_id = "EMD-0034"
         self.emdb_non_existent = "EMD-0000"
         self.temp_paths = []
         logging.info("created temp dir %s", self.temp_dir)
@@ -68,8 +70,6 @@ class TestHTTP(unittest.TestCase):
     def test_is_file(self):
         logging.info("testing is_file")
         grf = GetRemoteFilesHttp()
-        grf.read_timeout = 60
-        grf.use_read_timeout = True
         # test status code 200
         for file in self.zipfiles:
             self.assertTrue(grf.is_file(file), "error - %s" % os.path.basename(file))
@@ -82,26 +82,6 @@ class TestHTTP(unittest.TestCase):
     def test_streaming_http_request(self):
         logging.info("testing streaming http_request")
         grf = GetRemoteFilesHttp()
-        grf.read_timeout = 60
-        grf.use_read_timeout = True
-        logging.info("saving files to %s", self.temp_dir)
-        # test download
-        for file in self.zipfiles:
-            outfile = os.path.join(self.temp_dir, os.path.basename(file))
-            self.assertTrue(grf.httpRequest(file, outfile), "error downloading - %s" % os.path.basename(file))
-            # verify readable zip file
-            with gzip.open(outfile, 'rb') as r:
-                self.assertTrue(r.read(1), "error reading gzip file %s" % os.path.basename(file))
-        # test 404 error
-        for file in self.non_existent_files:
-            self.assertFalse(grf.httpRequest(file, os.path.join(self.temp_dir, os.path.basename(file))),
-                             "error downloading - %s" % os.path.basename(file))
-
-
-    def test_non_streaming_http_request(self):
-        logging.info("testing non-streaming http_request")
-        grf = GetRemoteFilesHttp()
-        grf.use_read_timeout = False
         logging.info("saving files to %s", self.temp_dir)
         # test download
         for file in self.zipfiles:
@@ -119,8 +99,6 @@ class TestHTTP(unittest.TestCase):
     def test_xml_header_file(self):
         logging.info("testing xml header file")
         grf = GetRemoteFilesHttp()
-        grf.read_timeout = 60
-        grf.use_read_timeout = True
         logging.info("saving files to %s", self.temp_dir)
         # test download
         for file in self.xmlfiles:
@@ -187,11 +165,42 @@ class TestHTTP(unittest.TestCase):
         self.assertTrue(os.path.exists(fsc_path), "error - could not download %s" % fsc_path)
         logging.info("downloaded %s", fsc_path)
         self.temp_paths.append(fsc_path)
+        # test half maps
+        emdbid = self.emdb_half_map_id
+        gfr = getFilesReleaseHttpEMDB(emdbid)
+        half_map_1, half_map_2 = gfr.get_emdb_half_maps()
+        self.assertTrue(os.path.exists(half_map_1), "error - could not download %s" % half_map_1)
+        logging.info("downloaded %s", half_map_1)
+        self.temp_paths.append(half_map_1)
+        self.assertTrue(os.path.exists(half_map_2), "error - could not download %s" % half_map_2)
+        logging.info("downloaded %s", half_map_2)
+        self.temp_paths.append(half_map_2)
+        # test masks
+        emdbid = self.emdb_mask_id
+        gfr = getFilesReleaseHttpEMDB(emdbid)
+        masks = gfr.get_emdb_masks()
+        if masks:
+            mask1, mask2 = masks
+        self.assertTrue(os.path.exists(mask1), "error - could not download %s" % mask1)
+        logging.info("downloaded %s", mask1)
+        self.temp_paths.append(mask1)
+        self.assertTrue(os.path.exists(mask2), "error - could not download %s" % mask2)
+        logging.info("downloaded %s", mask2)
+        self.temp_paths.append(mask2)
         # test non-existent
         emdbid = self.emdb_non_existent
         gfr = getFilesReleaseHttpEMDB(emdbid)
         vol_path = gfr.get_emdb_volume()
         self.assertFalse(vol_path, "error - downloaded %s" % vol_path)
+        xml_path = gfr.get_emdb_xml()
+        self.assertFalse(xml_path, "error - downloaded %s" % xml_path)
+        fsc_path = gfr.get_emdb_fsc()
+        self.assertFalse(fsc_path, "error - downloaded %s" % fsc_path)
+        half_map_1, half_map_2 = gfr.get_emdb_half_maps()
+        self.assertFalse(half_map_1, "error - downloaded %s" % half_map_1)
+        self.assertFalse(half_map_2, "error - downloaded %s" % half_map_2)
+        masks = gfr.get_emdb_masks()
+        self.assertFalse(masks, "error - downloaded masks")
 
 
 if __name__ == '__main__':

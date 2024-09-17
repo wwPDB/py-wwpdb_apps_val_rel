@@ -2,17 +2,12 @@ import requests
 from requests.adapters import HTTPAdapter
 import urllib.parse
 from urllib3.util.retry import Retry, MaxRetryError
-import smtplib
 import logging
 import os
 import shutil
 import tempfile
-import time
-from email.message import EmailMessage
 from wwpdb.apps.val_rel.utils.PersistFileCache import PersistFileCache
 from wwpdb.apps.val_rel.config.ValConfig import ValConfig
-from wwpdb.utils.config.ConfigInfo import getSiteId
-from wwpdb.utils.config.ConfigInfoApp import ConfigInfoAppCommunication
 from wwpdb.apps.val_rel.utils.emailHandler import EmailHandler
 
 logger = logging.getLogger(__name__)
@@ -54,8 +49,6 @@ class GetRemoteFilesHttp(object):
         self.__email_interval = vc._email_interval
         self.__max_per_interval = vc._max_per_interval
         self.emailHandler = EmailHandler(self.__admin_list, self.__email_interval, self.__max_per_interval)
-        # warning - possible security risk
-        # self.__ignore_certificate_on_last_try = False
 
     def get_url(self, *, url=None, output_path=None):
         if not url:
