@@ -42,6 +42,9 @@ class GetRemoteFilesHttp(object):
         self.connection_timeout = vc.connection_timeout
         self.read_timeout = vc.read_timeout
         self.__timeout = self.connection_timeout
+        self.__retries = vc.retries
+        self.__backoff_factor = vc.backoff_factor
+        self.__status_force_list = vc.status_force_list
         self.emailHandler = EmailHandler(site_id)
 
     def get_url(self, *, url=None, output_path=None):

@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 class EmailHandler:
 
-    def __init__(self, site_id)
+    def __init__(self, site_id):
         vc = ValConfig(site_id=site_id)
         self.__admin_list = vc._admin_list
         self.__email_interval = vc._email_interval
