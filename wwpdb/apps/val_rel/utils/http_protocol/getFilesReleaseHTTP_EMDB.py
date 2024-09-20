@@ -35,9 +35,9 @@ class getFilesReleaseHttpEMDB(object):
         l_ftp.set_ftp_emdb_root(self.url_prefix)
         self.url_prefix = l_ftp.get_ftp_emdb()
         self.__emdb_id = emdbid
-        self.grf = None
+        self.__grf = None
         if not self.__local_ftp.get_ftp_emdb():
-            self.grf = GetRemoteFilesHttp(server=self.__server, cache=self.__cache, site_id=self.__site_id)
+            self.__grf = GetRemoteFilesHttp(server=self.__server, cache=self.__cache, site_id=self.__site_id)
 
     def get_emdb_xml(self):
         logger.info('EM XML')
@@ -90,8 +90,10 @@ class getFilesReleaseHttpEMDB(object):
             vol_file_name = self.__rf.get_emdb_map(self.__emdb_id)
             url = os.path.join(self.url_prefix, self.__emdb_map_folder(), vol_file_name)
             temp_file_path = self.__get_file_from_remote_http(url=url, subfolder=self.__emdb_map_folder())
-            self.get_emdb_half_maps()
-            self.get_emdb_masks()
+
+            # Retreve other files that are required for validation
+            self.__get_emdb_half_maps()
+            self.__get_emdb_masks()
             if not temp_file_path:
                 remove_local_temp_http(self.__setup_local_temp_http(), require_empty=True)
         else:
@@ -101,7 +103,7 @@ class getFilesReleaseHttpEMDB(object):
         logger.debug('returning: {}'.format(temp_file_path))
         return temp_file_path
 
-    def get_emdb_half_maps(self):
+    def __get_emdb_half_maps(self):
         logger.debug('retrieving half maps')
         vol_file_name = self.__rf.get_emdb_map(self.__emdb_id)
         vol_file_name = vol_file_name.replace(".gz", "")
@@ -110,27 +112,27 @@ class getFilesReleaseHttpEMDB(object):
         map_2_name = half_map_name.replace("_map", "_map_2")
         half_maps = [map_1_name, map_2_name]
         temp_file_paths = []
-        if self.grf is None:
-            self.grf = GetRemoteFilesHttp(server=self.__server, cache=self.__cache, site_id=self.__site_id)
+        if self.__grf is None:
+            self.__grf = GetRemoteFilesHttp(server=self.__server, cache=self.__cache, site_id=self.__site_id)
         for half_map in half_maps:
             url = os.path.join(self.url_prefix, self.__emdb_half_map_folder(), half_map)
             temp_file_path = None
-            if self.grf.is_file(url):
+            if self.__grf.is_file(url):
                 temp_file_path = self.__get_file_from_remote_http(url=url, subfolder=self.__emdb_half_map_folder())
             else:
                 url += ".gz"
-                if self.grf.is_file(url):
+                if self.__grf.is_file(url):
                     temp_file_path = self.__get_file_from_remote_http(url=url, subfolder=self.__emdb_half_map_folder())
             temp_file_paths.append(temp_file_path)
         return temp_file_paths[0], temp_file_paths[1]
 
-    def get_emdb_masks(self):
+    def __get_emdb_masks(self):
         logger.debug('retrieving masks')
         vol_file_name = self.__rf.get_emdb_map(self.__emdb_id)
         vol_file_name = vol_file_name.replace(".gz", "")
         mask_name = vol_file_name.replace(".map", "_msk.map")
-        if self.grf is None:
-            self.grf = GetRemoteFilesHttp(server=self.__server, cache=self.__cache, site_id=self.__site_id)
+        if self.__grf is None:
+            self.__grf = GetRemoteFilesHttp(server=self.__server, cache=self.__cache, site_id=self.__site_id)
         # set max number to prevent inf loop
         max_masks = 100
         temp_file_paths = []
@@ -138,11 +140,11 @@ class getFilesReleaseHttpEMDB(object):
             mask_file_name = mask_name.replace("_msk", "_msk_%d" % x)
             url = os.path.join(self.url_prefix, self.__emdb_mask_folder(), mask_file_name)
             temp_file_path = None
-            if self.grf.is_file(url):
+            if self.__grf.is_file(url):
                 temp_file_path = self.__get_file_from_remote_http(url=url, subfolder=self.__emdb_mask_folder())
             else:
                 url += ".gz"
-                if self.grf.is_file(url):
+                if self.__grf.is_file(url):
                     temp_file_path = self.__get_file_from_remote_http(url=url, subfolder=self.__emdb_mask_folder())
             if temp_file_path is None:
                 break
@@ -189,10 +191,10 @@ class getFilesReleaseHttpEMDB(object):
         """
         logger.debug('get remote file from {}'.format(url))
 
-        if self.grf is None:
-            self.grf = GetRemoteFilesHttp(server=self.__server, cache=self.__cache, site_id=self.__site_id)
+        if self.__grf is None:
+            self.__grf = GetRemoteFilesHttp(server=self.__server, cache=self.__cache, site_id=self.__site_id)
         outpath = os.path.join(self.__get_temp_local_ftp_emdb_path(), subfolder)
-        ret = self.grf.get_url(url=url, output_path=outpath)
+        ret = self.__grf.get_url(url=url, output_path=outpath)
         logger.debug(ret)
         if ret:
             # ret does not have subfolder name
@@ -233,6 +235,6 @@ class getFilesReleaseHttpEMDB(object):
 
     def close_connection(self):
         # maintained for backward compatibility with ftp version
-        if self.grf is not None:
-            self.grf.disconnect()
-            self.grf = None
+        if self.__grf is not None:
+            self.__grf.disconnect()
+            self.__grf = None
