@@ -13,17 +13,22 @@ logger = logging.getLogger(__name__)
 
 class EmailHandler:
 
-    def __init__(self, admin_list, email_interval, max_per_interval):
-        self.__admin_list = []
-        self.__email_interval = email_interval
-        self.__max_per_interval = max_per_interval
-        vc = ValConfig()
+    def __init__(self, site_id)
+        vc = ValConfig(site_id=site_id)
+        self.__admin_list = vc._admin_list
+        self.__email_interval = vc._email_interval
+        self.__max_per_interval = vc._max_per_interval
+
         self.__dir = os.path.join(vc.session_path, "email_service")
         if not os.path.exists(self.__dir):
             os.makedirs(self.__dir)
         logger.info("email handler using directory %s", self.__dir)
         self.__shelf_file = os.path.join(self.__dir, "service.shelf")
         self.__lock_file = os.path.join(self.__dir, "service.lock")
+
+    def send_email_admins(self, msg):
+        for admin in self.__admin_list:
+            self.send_email(msg, admin)
 
     def send_email(self, txt, recipient):
         lock = SoftFileLock(self.__lock_file)

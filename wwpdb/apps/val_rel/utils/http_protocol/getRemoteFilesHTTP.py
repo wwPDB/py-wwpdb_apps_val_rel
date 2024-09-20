@@ -42,13 +42,7 @@ class GetRemoteFilesHttp(object):
         self.connection_timeout = vc.connection_timeout
         self.read_timeout = vc.read_timeout
         self.__timeout = self.connection_timeout
-        self.__retries = vc.retries
-        self.__backoff_factor = vc.backoff_factor
-        self.__status_force_list = vc.status_force_list
-        self.__admin_list = vc._admin_list
-        self.__email_interval = vc._email_interval
-        self.__max_per_interval = vc._max_per_interval
-        self.emailHandler = EmailHandler(self.__admin_list, self.__email_interval, self.__max_per_interval)
+        self.emailHandler = EmailHandler(site_id)
 
     def get_url(self, *, url=None, output_path=None):
         if not url:
@@ -165,8 +159,7 @@ class GetRemoteFilesHttp(object):
         return False
 
     def handle_exception(self, msg):
-        for admin in self.__admin_list:
-            self.emailHandler.send_email(msg, admin)
+        self.emailHandler.send_email_admins(msg)
         logger.exception(msg)
 
 
