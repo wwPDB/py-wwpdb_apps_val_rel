@@ -58,7 +58,8 @@ class ValConfig(object):
 
     @property
     def http_server(self):
-        return self.ftp_server.replace('ftp', 'files')
+        server = self.__cI.get('SITE_HTTP_SERVER', "files.wwpdb.org")
+        return server
 
     @property
     def ftp_server(self):
@@ -67,7 +68,8 @@ class ValConfig(object):
 
     @property
     def http_prefix(self):
-        return self.ftp_prefix
+        prefix = self.__cI.get('SITE_HTTP_SERVER_PREFIX', '/pub')
+        return prefix
 
     @property
     def ftp_prefix(self):
