@@ -7,6 +7,7 @@ from email.message import EmailMessage
 from wwpdb.utils.config.ConfigInfo import getSiteId
 from wwpdb.utils.config.ConfigInfoApp import ConfigInfoAppCommunication
 from wwpdb.apps.val_rel.config.ValConfig import ValConfig
+from wwpdb.apps.val_rel.utils.outputFiles import outputFiles
 import logging
 
 logger = logging.getLogger(__name__)
@@ -19,10 +20,11 @@ class EmailHandler:
         self.__email_interval = vc._email_interval
         self.__max_per_interval = vc._max_per_interval
 
-        self.__dir = os.path.join(vc.session_path, "email_service")
+        oF = outputFiles(siteID=site_id)
+        self.__dir = oF.get_root_state_folder()
         if not os.path.exists(self.__dir):
             os.makedirs(self.__dir)
-        logger.info("email handler using directory %s", self.__dir)
+        logger.debug("email handler using directory %s", self.__dir)
         self.__shelf_file = os.path.join(self.__dir, "service.shelf")
         self.__lock_file = os.path.join(self.__dir, "service.lock")
 
