@@ -107,16 +107,16 @@ class getFilesReleaseHttpPDB(object):
         :param filename: filename without path
         :return: file path or None if no file
         """
-        if self.__get_file_from_remote_ftp(url=url, filename=filename):
+        if self.__get_file_from_remote_http(url=url, filename=filename):
             file_path = os.path.join(self.__get_temp_local_http_path(), filename)
             if os.path.exists(file_path):
                 return file_path
         remove_local_temp_http(self.__setup_local_temp_http(), require_empty=True)
         return None
 
-    def __get_file_from_remote_ftp(self, *, url, filename):
+    def __get_file_from_remote_http(self, *, url, filename):
         """
-        gets file from FTP site
+        gets file from HTTP site
         :param url: path for download
         :param filename: filename without path
         :return: True if it exists, False if it fails
