@@ -48,10 +48,13 @@ class GetRemoteFilesHttp(object):
         self.emailHandler = EmailHandler(site_id)
 
     def get_url(self, *, url=None, output_path=None):
+        """Retrieve file from url.  Note:  This is a little backwards - should check cache instead of waiting for get_file"""
         if not url:
             raise ValueError("url must be specified")
-        if self.is_file(url):
-            self.get_file(url, output_path)
+
+        # Old code would check is_file() - and then get_file. get_file checks cache before download so no need here to check remote if file. If we have it
+        # cached, it is real.
+        self.get_file(url, output_path)
         return os.path.basename(url)
 
     def is_file(self, remote_file):
