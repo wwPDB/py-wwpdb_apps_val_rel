@@ -47,7 +47,8 @@ setup(
                       'wwpdb.utils.dp', 'wwpdb.utils.message_queue ~= 0.6',
                       'wwpdb.apps.validation', 'wwpdb.io~=0.15',
                       'wwpdb.utils.ws_utils', 'oslo_concurrency',
-                      'wwpdb.utils.nmr', 'requests', 'mmcif'
+                      'wwpdb.utils.nmr', 'requests', 'mmcif',
+                      'urllib3'
                       ],
     packages=find_packages(exclude=['wwpdb.apps.tests-val_rel',
                                     'mock-data']),
