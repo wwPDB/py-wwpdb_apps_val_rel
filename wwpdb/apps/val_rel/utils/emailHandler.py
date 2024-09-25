@@ -22,8 +22,6 @@ class EmailHandler:
 
         oF = outputFiles(siteID=site_id)
         self.__dir = oF.get_root_state_folder()
-        if not os.path.exists(self.__dir):
-            os.makedirs(self.__dir)
         logger.debug("email handler using directory %s", self.__dir)
         self.__shelf_file = os.path.join(self.__dir, "service.shelf")
         self.__lock_file = os.path.join(self.__dir, "service.lock")
@@ -33,6 +31,8 @@ class EmailHandler:
             self.send_email(msg, admin)
 
     def send_email(self, txt, recipient):
+        if not os.path.exists(self.__dir):
+            os.makedirs(self.__dir)
         lock = SoftFileLock(self.__lock_file)
         with lock:
             with shelve.open(self.__shelf_file) as db:
