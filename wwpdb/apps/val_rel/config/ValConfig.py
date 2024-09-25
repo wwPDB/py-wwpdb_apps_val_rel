@@ -31,8 +31,6 @@ class ValConfig(object):
         self.retries = 3
         self.backoff_factor = 15
         self.status_force_list = [429, 500, 502, 503, 504]
-        # array of admin emails
-        self._admin_list = []
         # interval in seconds
         self._email_interval = 60 * 60 * 24
         # max number of emails per recipient within the interval
@@ -87,4 +85,13 @@ class ValConfig(object):
     @property
     def val_cut_off(self):
         return self.__cI.get("PROJECT_VAL_REL_CUTOFF")
+
+
+    @property
+    def val_admin_email(self):
+        """Returns list of email admin addresses as a list"""
+        elist =  self.__cI.get("VAL_REL_ADMIN_EMAIL", None)
+        if elist is None:
+            return []
+        return elist.split(",")
 

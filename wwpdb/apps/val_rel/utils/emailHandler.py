@@ -14,9 +14,9 @@ logger = logging.getLogger(__name__)
 
 class EmailHandler:
 
-    def __init__(self, site_id):
+    def __init__(self, site_id=None):
         vc = ValConfig(site_id=site_id)
-        self.__admin_list = vc._admin_list
+        self.__admin_list = vc.val_admin_email
         self.__email_interval = vc._email_interval
         self.__max_per_interval = vc._max_per_interval
 
