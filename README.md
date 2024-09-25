@@ -4,10 +4,14 @@ Service to prepare weekly validation reports
 ## requirements
 In site-config the following must be set
 
+    VAL_REL_PROTOCOL = determines the protocol to use (ftp, http, https) if local ftp tree is not available.
+    VAL_REL_ADMIN_EMAIL = comma separated list of who to contact on failures
     SITE_PDB_FTP_ROOT_DIR = the root of the PDB FTP tree (before pdb/data) - this can be not set if its not available at the local site 
     SITE_EMDB_FTP_ROOT_DIR = the root of the EMDB FTP tree (before emdb/structures) - this can be not set if its not available at the local site
     SITE_FTP_SERVER = this will default to ftp.wwpdb.org if not set
     SITE_FTP_SERVER_PREFIX = this is the prefix in the URL at the FTP server until you get to the PDB or EMDB data - i.e. on ftp.wwpdb.org this is "pub"
+    SITE_HTTP_SERVER = this will default to files.wwpdb.org if not set
+    SITE_HTTP_SERVER_PREFIX = this is the prefix in the URL at the HTTP server until you get to the PDB or EMDB data - i.e. on files.wwpdb.org this is "pub"
     SITE_RBMQ_SERVER_HOST = this is the host that runs the rabbitMQ server
 
 ## to setup rabbitMQ
