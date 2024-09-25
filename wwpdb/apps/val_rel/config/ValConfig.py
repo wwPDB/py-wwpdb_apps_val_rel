@@ -22,7 +22,7 @@ class ValConfig(object):
         self.__cI = ConfigInfo(self.__site_id)
         self.__cICommon = ConfigInfoAppCommon(self.__site_id)
         self._val_rel_protocol = self.__cI.get('VAL_REL_PROTOCOL', 'ftp')
-        if self._val_rel_protocol not in ['ftp', 'sftp', 'http', 'https']:
+        if self._val_rel_protocol not in ['ftp', 'http', 'https']:
             logging.warning('Error - invalid protocol %s, setting to ftp' % self._val_rel_protocol)
             self._val_rel_protocol = 'ftp'
         # http settings
