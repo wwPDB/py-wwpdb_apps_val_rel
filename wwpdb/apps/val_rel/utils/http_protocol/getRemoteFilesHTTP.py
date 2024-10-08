@@ -58,10 +58,18 @@ class GetRemoteFilesHttp(object):
         return os.path.basename(url)
 
     def is_file(self, remote_file):
-        r = requests.head(remote_file, timeout=self.__timeout, allow_redirects=True)
-        if r.status_code < 400 and r.headers and 'content-length' in r.headers and int(r.headers['content-length']) > 0:
-            return True
-        return False
+        with requests.Session() as s:
+            try:
+                self.__mount_session_retry(s)
+                r = s.head(remote_file, timeout=self.__timeout, allow_redirects=True)
+                if r.status_code < 400 and r.headers and 'content-length' in r.headers and int(r.headers['content-length']) > 0:
+                    return True
+                return False
+            except Exception as e:
+                logging.error("Failure to get head of file %s %s", remote_file, e)
+                # We re-raise the exception - as there is no other way to handle
+                raise e
+
 
     def get_file(self, remote_file, output_path):
         """
@@ -100,14 +108,18 @@ class GetRemoteFilesHttp(object):
         if not os.path.exists(output_path):
             os.makedirs(output_path)
 
+    def __mount_session_retry(self, session):
+        """Sets up retry for session"""
+        retries = Retry(total=self.__retries, backoff_factor=self.__backoff_factor, status_forcelist=self.__status_force_list, allowed_methods=["GET"])
+        session.mount('https://', HTTPAdapter(max_retries=retries))
+        session.mount('http://', HTTPAdapter(max_retries=retries))
+
     def httpRequest(self, url, outfilepath):
         """ download to session directory """
         logging.info("http request for %s", url)
         status_code = -1
         with requests.Session() as s:
-            retries = Retry(total=self.__retries, backoff_factor=self.__backoff_factor, status_forcelist=self.__status_force_list, allowed_methods=["GET"])
-            s.mount('https://', HTTPAdapter(max_retries=retries))
-            s.mount('http://', HTTPAdapter(max_retries=retries))
+            self.__mount_session_retry(s)
             try:
                 r = s.get(url, timeout=(self.connection_timeout, self.read_timeout), stream=True, allow_redirects=True)
             except MaxRetryError as _e:  # noqa: F841
