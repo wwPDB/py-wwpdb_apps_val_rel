@@ -21,10 +21,10 @@ class ValConfig(object):
         self.__site_id = site_id
         self.__cI = ConfigInfo(self.__site_id)
         self.__cICommon = ConfigInfoAppCommon(self.__site_id)
-        self._val_rel_protocol = self.__cI.get('VAL_REL_PROTOCOL', 'ftp')
+        self._val_rel_protocol = self.__cI.get('VAL_REL_PROTOCOL', 'http')
         if self._val_rel_protocol not in ['ftp', 'http', 'https']:
-            logging.warning('Error - invalid protocol %s, setting to ftp' % self._val_rel_protocol)
-            self._val_rel_protocol = 'ftp'
+            logging.warning('Error - invalid protocol %s, setting to http' % self._val_rel_protocol)
+            self._val_rel_protocol = 'http'
         # http settings
         self.connection_timeout = 60
         self.read_timeout = 60
