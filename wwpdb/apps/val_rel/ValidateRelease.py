@@ -213,7 +213,6 @@ class runValidation:
         if self.__rel_files is not None:
             self.__rel_files.set_cache(self.__cachedir)
 
-
     def process_message(self, message):
         logger.debug("Message received %s", message)
         self.__pdbid = message.get("pdbID")
@@ -375,9 +374,9 @@ class runValidation:
         self.__cleanup(closeConnections=True)
         if list(set(all_worked)) == [True]:
             return True
-        else:
-            logger.error(all_worked)
-            return False
+
+        logger.error(all_worked)
+        return False
 
     def remove_existing_files(self):
         """Removes existing validation files"""
@@ -396,7 +395,7 @@ class runValidation:
             remove_files(emdb_output_file_dict.values())
 
     def copy_to_emdb(self, copy_to_root_emdb=False):
-        """ For map + model validation report, copy the validation report to names for EMDB, and then 
+        """ For map + model validation report, copy the validation report to names for EMDB, and then
             copy to proper output directory with potential compression
         """
         if self.__emdbid:
@@ -456,8 +455,8 @@ class runValidation:
         :return: True if ok, False if not
         """
         if now is None:
-            now=datetime.now()
-    
+            now = datetime.now()
+
         if self.__alternativeOutputFolder:
             return True
         if self.__always_recalculate:
@@ -510,7 +509,6 @@ class runValidation:
                 else:
                     self.__csPath = self.__rel_files.get_cs()  # sets is_cs_current
 
-
             # check if any input files have changed and set output folders
             is_modified = self.check_modified()
             if not is_modified:
@@ -519,7 +517,7 @@ class runValidation:
 
                 self.__sds.setValidationRunning(False)
                 return True, validation_run
-              
+
             # get EMDB data from FTP to after check for modification
             if self.__emdbid:
                 logger.debug('getting EMDB volume')
@@ -546,7 +544,7 @@ class runValidation:
             csPath = None
             resPath = None
             if self.__csPath:  # CS or nmr-data
-                csPath = convert_cs_file(cs_file=self.__csPath, working_dir=sessTempDir)
+                csPath = convert_cs_file(entry_id=self.__entry_id, cs_file=self.__csPath, working_dir=sessTempDir)
                 if not csPath:
                     logger.error('CS star to cif conversion failed')
                     self.__sds.setValidationRunning(False)
@@ -720,7 +718,7 @@ def main():
 
     # If pass in None - overrides siteid
     if args.python_site_id:
-        message["pythonSiteID"] = args.python_site_id,
+        message["pythonSiteID"] = args.python_site_id
 
     if args.nocache:
         message["nocache"] = args.nocache

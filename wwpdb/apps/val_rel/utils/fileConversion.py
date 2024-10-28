@@ -16,12 +16,12 @@ def __remediate_cs_file(infile, outfile):
     return ctns.convert(cifPath=infile, strPath=outfile)
 
 
-def convert_star_to_cif(star_file, cif_file):
+def convert_star_to_cif(entry_id, star_file, cif_file):
     """Run the star to cif conversion from the validator package"""
-    return starToPdbx(starPath=star_file, pdbxPath=cif_file)
+    return starToPdbx(entryId=entry_id, starPath=star_file, pdbxPath=cif_file)
 
 
-def convert_cs_file(cs_file, working_dir):
+def convert_cs_file(entry_id, cs_file, working_dir):
     """convert star format CS file to CIF format for the validator"""
     if cs_file:
         if os.path.exists(cs_file):
@@ -31,10 +31,9 @@ def convert_cs_file(cs_file, working_dir):
             df.copy(cs_file_tmp)
 
             temp_cif_cs_file = os.path.join(working_dir, 'working_cs.cif')
-            ok = convert_star_to_cif(star_file=cs_file_tmp, cif_file=temp_cif_cs_file)
+            ok = convert_star_to_cif(entry_id=entry_id, star_file=cs_file_tmp, cif_file=temp_cif_cs_file)
             if ok and os.path.exists(temp_cif_cs_file):
                 logger.info('CS star to cif conversion worked - new cs file: {}'.format(temp_cif_cs_file))
-
 
                 # Until ftp archive remediated, we need to handle legacy CS files
                 tempdPath = tempfile.mkdtemp(dir=os.path.dirname(temp_cif_cs_file))
@@ -43,13 +42,12 @@ def convert_cs_file(cs_file, working_dir):
                 __remediate_cs_file(temp_cif_cs_file, tempnmrstarPath)
                 if os.path.exists(tempnmrstarPath):
 
-                    ok = convert_star_to_cif(star_file=tempnmrstarPath, cif_file=newcsPath)
+                    ok = convert_star_to_cif(entry_id=entry_id, star_file=tempnmrstarPath, cif_file=newcsPath)
                     if ok and os.path.exists(newcsPath):
                         logger.info('CS star to cif conversion worked - new cs file: {}'.format(temp_cif_cs_file))
-
                         return newcsPath
-                    else:
-                        logger.error('CS star to cif conversion failed')
+
+                    logger.error('CS star to cif conversion failed')
             else:
                 logger.error('CS star to cif conversion failed')
 
