@@ -6,6 +6,7 @@ In site-config the following must be set
 
     VAL_REL_PROTOCOL = determines the protocol to use (ftp, http, https) if local ftp tree is not available.
     VAL_REL_ADMIN_EMAIL = comma separated list of who to contact on failures
+    VAL_REL_DISABLE_MULTITHREAD = if set disable validation code from running in parallel fashion
     SITE_PDB_FTP_ROOT_DIR = the root of the PDB FTP tree (before pdb/data) - this can be not set if its not available at the local site 
     SITE_EMDB_FTP_ROOT_DIR = the root of the EMDB FTP tree (before emdb/structures) - this can be not set if its not available at the local site
     SITE_FTP_SERVER = this will default to ftp.wwpdb.org if not set

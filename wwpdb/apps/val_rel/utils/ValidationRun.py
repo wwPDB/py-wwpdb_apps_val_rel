@@ -3,6 +3,7 @@ import os
 import sys
 
 from wwpdb.utils.dp.ValidationWrapper import ValidationWrapper
+from wwpdb.apps.val_rel.config.ValConfig import ValConfig
 
 logger = logging.getLogger(__name__)
 
@@ -11,6 +12,8 @@ class ValidationRun(object):
     def __init__(self, siteId, verbose=False, log=sys.stderr):
         self.__siteid = siteId
         self.__verbose = verbose
+        vc = ValConfig(self.__siteid)
+        self.__disablemulti = vc.val_disable_multithread
 
     def run(self, dD):
         """Produces a validation report based on data in the dD dictionry"""
@@ -78,6 +81,10 @@ class ValidationRun(object):
 
         if fscPath is not None and os.access(fscPath, os.R_OK):
             vw.addInput(name="fsc_file_path", value=fscPath)
+
+        if self.__disablemulti:
+            vw.addInput(name="skip_multi", value=True)
+        
 
         vw.op("annot-wwpdb-validate-all-sf")
         # output log file

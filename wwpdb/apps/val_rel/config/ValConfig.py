@@ -95,3 +95,8 @@ class ValConfig(object):
             return []
         return elist.split(",")
 
+    @property
+    def val_disable_multithread(self):
+        """Returns True if the desire is to disable parallel invocation of validation"""
+        value = True if self.__cI.get("VAL_REL_DISABLE_MULTITHREAD") else False
+        return value
