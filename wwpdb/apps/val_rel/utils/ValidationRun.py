@@ -85,7 +85,8 @@ class ValidationRun(object):
         if self.__disablemulti:
             vw.addInput(name="skip_multi", value=True)
         
-
+        vw.setNumThreads(4)
+        vw.setStartMemory(16000)
         vw.op("annot-wwpdb-validate-all-sf")
         # output log file
         if keepLog:
