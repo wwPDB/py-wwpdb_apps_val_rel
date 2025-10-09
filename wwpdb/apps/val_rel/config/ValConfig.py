@@ -12,7 +12,6 @@ Contains settings pertinent to configuring the behaviour of the Validation Servi
 from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
 from wwpdb.utils.config.ConfigInfoApp import ConfigInfoAppCommon
 import logging
-logging.basicConfig(level=logging.INFO)
 
 class ValConfig(object):
     def __init__(self, site_id=None):
