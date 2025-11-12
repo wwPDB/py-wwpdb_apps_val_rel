@@ -544,7 +544,7 @@ class runValidation:
             csPath = None
             resPath = None
             if self.__csPath:  # CS or nmr-data
-                csPath = convert_cs_file(entry_id=self.__entry_id, cs_file=self.__csPath, working_dir=sessTempDir)
+                csPath = convert_cs_file(entry_id=self.__entry_id, cs_file=self.__csPath, model_file=self.__modelPath, working_dir=sessTempDir)
                 if not csPath:
                     logger.error('CS star to cif conversion failed')
                     self.__sds.setValidationRunning(False)
