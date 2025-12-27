@@ -45,7 +45,7 @@ setup(
     #
     install_requires=['wwpdb.utils.config ~= 0.24', 'wwpdb.utils.detach',
                       'wwpdb.utils.dp', 'wwpdb.utils.message_queue ~= 0.6',
-                      'wwpdb.apps.validation~=2.40', 'wwpdb.io~=0.15',
+                      'wwpdb.apps.validation~=2.40', 'wwpdb.io >=0.15, < 2.0',
                       'wwpdb.utils.ws_utils', 'oslo_concurrency',
                       'wwpdb.utils.nmr', 'requests', 'mmcif',
                       'wwpdb.utils.sessions'
