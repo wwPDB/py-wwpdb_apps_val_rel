@@ -70,7 +70,6 @@ class GetRemoteFilesHttp(object):
                 # We re-raise the exception - as there is no other way to handle
                 raise e
 
-
     def get_file(self, remote_file, output_path):
         """
         get from cache if found
@@ -179,7 +178,6 @@ class GetRemoteFilesHttp(object):
     def handle_exception(self, msg):
         self.emailHandler.send_email_admins(msg)
         logger.exception(msg)
-
 
     def disconnect(self):
         # maintained for backward compatibility with ftp version

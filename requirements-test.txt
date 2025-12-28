@@ -1,0 +1,2 @@
+# Fake wwpdb.apps.validation
+https://github.com/wwPDB/py-fake-wwpdb_apps_validation/archive/refs/heads/main.tar.gz

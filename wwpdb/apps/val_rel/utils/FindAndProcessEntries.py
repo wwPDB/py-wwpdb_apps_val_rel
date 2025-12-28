@@ -133,7 +133,7 @@ class FindAndProcessEntries:
                         self.messages.append(message)
                         self.added_entries.append(emdb_entry)
                     re.remove_local_temp_files()
-                except:
+                except:  # noqa: E722,BLE001
                     logger.exception("ERROR processing %s", emdb_entry)
 
     def process_pdb_entries(self):

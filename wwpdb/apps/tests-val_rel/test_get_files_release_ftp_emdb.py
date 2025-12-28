@@ -76,7 +76,7 @@ class TestsGettingEMDBData(unittest.TestCase):
         gfrf.set_local_ftp_path('')
         ret = gfrf.get_emdb_volume()
         print(ret)
-        #self.assertIsNotNone(ret)
+        # self.assertIsNotNone(ret)
 
     def test_get_map_non_existing_emdb(self):
         gfrf = getFilesReleaseFtpEMDB(emdbid='EMD-ABCD', local_ftp_emdb_path='')

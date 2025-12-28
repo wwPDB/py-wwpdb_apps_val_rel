@@ -6,9 +6,10 @@ import shutil
 import tempfile
 import time
 
+from wwpdb.apps.val_rel.utils.PersistFileCache import PersistFileCache
+
 logger = logging.getLogger(__name__)
 
-from wwpdb.apps.val_rel.utils.PersistFileCache import PersistFileCache
 
 def setup_local_temp_ftp(temp_dir, suffix, session_path):
     if not temp_dir:
@@ -41,9 +42,9 @@ class GetRemoteFiles(object):
         self._ftp.login()
         self.__cache = cache
         # The current remote directory as we go up and down tree
-        self.__curdir = "." 
+        self.__curdir = "."
         # logger.debug("Setup for %s to %s", server, output_path)
-    
+
     def __del__(self):
         # for cases where ftplib.FTP.__init__() failed
         if hasattr(self, '_ftp'):
@@ -52,7 +53,7 @@ class GetRemoteFiles(object):
 
     def __connect(self, server):
         """Connects to remote server with retry"""
-        
+
         retry = 0
         sleep = 2
         ftp = None
@@ -73,18 +74,18 @@ class GetRemoteFiles(object):
                     continue
             # unhandled exception not caught - raises us
         # Never reached
-        
+
     def _check_connection(self):
         retries = 3
-        
+
         while retries > 0:
             try:
                 return self._ftp.voidcmd("noop")
-            except Exception as e:
+            except Exception as e:  # noqa: E722,BLE001
                 logger.error(e)
                 retries -= 1
                 self._ftp.login()
-        
+
         raise Exception("error connecting to server")
 
     def _setup_output_path(self, output_path):
@@ -110,9 +111,9 @@ class GetRemoteFiles(object):
 
         with open(file_name, 'wb') as out_file:
             self._ftp.retrbinary("RETR " + remote_file, out_file.write)
-            
+
         # File always exist - but might be zero length.... Annoying interface
-        #logger.debug("Output exists? %s", os.path.exists(file_name))
+        # logger.debug("Output exists? %s", os.path.exists(file_name))
         # See if can get details..
         mtime = self.get_remote_file_mtime(remote_file)
         if mtime is not None:
@@ -120,7 +121,7 @@ class GetRemoteFiles(object):
             os.utime(file_name, (mtime, mtime))
         if self.__cache is not None:
             pfc.add_file(file_name, rp)
-            #logger.debug("Adding %s to cache", rp)
+            # logger.debug("Adding %s to cache", rp)
 
     def get_remote_file_mtime(self, remote_file):
         self._check_connection()
@@ -142,7 +143,7 @@ class GetRemoteFiles(object):
 
             # Fall through
 
-        except Exception as e:
+        except Exception:  # noqa: E722,BLE001
             try:
                 # Fall back on MLST - which is more machine readable - but less universal
 
@@ -153,8 +154,8 @@ class GetRemoteFiles(object):
                 for line in mlst.split('\n'):
                     if line[0:3] == '250':
                         continue
-                    l = line.strip()
-                    facts_found, _, fname = l.partition(" ")
+                    ls = line.strip()
+                    facts_found, _, fname = ls.partition(" ")
                     factsd = {}
                     # Last ends in semicolor
                     for fact in facts_found[:-1].split(";"):
@@ -163,7 +164,7 @@ class GetRemoteFiles(object):
                 ts = factsd.get('modify', None)
                 # None caught below
 
-            except Exception as e:
+            except Exception:  # noqa: E722,BLE001
                 return None
 
         # print("TS: %s" % ts)
@@ -178,7 +179,7 @@ class GetRemoteFiles(object):
             time_tuple = dt.timetuple()
             timestamp = time.mktime(time_tuple)
             return timestamp
-        except:
+        except:  # noqa: E722,BLE001
             return None
 
     def get_size(self, remote_file):
@@ -187,7 +188,7 @@ class GetRemoteFiles(object):
         size = 0
         try:
             size = self._ftp.size(remote_file)
-        except:
+        except:  # noqa: E722,BLE001
             size = None
         return size
 
@@ -211,7 +212,7 @@ class GetRemoteFiles(object):
                     self.__curdir = os.path.join(self.__curdir, directory)
                 logger.debug("cur directory is %s", self.__curdir)
                 return True
-            except Exception as e:
+            except Exception as e:  # noqa: E722,BLE001
                 logger.error(e)
         return False
 
@@ -239,7 +240,7 @@ class GetRemoteFiles(object):
     def get_directory(self, directory, output_path):
         """Recursivle retrieve contents of directory"""
         self._check_connection()
-        
+
         # Improvement - cache nlst?
         ok = self.change_ftp_directory(directory)
         if not ok:
@@ -284,7 +285,7 @@ class GetRemoteFiles(object):
             # logger.info("Disconnect %s", self._ftp)
             try:
                 self._ftp.quit()
-            except:
+            except:  # noqa: E722,BLE001
                 logger.error("Error trying to close ftp connection")
 
             self._ftp = None

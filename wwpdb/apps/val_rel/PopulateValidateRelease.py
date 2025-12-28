@@ -55,7 +55,6 @@ class PopulateValidateRelease:
         if self.priority_queue:
             self.make_priorities()
 
-
     def find_and_process_entries(self):
         fape = FindAndProcessEntries(entry_string=self.entry_string,
                                      entry_file=self.entry_file,
@@ -72,7 +71,6 @@ class PopulateValidateRelease:
         self.find_and_process_entries()
         self.process_messages()
 
-
     def make_priorities(self):
         fe = FindEntries(siteID=self.site_id)
         # build lists of absolute input file paths and associated entries
@@ -82,7 +80,6 @@ class PopulateValidateRelease:
         self.added_priorities = [os.path.basename(path) for path in self.added_priority_paths]
         self.emdb_priority_paths = fe.get_emdb_paths()
         self.emdb_priorities = [os.path.basename(path) for path in self.emdb_priority_paths]
-
 
     def get_priority(self, message):
         # missing - 10
@@ -230,6 +227,7 @@ class PopulateValidateRelease:
                 logger.info('priority %s msg %s' % (priority, message))
                 vc = ValConfig(self.site_id)
                 logger.info(f'exchangeName {vc.exchange} queueName {vc.queue_name} routingKey {vc.routing_key}')
+
 
 def main():
     # Create logger -

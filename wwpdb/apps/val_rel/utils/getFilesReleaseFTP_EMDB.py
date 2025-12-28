@@ -198,7 +198,7 @@ class getFilesReleaseFtpEMDB(object):
         if self.grf is None:
             logger.warning("There was no existing ftp connection. Opening new connection now...")
             self.grf = GetRemoteFiles(server=self.server, cache=self.__cache)
-        
+
         ret = self.grf.get_url(output_path=self.get_temp_local_ftp_emdb_path(), directory=file_path, filename=filename)
         logger.debug(ret)
         if ret:

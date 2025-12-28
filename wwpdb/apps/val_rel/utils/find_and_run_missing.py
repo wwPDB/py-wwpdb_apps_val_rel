@@ -1,7 +1,5 @@
 import argparse
 import logging
-import os
-import sys
 
 from wwpdb.apps.val_rel.PopulateValidateRelease import PopulateValidateRelease
 from wwpdb.apps.val_rel.utils.check_results import CheckEntries

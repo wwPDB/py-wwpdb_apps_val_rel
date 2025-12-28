@@ -84,7 +84,6 @@ class ValidationRun(object):
 
         if self.__disablemulti:
             vw.addInput(name="skip_multi", value=True)
-        
 
         vw.op("annot-wwpdb-validate-all-sf")
         # output log file

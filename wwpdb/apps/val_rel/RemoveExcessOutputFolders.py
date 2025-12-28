@@ -10,6 +10,7 @@ from wwpdb.apps.val_rel.utils.outputFiles import outputFiles
 
 logger = logging.getLogger(__name__)
 
+
 class FindExcessEntries:
 
     def __init__(self, site_id=getSiteId(), dry_run=False):
@@ -82,9 +83,8 @@ def main():
     args = parser.parse_args()
     logger.setLevel(args.loglevel)
 
-    fee = FindExcessEntries(site_id=args.siteID,dry_run=args.dry_run)
+    fee = FindExcessEntries(site_id=args.siteID, dry_run=args.dry_run)
     fee.run_process()
-
 
 
 if "__main__" in __name__:

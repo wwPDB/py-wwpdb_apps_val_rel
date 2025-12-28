@@ -160,7 +160,7 @@ class getFilesReleaseHttpEMDB(object):
             self.__temp_local_ftp = setup_local_temp_http(temp_dir=self.__temp_local_ftp,
                                                           suffix=self.__emdb_id,
                                                           session_path=session_path
-                                                      )
+                                                          )
         return self.__temp_local_ftp
 
     def __emdb_xml_folder(self):

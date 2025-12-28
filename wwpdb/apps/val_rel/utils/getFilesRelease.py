@@ -11,7 +11,6 @@ from wwpdb.apps.val_rel.utils.getFilesReleaseFTP_PDB import getFilesReleaseFtpPD
 logger = logging.getLogger(__name__)
 
 
-
 class getFilesRelease:
     """Class to access prior/public release files"""
 
@@ -40,7 +39,6 @@ class getFilesRelease:
         self.__release_file_from_remote_emdb = self.__files_emdb_func(site_id=self.__siteID, emdbid=emdb_id, cache=self.__cache)
         self.__release_file_from_remote_pdb = self.__files_pdb_func(site_id=self.__siteID, pdbid=pdb_id, cache=self.__cache)
 
-
     def close_connections(self):
         """This method should be used to close all open
         connections in subclasses.
@@ -57,7 +55,7 @@ class getFilesRelease:
             self.__release_file_from_onedep = getFilesReleaseOneDep(siteID=self.__siteID,
                                                                     pdb_id=self.pdb_id,
                                                                     emdb_id=self.emdb_id)
-            if self.__release_file_from_remote_pdb  is not None:
+            if self.__release_file_from_remote_pdb is not None:
                 self.__release_file_from_remote_pdb.close_connection()
 
             self.__release_file_from_remote_pdb = self.__files_pdb_func(site_id=self.__siteID, pdbid=pdb_id, cache=self.__cache)
@@ -157,4 +155,3 @@ class getFilesRelease:
 
     def set_cache(self, fpath):
         self.__cache = fpath
-

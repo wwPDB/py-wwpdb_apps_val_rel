@@ -30,7 +30,7 @@ class PersistFileCache(object):
         """Returns the internal cachedir for fpath"""
         if fpath is None:
             return None
-        
+
         # Remove starting slash if present on filename
         if fpath[0] == "/":
             fpath = fpath[1:]

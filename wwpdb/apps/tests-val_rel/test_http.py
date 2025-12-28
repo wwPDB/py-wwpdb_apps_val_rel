@@ -15,8 +15,6 @@ logging.basicConfig(level=logging.INFO)
 
 
 class TestHTTP(unittest.TestCase):
-
-
     def setUp(self):
         logging.info("running setup")
         pdb_testpath = "https://files.wwpdb.org/pub/pdb/data/structures/all/mmCIF"
@@ -39,7 +37,6 @@ class TestHTTP(unittest.TestCase):
         self.emdb_non_existent = "EMD-0000"
         self.temp_paths = []
         logging.info("created temp dir %s", self.temp_dir)
-
 
     def tearDown(self):
         logging.info("running teardown")
@@ -66,7 +63,6 @@ class TestHTTP(unittest.TestCase):
                 else:
                     logging.warning("could not remove temp path %s", temp_path)
 
-
     def test_is_file(self):
         logging.info("testing is_file")
         grf = GetRemoteFilesHttp()
@@ -77,7 +73,6 @@ class TestHTTP(unittest.TestCase):
         # test 404 error
         for file in self.non_existent_files:
             self.assertFalse(grf.is_file(file), "error - %s" % os.path.basename(file))
-
 
     def test_streaming_http_request(self):
         logging.info("testing streaming http_request")
@@ -95,7 +90,6 @@ class TestHTTP(unittest.TestCase):
             self.assertFalse(grf.httpRequest(file, os.path.join(self.temp_dir, os.path.basename(file))),
                              "error downloading - %s" % os.path.basename(file))
 
-
     def test_xml_header_file(self):
         logging.info("testing xml header file")
         grf = GetRemoteFilesHttp()
@@ -109,7 +103,6 @@ class TestHTTP(unittest.TestCase):
             pdbids = XmlInfo(outfile).get_pdbids_from_xml()
             self.assertTrue(isinstance(pdbids, list), "error - no pdbids found in xml file %s" % os.path.basename(file))
             self.assertTrue(len(pdbids) > 0, "error - no pdbids found in xml file %s" % os.path.basename(file))
-
 
     def test_gfr_pdb(self):
         logging.info("testing get files release pdb")
@@ -142,7 +135,6 @@ class TestHTTP(unittest.TestCase):
         self.assertFalse(model_path, "error - downloaded %s" % model_path)
         sf_path = gfr.get_sf()
         self.assertFalse(sf_path, "error - downloaded %s" % sf_path)
-
 
     def test_gfr_emdb(self):
         logging.info("testing get files release emdb")
@@ -205,4 +197,3 @@ class TestHTTP(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-

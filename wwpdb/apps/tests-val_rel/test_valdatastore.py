@@ -23,5 +23,6 @@ class ValDataStoreTests(unittest.TestCase):
         self.assertTrue(v.setValidationRunning(False))
         self.assertFalse(v.isValidationRunning())
 
+
 if __name__ == "__main__":
     unittest.main()

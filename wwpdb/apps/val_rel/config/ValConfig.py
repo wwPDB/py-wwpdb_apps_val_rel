@@ -13,6 +13,7 @@ from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
 from wwpdb.utils.config.ConfigInfoApp import ConfigInfoAppCommon
 import logging
 
+
 class ValConfig(object):
     def __init__(self, site_id=None):
         if site_id is None:
@@ -85,11 +86,10 @@ class ValConfig(object):
     def val_cut_off(self):
         return self.__cI.get("PROJECT_VAL_REL_CUTOFF")
 
-
     @property
     def val_admin_email(self):
         """Returns list of email admin addresses as a list"""
-        elist =  self.__cI.get("VAL_REL_ADMIN_EMAIL", None)
+        elist = self.__cI.get("VAL_REL_ADMIN_EMAIL", None)
         if elist is None:
             return []
         return elist.split(",")

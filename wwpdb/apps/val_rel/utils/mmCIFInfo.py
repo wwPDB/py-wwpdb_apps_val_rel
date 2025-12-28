@@ -6,6 +6,7 @@ from mmcif.api.PdbxContainers import CifName
 
 logger = logging.getLogger(__name__)
 
+
 def is_simple_modification(model_path):
     """if there are only simple changes based the audit - skip calculation of validation report
     (currently, citation, citation_author, pdbx_audit_support, pdbx_initial_refinement_model)
@@ -30,7 +31,7 @@ def is_simple_modification(model_path):
                  'struct_sheet_range', 'struct_site', 'pdbx_initial_refinement_model', 'database_2',
                  'chem_comp_atom', 'chem_comp_bond', 'chem_comp_angle', 'pdbx_modification_feature']
 
-    SKIP_ATTR = { 'database_2': ['pdbx_DOI', 'pdbx_database_accession'] }
+    SKIP_ATTR = {'database_2': ['pdbx_DOI', 'pdbx_database_accession']}
 
     cf = mmCIFInfo(model_path)
     modified_cats, latest_ordinal = cf.get_latest_modified_categories()
@@ -52,7 +53,7 @@ def is_simple_modification(model_path):
                 for attr in attrs[item]:
                     if attr not in SKIP_ATTR[item]:
                         return False
-                    
+
         logger.debug('%s only a simple modification: %s', model_path, ','.join(modified_cats))
         return True
     return False

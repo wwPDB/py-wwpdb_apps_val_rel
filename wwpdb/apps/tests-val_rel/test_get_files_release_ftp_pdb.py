@@ -12,7 +12,6 @@ class TestsGettingEMDBData(unittest.TestCase):
         self.server = 'ftp.ebi.ac.uk'
         self.url_prefix = 'pub/databases/pdb/data/structures/all/'
 
-
     def tearDown(self):
         shutil.rmtree(self.temp_folder, ignore_errors=True)
 

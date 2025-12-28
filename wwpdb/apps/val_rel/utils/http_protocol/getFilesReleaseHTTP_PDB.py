@@ -27,8 +27,7 @@ class getFilesReleaseHttpPDB(object):
         protocol = vc.val_rel_protocol
         url_prefix = "%s://%s%s" % (protocol, self.__server, http_prefix)
 
-
-        # This is refencing public archive path 
+        # This is refencing public archive path
         self.__remote_http = LocalFTPPathInfo()
         self.__remote_http.set_ftp_pdb_root(url_prefix)
 
@@ -149,8 +148,8 @@ class getFilesReleaseHttpPDB(object):
             if not session_path:
                 session_path = self.__session_path
             self.__local_http_path = setup_local_temp_http(temp_dir=self.__temp_local_ftp,
-                                                          session_path=session_path,
-                                                          suffix=self.__pdb_id)
+                                                           session_path=session_path,
+                                                           suffix=self.__pdb_id)
         return self.__local_http_path
 
     @staticmethod

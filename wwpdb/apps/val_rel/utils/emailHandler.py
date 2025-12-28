@@ -2,7 +2,7 @@ import os
 import smtplib
 import time
 import shelve
-from filelock import Timeout, FileLock, SoftFileLock
+from filelock import SoftFileLock
 from email.message import EmailMessage
 from wwpdb.utils.config.ConfigInfo import getSiteId
 from wwpdb.utils.config.ConfigInfoApp import ConfigInfoAppCommunication
@@ -11,6 +11,7 @@ from wwpdb.apps.val_rel.utils.outputFiles import outputFiles
 import logging
 
 logger = logging.getLogger(__name__)
+
 
 class EmailHandler:
 
@@ -59,7 +60,6 @@ class EmailHandler:
         {txt}""".format(site_id=getSiteId(), txt=txt)
         self.email(content, recipient)
 
-
     def email(self, content, recipient):
         app = ConfigInfoAppCommunication(siteId=getSiteId())
         server = app.get_mailserver_name()
@@ -72,7 +72,5 @@ class EmailHandler:
         try:
             with smtplib.SMTP(server) as s:
                 s.send_message(msg)
-        except Exception as e:
+        except Exception:  # noqa: E722,BLE001
             logger.exception("unable to send to %s email %s", recipient, content)
-
-

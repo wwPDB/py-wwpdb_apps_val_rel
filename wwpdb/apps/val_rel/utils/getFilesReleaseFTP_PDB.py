@@ -64,7 +64,6 @@ class getFilesReleaseFtpPDB(object):
         if self.__local_ftp_path and os.path.exists(self.__local_ftp_path):
             remove_local_temp_ftp(self.__local_ftp_path, require_empty=False)
 
-
     def get_remote_ftp_file(self, file_path, filename):
         """
         Get a file from the remote FTP
@@ -122,7 +121,7 @@ class getFilesReleaseFtpPDB(object):
         """
         if self.__local_ftp.get_ftp_pdb():
             file_path = self.__local_ftp.get_structure_factors_fname(accession=self.pdb_id)
-            #file_path = os.path.join(self.get_temp_local_ftp_path(), fpart)
+            # file_path = os.path.join(self.get_temp_local_ftp_path(), fpart)
             logger.debug('checking local structure factor filepath: {}'.format(file_path))
             file_name = self.check_filename(file_path)
         else:
@@ -138,7 +137,7 @@ class getFilesReleaseFtpPDB(object):
         :param pdbid: PDB ID
         :return: file name if present or None
         """
-        #file_path = os.path.join(self.get_temp_local_ftp_path(), fpart)
+        # file_path = os.path.join(self.get_temp_local_ftp_path(), fpart)
         if self.__local_ftp.get_ftp_pdb():
             file_path = self.__local_ftp.get_chemical_shifts_fname(accession=self.pdb_id)
             logger.debug('checking local chemical shift filepath: {}'.format(file_path))
@@ -158,7 +157,7 @@ class getFilesReleaseFtpPDB(object):
         """
         if self.__local_ftp.get_ftp_pdb():
             file_path = self.__local_ftp.get_nmr_data_fname(accession=self.pdb_id)
-            #file_path = os.path.join(self.get_temp_local_ftp_path(), fpart)
+            # file_path = os.path.join(self.get_temp_local_ftp_path(), fpart)
             logger.debug('checking local NMR data filepath: {}'.format(file_path))
             file_name = self.check_filename(file_path)
         else:

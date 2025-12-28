@@ -68,6 +68,7 @@ class MessageConsumer(MessageConsumerBase):
 
         return successFlag
 
+
 class MessageSubscriber(MessageSubscriberBase):
     def __init__(self, amqpUrl):
         super(MessageSubscriber, self).__init__(amqpUrl)
@@ -89,6 +90,7 @@ class MessageSubscriber(MessageSubscriberBase):
 
         return successFlag
 
+
 class MessageConsumerWorker(object):
     def __init__(self, siteID, priority=False):
         self.__siteID = siteID
@@ -98,7 +100,7 @@ class MessageConsumerWorker(object):
     def __setup(self):
         mqc = MessageQueueConnection()
         url = mqc._getDefaultConnectionUrl()
-        self.__mc = MessageConsumer(amqpUrl=url,priority=self.__priority)
+        self.__mc = MessageConsumer(amqpUrl=url, priority=self.__priority)
         vc = ValConfig(self.__siteID)
         self.__mc.setQueue(queueName=vc.queue_name, routingKey=vc.routing_key)
         self.__mc.setExchange(exchange=vc.exchange, exchangeType="topic")
@@ -192,9 +194,9 @@ class MyDetachedProcess(DetachedProcessBase):
         )
         self.pidFile = pidFile
         if not subscribe:
-            self.__mcw = MessageConsumerWorker(siteID,priority=priority)
+            self.__mcw = MessageConsumerWorker(siteID, priority=priority)
         else:
-            self.__mcw = MessageSubscriberWorker(siteID,exchange_name=subscribe)
+            self.__mcw = MessageSubscriberWorker(siteID, exchange_name=subscribe)
 
     def run(self):
         logger.info("STARTING detached run method")
@@ -288,7 +290,7 @@ def main():
     # siteId = getSiteId(defaultSiteId=None)
     siteId = args.siteID
     cI = ConfigInfo(siteId)
-    exchange_name = args.subscribe
+    # exchange_name = args.subscribe
 
     #    topPath = cI.get('SITE_WEB_APPS_TOP_PATH')
     topSessionPath = cI.get("SITE_WEB_APPS_TOP_SESSIONS_PATH")

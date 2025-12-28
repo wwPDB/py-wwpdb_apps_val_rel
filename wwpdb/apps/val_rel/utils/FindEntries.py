@@ -3,6 +3,7 @@ import os
 from wwpdb.io.locator.ReleasePathInfo import ReleasePathInfo
 from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
 
+
 class FindEntries:
     def __init__(self, siteID=getSiteId()):
         self.siteID = siteID

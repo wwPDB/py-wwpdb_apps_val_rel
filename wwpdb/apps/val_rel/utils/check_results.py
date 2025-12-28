@@ -130,11 +130,11 @@ class CheckEntries:
                     for row in reader:
                         entry_id = row['entry_id']
                         entry_type = row['entry_type']
-                        entry_row = {'entry_type': entry_type,
-                                     'entry_id': entry_id}
+                        # entry_row = {'entry_type': entry_type,
+                        #              'entry_id': entry_id}
                         missing_entries.append(entry_id)
                         entries_to_add.setdefault(entry_type, []).append(entry_id)
-                except Exception as e:
+                except Exception:  # noqa: E722,BLE001
                     logging.error('unable to read: {}'.format(self.get_missing_file_path()))
         if entries_to_add:
             for entry_type in entries_to_add:
