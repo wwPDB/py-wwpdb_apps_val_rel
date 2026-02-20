@@ -237,7 +237,7 @@ class outputFiles:
                 )
             else:
                 self.pdb_output_folder = os.path.join(
-                    self.get_pdb_root_folder(), self.get_pdb_id()
+                    self.get_pdb_root_folder(), self.ret_pdb_hash(), self.get_pdb_id()
                 )
         return self.pdb_output_folder
 

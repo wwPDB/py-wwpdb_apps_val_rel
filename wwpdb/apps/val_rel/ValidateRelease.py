@@ -623,12 +623,12 @@ class runValidation:
                 # Set the time on output_folder to now
                 os.utime(self.__entry_output_folder, None)
 
-            if self.__pdbid and self.__emdbid:
-                ok = self.copy_to_emdb()
-                if not ok:
-                    logger.error("failed to copy to emdb folder")
-                    self.__sds.setValidationRunning(False)
-                    return False, validation_run
+            # if self.__pdbid and self.__emdbid:
+            #     ok = self.copy_to_emdb()
+            #     if not ok:
+            #         logger.error("failed to copy to emdb folder")
+            #         self.__sds.setValidationRunning(False)
+            #         return False, validation_run
 
             output_file_list = []
             for key in self.__output_file_dict:
