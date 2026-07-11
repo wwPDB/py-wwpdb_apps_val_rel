@@ -29,7 +29,9 @@ def is_simple_modification(model_path):
                  'struct_conf_type', 'struct_keywords', 'struct_ncs_dom', 'struct_ncs_dom_lim', 'struct_ncs_ens',
                  'struct_sheet', 'struct_sheet', 'struct_sheet_order', 'struct_sheet_order', 'struct_sheet_range',
                  'struct_sheet_range', 'struct_site', 'pdbx_initial_refinement_model', 'database_2',
-                 'chem_comp_atom', 'chem_comp_bond', 'chem_comp_angle', 'pdbx_modification_feature']
+                 'chem_comp_atom', 'chem_comp_bond', 'chem_comp_angle', 'pdbx_modification_feature',
+                 'pdbx_nonpoly_feature', 'pdbx_nonpoly_atom_feature', 'pdbx_nonpoly_atom_feature_evidence', 'pdbx_nonpoly_feature_evidence'
+                 'pdbx_nonpoly_atom_coordination', 'pdbx_nonpoly_atom_coordination_sphere', 'pdbx_nonpoly_atom_coordination_sphere_order']
 
     SKIP_ATTR = {'database_2': ['pdbx_DOI', 'pdbx_database_accession']}
 
