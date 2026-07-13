@@ -104,13 +104,13 @@ class getFilesReleaseFtpPDB(object):
         """
         if self.__local_ftp.get_ftp_pdb():
             file_path = self.__local_ftp.get_model_fname(accession=self.pdb_id)
-            logger.debug('checking local model filepath: {}'.format(file_path))
+            logger.debug('checking local model filepath: %s', file_path)
             file_name = self.check_filename(file_path)
         else:
-            fpart = ReleaseFileNames().get_model(accession=self.pdb_id, for_release=False)
+            fpart = self.__rf.get_model(accession=self.pdb_id, for_release=False)
             file_name = self.get_remote_ftp_file(file_path=self.__remote_ftp.get_model_path(),
                                                  filename=fpart)
-        logger.debug('final model filepath: {}'.format(file_name))
+        logger.debug('final model filepath: %s', file_name)
         return file_name
 
     def get_sf(self):
@@ -122,13 +122,13 @@ class getFilesReleaseFtpPDB(object):
         if self.__local_ftp.get_ftp_pdb():
             file_path = self.__local_ftp.get_structure_factors_fname(accession=self.pdb_id)
             # file_path = os.path.join(self.get_temp_local_ftp_path(), fpart)
-            logger.debug('checking local structure factor filepath: {}'.format(file_path))
+            logger.debug('checking local structure factor filepath: %s', file_path)
             file_name = self.check_filename(file_path)
         else:
-            fpart = ReleaseFileNames().get_structure_factor(accession=self.pdb_id, for_release=False)
+            fpart = self.__rf.get_structure_factor(accession=self.pdb_id, for_release=False)
             file_name = self.get_remote_ftp_file(file_path=self.__remote_ftp.get_sf_path(),
                                                  filename=fpart)
-        logger.debug('final structure factor filepath: {}'.format(file_name))
+        logger.debug('final structure factor filepath: %s', file_name)
         return file_name
 
     def get_cs(self):
@@ -140,13 +140,13 @@ class getFilesReleaseFtpPDB(object):
         # file_path = os.path.join(self.get_temp_local_ftp_path(), fpart)
         if self.__local_ftp.get_ftp_pdb():
             file_path = self.__local_ftp.get_chemical_shifts_fname(accession=self.pdb_id)
-            logger.debug('checking local chemical shift filepath: {}'.format(file_path))
+            logger.debug('checking local chemical shift filepath: %s', file_path)
             file_name = self.check_filename(file_path)
         else:
-            fpart = ReleaseFileNames().get_chemical_shifts(accession=self.pdb_id, for_release=False)
+            fpart = self.__rf.get_chemical_shifts(accession=self.pdb_id, for_release=False)
             file_name = self.get_remote_ftp_file(file_path=self.__remote_ftp.get_cs_path(),
                                                  filename=fpart)
-        logger.debug('final chemical shift filepath: {}'.format(file_name))
+        logger.debug('final chemical shift filepath: %s', file_name)
         return file_name
 
     def get_nmr_data(self):
@@ -158,14 +158,14 @@ class getFilesReleaseFtpPDB(object):
         if self.__local_ftp.get_ftp_pdb():
             file_path = self.__local_ftp.get_nmr_data_fname(accession=self.pdb_id)
             # file_path = os.path.join(self.get_temp_local_ftp_path(), fpart)
-            logger.debug('checking local NMR data filepath: {}'.format(file_path))
+            logger.debug('checking local NMR data filepath: %s', file_path)
             file_name = self.check_filename(file_path)
         else:
-            fpart = ReleaseFileNames().get_nmr_data(accession=self.pdb_id, for_release=False)
+            fpart = self.__rf.get_nmr_data(accession=self.pdb_id, for_release=False)
             file_name = self.get_remote_ftp_file(file_path=self.__remote_ftp.get_nmr_data_path(),
                                                  filename=fpart)
 
-        logger.debug('final NMR data filepath: {}'.format(file_name))
+        logger.debug('final NMR data filepath: %s', file_name)
         return file_name
 
     def close_connection(self):

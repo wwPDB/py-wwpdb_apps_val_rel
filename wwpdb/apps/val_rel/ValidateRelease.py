@@ -31,7 +31,6 @@ class runValidation:
         self.__pdbid = None
         self.__emdbid = None
         self.__run_map_only = False
-        self.__emdbids = []
         self.__pdbids = []
         self.__pythonSiteID = None
         self.siteID = None
@@ -68,7 +67,6 @@ class runValidation:
         self.__rel_files = None
 
         self.__statefolder = None
-        self.__vds = None
         self.__sds = None
         self.__setupRelFiles()
 
@@ -263,8 +261,8 @@ class runValidation:
         self.__rel_files.set_emdb_id(self.__emdbid)
         self.set_xml_file()
         self.__volPath = self.__rel_files.get_emdb_volume()
-        logger.debug('xml path: {}'.format(self.__emXmlPath))
-        logger.debug('EM vol path: {}'.format(self.__volPath))
+        logger.debug('xml path: %s', self.__emXmlPath)
+        logger.debug('EM vol path: %s', self.__volPath)
 
     def set_entry_id(self):
         if self.__pdbid:
@@ -360,14 +358,14 @@ class runValidation:
                                 logger.info('report already run for %s', self.get_emdb_pdb_string())
 
         if self.__run_map_only:
-            logger.info('{} make map only validation report without models'.format(self.__emdbid))
+            logger.info('%s make map only validation report without models', self.__emdbid)
             self.__pdbid = None
             # run validation - forcing map only if map+model has already been run
             if validation_ran:
                 self.setAlwaysRecalculate(True)
             worked = self.run_validation()
             # Not needed as fallthrough self.__cleanup(onlyRunDir=True)
-            logger.info('map only validation worked: {}'.format(worked))
+            logger.info('map only validation worked: %s', worked)
             all_worked.append(worked)
 
         # Cleanup ftp temp
@@ -470,7 +468,7 @@ class runValidation:
     def __gzip_output(self, filelist, output_folder):
         """Creates compressed file in place and then copy to output_folder"""
         if self.is_ok_to_copy():
-            logger.debug('gzip files: {}'.format(filelist))
+            logger.debug('gzip files: %s', filelist)
             for f in filelist:
                 gzip_file(in_file=f, output_folder=output_folder)
 
@@ -482,7 +480,7 @@ class runValidation:
         :return:
         """
         if self.is_ok_to_copy():
-            logger.debug('copy files: {}'.format(filelist))
+            logger.debug('copy files: %s', filelist)
             for f in filelist:
                 copy_file(in_file=f, output_folder=output_folder)
 
@@ -512,8 +510,8 @@ class runValidation:
             # check if any input files have changed and set output folders
             is_modified = self.check_modified()
             if not is_modified:
-                logger.info("skipping {}/{} as entry files have not changed".format(
-                    self.__pdbid, self.__emdbid))
+                logger.info("skipping %s/%s as entry files have not changed",
+                            self.__pdbid, self.__emdbid)
 
                 self.__sds.setValidationRunning(False)
                 return True, validation_run
@@ -568,8 +566,8 @@ class runValidation:
                 self.__modelPath = os.path.join(
                     sessTempDir, "{}_minimal.cif".format(self.__emdbid)
                 )
-                logger.info('generating minimal cif: {}'.format(self.__modelPath))
-                logger.info('using XML file: {}'.format(self.__emXmlPath))
+                logger.info('generating minimal cif: %s', self.__modelPath)
+                logger.info('using XML file: %s', self.__emXmlPath)
                 GenerateMinimalCif(emdb_xml=self.__emXmlPath).write_out(
                     output_cif=self.__modelPath
                 )
@@ -637,9 +635,9 @@ class runValidation:
 
             output_file_list_to_alternative_location = self.__validation_files_alternative_location.values()
 
-            logger.info('files to copy to {}: {}'.format(self.__entry_output_folder, ','.join(output_file_list)))
-            logger.info('files to copy to {}: {}'.format(self.__entry_image_output_folder,
-                                                         ','.join(output_file_list_to_alternative_location)))
+            logger.info('files to copy to %s: %s', self.__entry_output_folder, ','.join(output_file_list))
+            logger.info('files to copy to %s: %s', self.__entry_image_output_folder,
+                        ','.join(output_file_list_to_alternative_location))
 
             if self.__skip_gzip:
                 self.__copy_output(filelist=output_file_list,

@@ -171,8 +171,11 @@ class TestHTTP(unittest.TestCase):
         emdbid = self.emdb_mask_id
         gfr = getFilesReleaseHttpEMDB(emdbid)
         masks = gfr.get_emdb_masks()
+        mask1 = None
+        mask2 = None
         if masks:
-            mask1, mask2 = masks
+            mask1 = masks[0]
+            mask2 = masks[1]
         self.assertTrue(os.path.exists(mask1), "error - could not download %s" % mask1)
         logging.info("downloaded %s", mask1)
         self.temp_paths.append(mask1)

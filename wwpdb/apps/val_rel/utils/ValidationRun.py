@@ -9,9 +9,9 @@ logger = logging.getLogger(__name__)
 
 
 class ValidationRun(object):
-    def __init__(self, siteId, verbose=False, log=sys.stderr):
+    def __init__(self, siteId, verbose=False, log=sys.stderr):  # pylint: disable=unused-argument
         self.__siteid = siteId
-        self.__verbose = verbose
+        # self.__verbose = verbose
         vc = ValConfig(self.__siteid)
         self.__disablemulti = vc.val_disable_multithread
 
@@ -100,7 +100,7 @@ class ValidationRun(object):
 
         ok = vw.expList(dstPathList=output_file_list)
         if not ok:
-            logger.error('failed to copy files from {} to {}'.format(run_dir, entry_output_folder))
+            logger.error('failed to copy files from %s to %s', run_dir, entry_output_folder)
 
         logger.info('validation run finished')
 

@@ -42,7 +42,7 @@ class getFilesReleaseHttpEMDB(object):
     def get_emdb_xml(self):
         logger.info('EM XML')
         local_ftp = self.__local_ftp.get_ftp_emdb()
-        logger.debug('local FTP path: "{}"'.format(local_ftp))
+        logger.debug('local FTP path: "%s"', local_ftp)
         if not local_ftp:
             logger.info('trying remote HTTP')
             self.__setup_local_temp_http()
@@ -57,13 +57,13 @@ class getFilesReleaseHttpEMDB(object):
             logger.info('trying local FTP')
             temp_file_path = self.__get_emdb_local_ftp_file(filename=self.__rf.get_emdb_xml(self.__emdb_id),
                                                             emdb_path=self.__emdb_xml_folder())
-        logger.info('returning: {}'.format(temp_file_path))
+        logger.info('returning: %s', temp_file_path)
         return temp_file_path
 
     def get_emdb_fsc(self):
         logger.debug('FSC')
         local_ftp = self.__local_ftp.get_ftp_emdb()
-        logger.debug('local FTP path: "{}"'.format(local_ftp))
+        logger.debug('local FTP path: "%s"', local_ftp)
         if not local_ftp:
             self.__setup_local_temp_http()
             logger.debug('trying remote HTTP')
@@ -76,13 +76,13 @@ class getFilesReleaseHttpEMDB(object):
             logger.debug('trying local FTP')
             temp_file_path = self.__get_emdb_local_ftp_file(filename=self.__rf.get_emdb_fsc(self.__emdb_id),
                                                             emdb_path=self.__emdb_fsc_folder())
-        logger.debug('returning: {}'.format(temp_file_path))
+        logger.debug('returning: %s', temp_file_path)
         return temp_file_path
 
     def get_emdb_volume(self):
         logger.debug('em volume')
         local_ftp = self.__local_ftp.get_ftp_emdb()
-        logger.debug('local FTP path: "{}"'.format(local_ftp))
+        logger.debug('local FTP path: "%s"', local_ftp)
         if not local_ftp:
             # In FTP access model -- this is supposed to pull in whole directory tree
             self.__setup_local_temp_http()
@@ -100,7 +100,7 @@ class getFilesReleaseHttpEMDB(object):
             logger.debug('trying local FTP')
             temp_file_path = self.__get_emdb_local_ftp_file(filename=self.__rf.get_emdb_map(self.__emdb_id),
                                                             emdb_path=self.__emdb_map_folder())
-        logger.debug('returning: {}'.format(temp_file_path))
+        logger.debug('returning: %s', temp_file_path)
         return temp_file_path
 
     # Public for testing
@@ -190,7 +190,7 @@ class getFilesReleaseHttpEMDB(object):
         gets file from HTTP site
         :return string: file name if it exists or None if it doesn't
         """
-        logger.debug('get remote file from {}'.format(url))
+        logger.debug('get remote file from %s', url)
 
         if self.__grf is None:
             self.__grf = GetRemoteFilesHttp(server=self.__server, cache=self.__cache, site_id=self.__site_id)

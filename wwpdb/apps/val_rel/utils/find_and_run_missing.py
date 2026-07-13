@@ -36,7 +36,7 @@ class FindAndRunMissing:
 
     def read_missing_file(self):
         self.missing_ids = self.ce.read_missing_file()
-        logger.debug('missing IDs: {}'.format(','.join(self.missing_ids)))
+        logger.debug('missing IDs: %s', ','.join(self.missing_ids))
 
     def populate_queue(self):
         if self.missing_ids:
@@ -60,7 +60,7 @@ class FindAndRunMissing:
 
 def main():
     # Root logger
-    logger = logging.getLogger()
+    logger = logging.getLogger()  # pylint: disable=redefined-outer-name
     log_format = "%(funcName)s (%(levelname)s) - %(message)s"
     logging.basicConfig(format=log_format)
 

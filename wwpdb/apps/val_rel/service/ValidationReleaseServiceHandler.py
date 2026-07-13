@@ -19,12 +19,7 @@ import json
 import logging
 
 
-try:
-    from argparse import ArgumentParser as ArgParser
-except ImportError:
-    from optparse import OptionParser as ArgParser
-
-# from optparse import OptionParser
+from argparse import ArgumentParser as ArgParser
 
 from wwpdb.utils.detach.DetachedProcessBase import DetachedProcessBase
 from wwpdb.utils.message_queue.MessageConsumerBase import MessageConsumerBase
@@ -99,7 +94,7 @@ class MessageConsumerWorker(object):
 
     def __setup(self):
         mqc = MessageQueueConnection()
-        url = mqc._getDefaultConnectionUrl()
+        url = mqc._getDefaultConnectionUrl()  # pylint: disable=protected-access
         self.__mc = MessageConsumer(amqpUrl=url, priority=self.__priority)
         vc = ValConfig(self.__siteID)
         self.__mc.setQueue(queueName=vc.queue_name, routingKey=vc.routing_key)
@@ -129,14 +124,15 @@ class MessageConsumerWorker(object):
 
 
 class MessageSubscriberWorker(object):
-    def __init__(self, siteID, exchange_name):
-        self.__siteID = siteID
+    def __init__(self, siteID, exchange_name):  # pylint: disable=unused-argument
+        # self.__siteID = siteID
         self.__exchange_name = exchange_name
         self.__setup()
 
     def __setup(self):
+        # No siteID available in the API
         mqc = MessageQueueConnection()
-        url = mqc._getDefaultConnectionUrl()
+        url = mqc._getDefaultConnectionUrl()  # pylint: disable=protected-access
         self.__subscriber = MessageSubscriber(amqpUrl=url)
         self.__subscriber.add_exchange(self.__exchange_name)
         #
@@ -154,7 +150,7 @@ class MessageSubscriberWorker(object):
                 self.__subscriber.stop()
         except Exception as e:
             logger.exception("MessageConsumer failing %r", str(e))
-            raise Exception
+            raise Exception from e  # pylint: disable=broad-exception-raised
 
         endTime = time.time()
         logger.info("Completed (%f seconds)", (endTime - startTime))
@@ -317,7 +313,7 @@ def main():
         wsLogDirPath, myHostName + "_" + str(args.instanceNo) + "_" + now + ".log"
     )
     #
-    logger = logging.getLogger(name="root")
+    logger = logging.getLogger(name="root")  # pylint: disable=redefined-outer-name
     logging.captureWarnings(True)
     formatter = logging.Formatter(
         "%(asctime)s [%(levelname)s]-%(module)s.%(funcName)s: %(message)s"

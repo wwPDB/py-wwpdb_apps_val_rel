@@ -24,7 +24,6 @@ class getFilesRelease:
         self.cs_current = False
         self.mr_current = False
         self.em_xml_current = False
-        self.__tempFTP = None
 
         # Determine which routing
         config = ValConfig(site_id=siteID)

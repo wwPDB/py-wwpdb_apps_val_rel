@@ -55,9 +55,9 @@ class FindExcessEntries:
         for entry in self.output_pdb_entries:
             logging.info(entry)
             if entry not in self.pdb_entries:
-                logger.info('{} should be removed'.format(entry))
+                logger.info('%s should be removed', entry)
                 path_to_remove = os.path.join(self.get_pdb_output_folder(), entry)
-                logger.info('{} being removed'.format(path_to_remove))
+                logger.info('%s being removed', path_to_remove)
                 if not self.dry_run:
                     shutil.rmtree(path_to_remove, ignore_errors=True)
 

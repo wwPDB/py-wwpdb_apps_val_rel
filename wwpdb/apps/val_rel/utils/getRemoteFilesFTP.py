@@ -28,7 +28,7 @@ def remove_local_temp_ftp(temp_dir, require_empty=False):
         if require_empty:
             dlist = os.listdir(temp_dir)
             if len(dlist) > 0:
-                logger.debug("Skipping removal of %s as not empty" % temp_dir)
+                logger.debug("Skipping removal of %s as not empty", temp_dir)
                 return
         shutil.rmtree(temp_dir, ignore_errors=True)
 
@@ -86,7 +86,7 @@ class GetRemoteFiles(object):
                 retries -= 1
                 self._ftp.login()
 
-        raise Exception("error connecting to server")
+        raise Exception("error connecting to server")  # pylint: disable=broad-exception-raised
 
     def _setup_output_path(self, output_path):
         if not os.path.exists(output_path):
@@ -155,7 +155,7 @@ class GetRemoteFiles(object):
                     if line[0:3] == '250':
                         continue
                     ls = line.strip()
-                    facts_found, _, fname = ls.partition(" ")
+                    facts_found, _, _fname = ls.partition(" ")
                     factsd = {}
                     # Last ends in semicolor
                     for fact in facts_found[:-1].split(";"):
@@ -179,7 +179,7 @@ class GetRemoteFiles(object):
             time_tuple = dt.timetuple()
             timestamp = time.mktime(time_tuple)
             return timestamp
-        except:  # noqa: E722,BLE001
+        except:  # noqa: E722,BLE001  pylint: disable=bare-except
             return None
 
     def get_size(self, remote_file):
@@ -188,7 +188,7 @@ class GetRemoteFiles(object):
         size = 0
         try:
             size = self._ftp.size(remote_file)
-        except:  # noqa: E722,BLE001
+        except:  # noqa: E722,BLE001  pylint: disable=bare-except
             size = None
         return size
 
@@ -255,7 +255,7 @@ class GetRemoteFiles(object):
                 if self.is_file(obj):
                     self.get_file(obj, output_path)
                 else:
-                    logging.debug('not a file: {}'.format(obj))
+                    logging.debug('not a file: %s', obj)
                     # Skip recursion
                     if obj == "." or obj == "..":
                         continue
@@ -285,7 +285,7 @@ class GetRemoteFiles(object):
             # logger.info("Disconnect %s", self._ftp)
             try:
                 self._ftp.quit()
-            except:  # noqa: E722,BLE001
+            except:  # noqa: E722,BLE001  pylint: disable=bare-except
                 logger.error("Error trying to close ftp connection")
 
             self._ftp = None

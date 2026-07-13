@@ -12,7 +12,6 @@ logger = logging.getLogger()
 class ValDataStore(object):
     def __init__(self, entryid, sessiondir):
         self.__sessiondir = sessiondir
-        self.__entryid = entryid
         self.__sds = ServiceDataStore(self.__sessiondir, entryid)
         # Create empty state if does not exist
         fpath = self.__sds.getFilePath()

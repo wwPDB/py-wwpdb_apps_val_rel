@@ -141,7 +141,7 @@ class mmCIFInfo:
                     emdb_ids.append(db_id)
         if emdb_ids:
             emdb_id = emdb_ids[0]
-            logger.debug('found EMDB ID: {}'.format(emdb_id))
+            logger.debug('found EMDB ID: %s', emdb_id)
             return emdb_id
         return None
 

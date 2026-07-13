@@ -47,7 +47,7 @@ class CheckResult:
         return True
 
     def check_entry(self):
-        self.rv = runValidation()
+        self.rv = runValidation()  # pylint: disable=attribute-defined-outside-init
         self.rv.process_message(self.__message)
         self.rv.set_entry_id()
         self.rv.set_output_dir_and_files()
@@ -63,7 +63,7 @@ class CheckResult:
         if model_file and not em_xml_file:
             simple_modification = is_simple_modification(model_path=model_file)
         self.validation_xml = get_gzip_name(self.rv.getValidationXml())
-        logging.debug('validation xml: {}'.format(self.validation_xml))
+        logging.debug('validation xml: %s', self.validation_xml)
         output_files = self.rv.getCoreOutputFileDict()
         logging.debug('output_file_dict')
         logging.debug(self.expected_files)
@@ -135,7 +135,7 @@ class CheckEntries:
                         missing_entries.append(entry_id)
                         entries_to_add.setdefault(entry_type, []).append(entry_id)
                 except Exception:  # noqa: E722,BLE001
-                    logging.error('unable to read: {}'.format(self.get_missing_file_path()))
+                    logging.error('unable to read: %s', self.get_missing_file_path())
         if entries_to_add:
             for entry_type in entries_to_add:
                 if entry_type == 'emdb':
@@ -143,12 +143,12 @@ class CheckEntries:
                 if entry_type == 'pdb':
                     self.add_pdb_entries(pdb_entries=entries_to_add[entry_type])
 
-        logger.info('There are {} entries to check from the missing folder'.format(len(missing_entries)))
+        logger.info('There are %s entries to check from the missing folder', len(missing_entries))
 
         return missing_entries
 
     def write_missing_file(self):
-        logger.info('writing out: {}'.format(self.get_missing_file_path()))
+        logger.info('writing out: %s', self.get_missing_file_path())
         with open(self.get_missing_file_path(), 'w') as out_file:
             if self.failed_entries:
                 logger.info(pformat(self.failed_entries))
@@ -186,12 +186,12 @@ class CheckEntries:
         self.add_emdb_entries(emdb_entries=emdb_entries)
 
     def add_emdb_entries(self, emdb_entries):
-        logger.info('There are {} EMDB entries to check'.format(len(emdb_entries)))
+        logger.info('There are %s EMDB entries to check', len(emdb_entries))
         for emdb_entry in emdb_entries:
             self.entry_list.append((emdb_entry, 'emdb'))
 
     def add_pdb_entries(self, pdb_entries):
-        logger.info('There are {} PDB entries to check'.format(len(pdb_entries)))
+        logger.info('There are %s PDB entries to check', len(pdb_entries))
         for pdb_entry in pdb_entries:
             self.entry_list.append((pdb_entry, 'pdb'))
 
@@ -297,14 +297,14 @@ def prepare_entries_and_check(siteID=None, output_folder=None, failed_entries_fi
         for sub_folder in failed_programs:
             for program_type in failed_programs.get(sub_folder, {}):
                 entries = list(failed_programs[sub_folder][program_type])
-                print('\n{} {} entries with failed programs'.format(sub_folder, program_type))
+                print('\n%s %s entries with failed programs', sub_folder, program_type)
                 print(','.join(entries))
 
     if failed_entries:
         for sub_folder in failed_entries:
             for entry_type in failed_entries.get(sub_folder, {}):
                 entries = list(failed_entries[sub_folder][entry_type])
-                print('\n{} {} entries with missing output files'.format(sub_folder, entry_type.upper()))
+                print('\n%s %s entries with missing output files', sub_folder, entry_type.upper())
                 print(','.join(entries))
 
     if failed_entries_file:
@@ -312,7 +312,7 @@ def prepare_entries_and_check(siteID=None, output_folder=None, failed_entries_fi
 
 
 def main():
-    logger = logging.getLogger()
+    logger = logging.getLogger()  # pylint: disable=redefined-outer-name
     log_format = "%(funcName)s (%(levelname)s) - %(message)s"
     logging.basicConfig(format=log_format)
 

@@ -15,11 +15,13 @@ logger = logging.getLogger(__name__)
 
 class FindAndProcessEntries:
 
-    def __init__(self, entry_string='', entry_list=[], entry_file='',
+    def __init__(self, entry_string='', entry_list=None, entry_file='',
                  skip_emdb=False,
                  pdb_release=False, emdb_release=False,
                  site_id=getSiteId(),
-                 nocache=False):
+                 nocache=False):  # pylint: disable=unused-argument
+        if entry_list is None:
+            entry_list = []
         self.entry_list = entry_list
         self.entry_string = entry_string
         self.entry_file = entry_file
@@ -33,7 +35,7 @@ class FindAndProcessEntries:
         self.pdb_release = pdb_release
         self.emdb_release = emdb_release
         self.skip_emdb = skip_emdb
-        self.__nocache = nocache
+        # self.__nocache = nocache
         of = outputFiles(siteID=site_id)
 
         if nocache:
@@ -73,13 +75,13 @@ class FindAndProcessEntries:
 
     def process_entry_list(self):
         if self.entry_list:
-            logging.info('entries from input list: {}'.format(self.entry_list))
+            logging.info('entries from input list: %s', self.entry_list)
             self.entries.extend(self.entry_list)
 
     def process_entry_string(self):
         if self.entry_string:
             entries_from_entry_string = self.entry_string.split(",")
-            logging.info('entries from input string: {}'.format(entries_from_entry_string))
+            logging.info('entries from input string: %s', entries_from_entry_string)
             self.entries.extend(entries_from_entry_string)
 
     def categorise_entries(self):
@@ -133,7 +135,7 @@ class FindAndProcessEntries:
                         self.messages.append(message)
                         self.added_entries.append(emdb_entry)
                     re.remove_local_temp_files()
-                except:  # noqa: E722,BLE001
+                except:  # noqa: E722,BLE001 pylint: disable=bare-except
                     logger.exception("ERROR processing %s", emdb_entry)
 
     def process_pdb_entries(self):
@@ -155,7 +157,7 @@ class FindAndProcessEntries:
 
 def main():
     # Create logger -
-    logger = logging.getLogger()
+    logger = logging.getLogger()  # pylint: disable=redefined-outer-name
     FORMAT = '[%(asctime)s %(levelname)s]-%(module)s.%(funcName)s: %(message)s'
     logging.basicConfig(format=FORMAT)
 

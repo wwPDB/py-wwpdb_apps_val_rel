@@ -105,7 +105,7 @@ class getFilesReleaseFtpEMDB(object):
     def get_emdb_xml(self):
         logger.debug('EM XML')
         local_ftp = self.__local_ftp.get_ftp_emdb()
-        logger.debug('local FTP path: "{}"'.format(local_ftp))
+        logger.debug('local FTP path: "%s"', local_ftp)
         if local_ftp:
             logger.debug('trying local FTP')
             file_name = self.get_emdb_local_ftp_file(filename=self.__rf.get_emdb_xml(self.emdb_id),
@@ -118,13 +118,13 @@ class getFilesReleaseFtpEMDB(object):
 
             if not file_name:
                 remove_local_temp_ftp(self.setup_local_temp_ftp(), require_empty=True)
-        logger.debug('returning: {}'.format(file_name))
+        logger.debug('returning: %s', file_name)
         return file_name
 
     def get_emdb_volume(self):
         logger.debug('em volume')
         local_ftp = self.__local_ftp.get_ftp_emdb()
-        logger.debug('local FTP path: "{}"'.format(local_ftp))
+        logger.debug('local FTP path: "%s"', local_ftp)
         if local_ftp:
             logger.debug('trying local FTP')
             file_name = self.get_emdb_local_ftp_file(filename=self.__rf.get_emdb_map(self.emdb_id),
@@ -134,13 +134,13 @@ class getFilesReleaseFtpEMDB(object):
             self.get_remote_ftp_data()
             file_name = self.get_emdb_local_ftp_file(filename=self.__rf.get_emdb_map(self.emdb_id),
                                                      emdb_path=self.emdb_map_folder())
-        logger.debug('returning: {}'.format(file_name))
+        logger.debug('returning: %s', file_name)
         return file_name
 
     def get_emdb_fsc(self):
         logger.debug('FSC')
         local_ftp = self.__local_ftp.get_ftp_emdb()
-        logger.debug('local FTP path: "{}"'.format(local_ftp))
+        logger.debug('local FTP path: "%s"', local_ftp)
         if local_ftp:
             logger.debug('trying local FTP')
             file_name = self.get_emdb_local_ftp_file(filename=self.__rf.get_emdb_fsc(self.emdb_id),
@@ -152,7 +152,7 @@ class getFilesReleaseFtpEMDB(object):
                                                       file_path=os.path.join(self.url_prefix, self.emdb_fsc_folder()))
             if not file_name:
                 remove_local_temp_ftp(self.setup_local_temp_ftp(), require_empty=True)
-        logger.debug('returning: {}'.format(file_name))
+        logger.debug('returning: %s', file_name)
         return file_name
 
     def check_header_on_remote_ftp(self):
@@ -193,7 +193,7 @@ class getFilesReleaseFtpEMDB(object):
         gets file from FTP site
         :return string: file name if it exists or None if it doesn't
         """
-        logger.debug('get remote file {} FTP from {}'.format(filename, file_path))
+        logger.debug('get remote file %s FTP from %s', filename, file_path)
 
         if self.grf is None:
             logger.warning("There was no existing ftp connection. Opening new connection now...")

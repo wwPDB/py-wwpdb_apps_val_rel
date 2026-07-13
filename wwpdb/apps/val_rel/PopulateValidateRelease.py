@@ -6,7 +6,6 @@ import sys
 
 from wwpdb.apps.val_rel.config.ValConfig import ValConfig
 from wwpdb.utils.config.ConfigInfo import getSiteId
-from wwpdb.apps.val_rel.utils.outputFiles import outputFiles
 from wwpdb.utils.message_queue.MessagePublisher import MessagePublisher
 from wwpdb.apps.val_rel.utils.FindAndProcessEntries import FindAndProcessEntries
 from wwpdb.apps.val_rel.utils.FindEntries import FindEntries
@@ -16,11 +15,13 @@ logger = logging.getLogger(__name__)
 
 class PopulateValidateRelease:
 
-    def __init__(self, entry_string='', entry_list=[], entry_file='', keep_logs=False, output_root=None,
+    def __init__(self, entry_string='', entry_list=None, entry_file='', keep_logs=False, output_root=None,
                  always_recalculate=False, skip_gzip=False, skip_emdb=False, validation_sub_dir='current',
                  pdb_release=False, emdb_release=False,
                  site_id=getSiteId(), nocache=False,
                  priority=False, subscribe=None):
+        if entry_list is None:
+            entry_list = []
         self.entry_list = entry_list
         self.entry_string = entry_string
         self.entry_file = entry_file
@@ -44,13 +45,7 @@ class PopulateValidateRelease:
         if self.priority_queue and self.subscribe:
             logger.critical('error - mixing of priority queues and subscriber queues')
             sys.exit()
-        # Get cachedir
-        of = outputFiles(siteID=site_id)
         self.__nocache = nocache
-        if nocache:
-            self.__cache = None
-        else:
-            self.__cache = of.get_ftp_cache_folder()
         # priority queues
         if self.priority_queue:
             self.make_priorities()
@@ -179,9 +174,9 @@ class PopulateValidateRelease:
                         routingKey=vc.routing_key
                     )
                 if self.priority_queue:
-                    logger.info('MESSAGE {} PRIORITY {}'.format(ok, priority))
+                    logger.info('MESSAGE %s PRIORITY %s', ok, priority)
                 else:
-                    logger.info('MESSAGE {}'.format(ok))
+                    logger.info('MESSAGE %s', ok)
                 if not ok:
                     logger.critical('error - could not publish')
                     break
@@ -224,14 +219,14 @@ class PopulateValidateRelease:
                     message["skipGzip"] = self.skipGzip
                 if self.skip_emdb:
                     message['skip_emdb'] = self.skip_emdb
-                logger.info('priority %s msg %s' % (priority, message))
+                logger.info('priority %s msg %s', priority, message)
                 vc = ValConfig(self.site_id)
                 logger.info(f'exchangeName {vc.exchange} queueName {vc.queue_name} routingKey {vc.routing_key}')
 
 
 def main():
     # Create logger -
-    logger = logging.getLogger()
+    logger = logging.getLogger()  # pylint: disable=redefined-outer-name
     FORMAT = '[%(asctime)s %(levelname)s]-%(module)s.%(funcName)s: %(message)s'
     logging.basicConfig(format=FORMAT)
 

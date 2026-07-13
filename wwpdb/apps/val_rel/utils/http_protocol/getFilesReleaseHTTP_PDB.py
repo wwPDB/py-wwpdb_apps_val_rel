@@ -52,9 +52,9 @@ class getFilesReleaseHttpPDB(object):
             temp_file_path = self.__get_remote_http_file(url=url, filename=zip_file_name)
         else:
             file_path = self.__local_ftp.get_model_fname(accession=self.__pdb_id)
-            logger.debug('checking local model filepath: {}'.format(file_path))
+            logger.debug('checking local model filepath: %s', file_path)
             return self.__check_filename(file_path)
-        logger.debug('final model filepath: {}'.format(temp_file_path))
+        logger.debug('final model filepath: %s', temp_file_path)
         return temp_file_path
 
     def get_sf(self):
@@ -68,9 +68,9 @@ class getFilesReleaseHttpPDB(object):
             temp_file_path = self.__get_remote_http_file(url=url, filename=zip_file_name)
         else:
             file_path = self.__local_ftp.get_structure_factors_fname(accession=self.__pdb_id)
-            logger.debug('checking local structure factor filepath: {}'.format(file_path))
+            logger.debug('checking local structure factor filepath: %s', file_path)
             return self.__check_filename(file_path)
-        logger.debug('final structure factor filepath: {}'.format(temp_file_path))
+        logger.debug('final structure factor filepath: %s', temp_file_path)
         return temp_file_path
 
     def get_cs(self):
@@ -84,9 +84,9 @@ class getFilesReleaseHttpPDB(object):
             temp_file_path = self.__get_remote_http_file(url=url, filename=zip_file_name)
         else:
             file_path = self.__local_ftp.get_chemical_shifts_fname(accession=self.__pdb_id)
-            logger.debug('checking local chemical shift filepath: {}'.format(file_path))
+            logger.debug('checking local chemical shift filepath: %s', file_path)
             return self.__check_filename(file_path)
-        logger.debug('final chemical shift filepath: {}'.format(temp_file_path))
+        logger.debug('final chemical shift filepath: %s', temp_file_path)
         return temp_file_path
 
     def get_nmr_data(self):
@@ -100,9 +100,9 @@ class getFilesReleaseHttpPDB(object):
             temp_file_path = self.__get_remote_http_file(url=url, filename=zip_file_name)
         else:
             file_path = self.__local_ftp.get_nmr_data_fname(accession=self.__pdb_id)
-            logger.debug('checking local NMR data filepath: {}'.format(file_path))
+            logger.debug('checking local NMR data filepath: %s', file_path)
             return self.__check_filename(file_path)
-        logger.debug('final NMR data filepath: {}'.format(temp_file_path))
+        logger.debug('final NMR data filepath: %s', temp_file_path)
         return temp_file_path
 
     def __get_remote_http_file(self, *, url, filename):
