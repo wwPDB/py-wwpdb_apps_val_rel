@@ -8,19 +8,19 @@ from datetime import datetime
 
 from wwpdb.apps.validation.src.utils.minimal_map_cif import GenerateMinimalCif
 from wwpdb.utils.config.ConfigInfo import getSiteId
+from wwpdb.utils.session.SessionManager import SessionManager
 
 from wwpdb.apps.val_rel.config.ValConfig import ValConfig
-from wwpdb.apps.val_rel.utils.CutOffUtils import ok_to_copy, get_start_end_cut_off
-from wwpdb.apps.val_rel.utils.Files import gzip_file, remove_files, copy_file
+from wwpdb.apps.val_rel.utils.checkModifications import already_run
+from wwpdb.apps.val_rel.utils.CutOffUtils import get_start_end_cut_off, ok_to_copy
+from wwpdb.apps.val_rel.utils.fileConversion import convert_cs_file
+from wwpdb.apps.val_rel.utils.Files import copy_file, gzip_file, remove_files
+from wwpdb.apps.val_rel.utils.getFilesRelease import getFilesRelease
+from wwpdb.apps.val_rel.utils.mmCIFInfo import is_simple_modification, mmCIFInfo
+from wwpdb.apps.val_rel.utils.outputFiles import outputFiles
 from wwpdb.apps.val_rel.utils.ValDataStore import ValDataStore
 from wwpdb.apps.val_rel.utils.ValidationRun import ValidationRun
 from wwpdb.apps.val_rel.utils.XmlInfo import XmlInfo
-from wwpdb.apps.val_rel.utils.checkModifications import already_run
-from wwpdb.apps.val_rel.utils.fileConversion import convert_cs_file
-from wwpdb.apps.val_rel.utils.getFilesRelease import getFilesRelease
-from wwpdb.apps.val_rel.utils.mmCIFInfo import mmCIFInfo, is_simple_modification
-from wwpdb.apps.val_rel.utils.outputFiles import outputFiles
-from wwpdb.utils.session.SessionManager import SessionManager
 
 logger = logging.getLogger()
 
@@ -49,7 +49,7 @@ class runValidation:
         # self.contour_level = None # not needed as its in the xml
         self.__entry_output_folder = None
         self.__temp_output_dir = None
-        self.__validation_sub_folder = 'current'
+        self.__validation_sub_folder = "current"
         self.__pdb_output_folder = None
         self.__emdb_output_folder = None
         self.__entry_image_output_folder = None
@@ -135,8 +135,8 @@ class runValidation:
 
     @staticmethod
     def exptl_is_em(exp_methods):
-        if "ELECTRON MICROSCOPY" in exp_methods or 'ELECTRON CRYSTALLOGRAPHY' in exp_methods:
-            logger.info('is EM')
+        if "ELECTRON MICROSCOPY" in exp_methods or "ELECTRON CRYSTALLOGRAPHY" in exp_methods:
+            logger.info("is EM")
             return True
         return False
 
@@ -180,9 +180,9 @@ class runValidation:
         return False
 
     def get_emdb_pdb_string(self):
-        emdb_pdb_string = ''
+        emdb_pdb_string = ""
         if self.__emdbid and self.__pdbid:
-            emdb_pdb_string = '{}-{}'.format(self.__emdbid, self.__pdbid)
+            emdb_pdb_string = f"{self.__emdbid}-{self.__pdbid}"
         return emdb_pdb_string
 
     def set_output_dir_and_files(self):
@@ -192,7 +192,7 @@ class runValidation:
             siteID=self.siteID,
             outputRoot=self.__outputRoot,
             validation_sub_directory=self.__validation_sub_folder,
-            temp_output_folder=self.__temp_output_dir
+            temp_output_folder=self.__temp_output_dir,
         )
         self.__entry_output_folder = of.get_entry_output_folder()
         logger.debug("output folder: %s", self.__entry_output_folder)
@@ -226,11 +226,11 @@ class runValidation:
         self.__setupRelFiles()
         self.__outputRoot = message.get("outputRoot")
         self.__skip_gzip = message.get("skipGzip", False)
-        self.__skip_emdb = message.get('skip_emdb', False)
+        self.__skip_emdb = message.get("skip_emdb", False)
         self.__always_recalculate = message.get("alwaysRecalculate", False)
         self.__keepLog = message.get("keepLog", False)
-        self.__validation_sub_folder = message.get("subfolder", 'current')
-        self.__remove_validation_files = message.get('removeValFiles', False)
+        self.__validation_sub_folder = message.get("subfolder", "current")
+        self.__remove_validation_files = message.get("removeValFiles", False)
         self.__pythonSiteID = message.get("python_site_id", self.siteID)
         self.__entry_output_folder = None
         self.__nocache = message.get("nocache", False)
@@ -261,8 +261,8 @@ class runValidation:
         self.__rel_files.set_emdb_id(self.__emdbid)
         self.set_xml_file()
         self.__volPath = self.__rel_files.get_emdb_volume()
-        logger.debug('xml path: %s', self.__emXmlPath)
-        logger.debug('EM vol path: %s', self.__volPath)
+        logger.debug("xml path: %s", self.__emXmlPath)
+        logger.debug("EM vol path: %s", self.__volPath)
 
     def set_entry_id(self):
         if self.__pdbid:
@@ -344,8 +344,8 @@ class runValidation:
                     # logger.info(da_internal_pdbids)
                     self.__pdbids = XmlInfo(self.__emXmlPath).get_pdbids_from_xml()
                     if self.__pdbids:
-                        for self.__pdbid in self.__pdbids:
-                            self.__pdbid = self.__pdbid.lower()
+                        for self.__pdbid in self.__pdbids:  # noqa: B020
+                            self.__pdbid = self.__pdbid.lower()  # noqa: PLW2901  # Should not alter loop variable
                             if self.get_emdb_pdb_string() not in run_emdb_and_pdbid:
                                 self.__rel_files.set_pdb_id(pdb_id=self.__pdbid)
                                 self.__modelPath = self.__rel_files.get_model()
@@ -355,17 +355,17 @@ class runValidation:
                                     all_worked.append(worked)
                                     self.__cleanup(onlyRunDir=True)
                             else:
-                                logger.info('report already run for %s', self.get_emdb_pdb_string())
+                                logger.info("report already run for %s", self.get_emdb_pdb_string())
 
         if self.__run_map_only:
-            logger.info('%s make map only validation report without models', self.__emdbid)
+            logger.info("%s make map only validation report without models", self.__emdbid)
             self.__pdbid = None
             # run validation - forcing map only if map+model has already been run
             if validation_ran:
                 self.setAlwaysRecalculate(True)
             worked = self.run_validation()
             # Not needed as fallthrough self.__cleanup(onlyRunDir=True)
-            logger.info('map only validation worked: %s', worked)
+            logger.info("map only validation worked: %s", worked)
             all_worked.append(worked)
 
         # Cleanup ftp temp
@@ -386,20 +386,19 @@ class runValidation:
                 emdbID=self.__emdbid,
                 siteID=self.siteID,
                 outputRoot=self.__outputRoot,
-                validation_sub_directory=self.__validation_sub_folder
+                validation_sub_directory=self.__validation_sub_folder,
             )
             em_of.set_accession_variables(with_emdb=True)
             emdb_output_file_dict = em_of.get_core_validation_files()
             remove_files(emdb_output_file_dict.values())
 
     def copy_to_emdb(self, copy_to_root_emdb=False):
-        """ For map + model validation report, copy the validation report to names for EMDB, and then
-            copy to proper output directory with potential compression
+        """For map + model validation report, copy the validation report to names for EMDB, and then
+        copy to proper output directory with potential compression
         """
         if self.__emdbid:
             temp_output_dir = tempfile.mkdtemp(
-                dir=self.__sessionPath,
-                prefix="%s_validation_release_emdb_temp_output_dir_" % self.__entry_id
+                dir=self.__sessionPath, prefix="%s_validation_release_emdb_temp_output_dir_" % self.__entry_id
             )
             of = outputFiles(
                 pdbID=self.__pdbid,
@@ -407,15 +406,13 @@ class runValidation:
                 siteID=self.siteID,
                 outputRoot=self.__outputRoot,
                 temp_output_folder=temp_output_dir,
-                validation_sub_directory=self.__validation_sub_folder
+                validation_sub_directory=self.__validation_sub_folder,
             )
             logger.info("EMDB ID: %s", self.__emdbid)
             __emdb_output_folder = of.get_emdb_output_folder()
             if __emdb_output_folder != self.__entry_output_folder:
                 logger.info("EMDB output folder: %s", __emdb_output_folder)
-                of.set_accession_variables(
-                    with_emdb=True, copy_to_root_emdb=copy_to_root_emdb
-                )
+                of.set_accession_variables(with_emdb=True, copy_to_root_emdb=copy_to_root_emdb)
                 emdb_output_file_dict = of.get_core_validation_files()
                 logger.info("EMDB output file dict: %s", emdb_output_file_dict)
 
@@ -453,22 +450,19 @@ class runValidation:
         :return: True if ok, False if not
         """
         if now is None:
-            now = datetime.now()
+            now = datetime.now()  # noqa:  DTZ005
 
         if self.__alternativeOutputFolder:
             return True
         if self.__always_recalculate:
             return True
         start_cut_off_time, end_cut_off_time = self.get_start_end_cut_off()
-        return ok_to_copy(start_cut_off_time=start_cut_off_time,
-                          end_cut_off_time=end_cut_off_time,
-                          check_time=now
-                          )
+        return ok_to_copy(start_cut_off_time=start_cut_off_time, end_cut_off_time=end_cut_off_time, check_time=now)
 
     def __gzip_output(self, filelist, output_folder):
         """Creates compressed file in place and then copy to output_folder"""
         if self.is_ok_to_copy():
-            logger.debug('gzip files: %s', filelist)
+            logger.debug("gzip files: %s", filelist)
             for f in filelist:
                 gzip_file(in_file=f, output_folder=output_folder)
 
@@ -480,12 +474,11 @@ class runValidation:
         :return:
         """
         if self.is_ok_to_copy():
-            logger.debug('copy files: %s', filelist)
+            logger.debug("copy files: %s", filelist)
             for f in filelist:
                 copy_file(in_file=f, output_folder=output_folder)
 
     def run_validation(self):
-
         validation_run = False
 
         self.__sds.setValidationRunning(True)
@@ -510,17 +503,16 @@ class runValidation:
             # check if any input files have changed and set output folders
             is_modified = self.check_modified()
             if not is_modified:
-                logger.info("skipping %s/%s as entry files have not changed",
-                            self.__pdbid, self.__emdbid)
+                logger.info("skipping %s/%s as entry files have not changed", self.__pdbid, self.__emdbid)
 
                 self.__sds.setValidationRunning(False)
                 return True, validation_run
 
             # get EMDB data from FTP to after check for modification
             if self.__emdbid:
-                logger.debug('getting EMDB volume')
+                logger.debug("getting EMDB volume")
                 self.__volPath = self.__rel_files.get_emdb_volume()
-                logger.debug('getting FSC')
+                logger.debug("getting FSC")
                 self.__fscPath = self.__rel_files.get_emdb_fsc()
 
             # worked = False
@@ -531,20 +523,24 @@ class runValidation:
 
             sessTempDir = tempfile.mkdtemp(
                 dir=self.__sessionPath,
-                prefix="{}_validation_release_temp_dir_".format(self.__entry_id),
+                prefix=f"{self.__entry_id}_validation_release_temp_dir_",
             )
             self.__temp_output_dir = tempfile.mkdtemp(
-                dir=self.__sessionPath,
-                prefix="%s_validation_release_output_dir_" % self.__entry_id
+                dir=self.__sessionPath, prefix="%s_validation_release_output_dir_" % self.__entry_id
             )
             self.set_output_dir_and_files()
 
             csPath = None
             resPath = None
             if self.__csPath:  # CS or nmr-data
-                csPath = convert_cs_file(entry_id=self.__entry_id, cs_file=self.__csPath, model_file=self.__modelPath, working_dir=sessTempDir)
+                csPath = convert_cs_file(
+                    entry_id=self.__entry_id,
+                    cs_file=self.__csPath,
+                    model_file=self.__modelPath,
+                    working_dir=sessTempDir,
+                )
                 if not csPath:
-                    logger.error('CS star to cif conversion failed')
+                    logger.error("CS star to cif conversion failed")
                     self.__sds.setValidationRunning(False)
                     return False, validation_run
                 # If self.__resPath was set, nmr-data - need converted file
@@ -556,21 +552,14 @@ class runValidation:
             # clearing existing reports before making new ones
             self.remove_existing_files()
 
-            run_dir = tempfile.mkdtemp(
-                dir=self.__sessionPath,
-                prefix="%s_validation_release_rundir_" % self.__entry_id
-            )
+            run_dir = tempfile.mkdtemp(dir=self.__sessionPath, prefix="%s_validation_release_rundir_" % self.__entry_id)
 
             # map only generation
             if not self.__pdbid:
-                self.__modelPath = os.path.join(
-                    sessTempDir, "{}_minimal.cif".format(self.__emdbid)
-                )
-                logger.info('generating minimal cif: %s', self.__modelPath)
-                logger.info('using XML file: %s', self.__emXmlPath)
-                GenerateMinimalCif(emdb_xml=self.__emXmlPath).write_out(
-                    output_cif=self.__modelPath
-                )
+                self.__modelPath = os.path.join(sessTempDir, f"{self.__emdbid}_minimal.cif")
+                logger.info("generating minimal cif: %s", self.__modelPath)
+                logger.info("using XML file: %s", self.__emXmlPath)
+                GenerateMinimalCif(emdb_xml=self.__emXmlPath).write_out(output_cif=self.__modelPath)
 
             log_path = os.path.join(self.__temp_output_dir, "validation.log")
 
@@ -635,21 +624,24 @@ class runValidation:
 
             output_file_list_to_alternative_location = self.__validation_files_alternative_location.values()
 
-            logger.info('files to copy to %s: %s', self.__entry_output_folder, ','.join(output_file_list))
-            logger.info('files to copy to %s: %s', self.__entry_image_output_folder,
-                        ','.join(output_file_list_to_alternative_location))
+            logger.info("files to copy to %s: %s", self.__entry_output_folder, ",".join(output_file_list))
+            logger.info(
+                "files to copy to %s: %s",
+                self.__entry_image_output_folder,
+                ",".join(output_file_list_to_alternative_location),
+            )
 
             if self.__skip_gzip:
-                self.__copy_output(filelist=output_file_list,
-                                   output_folder=self.__entry_output_folder)
-                self.__copy_output(filelist=output_file_list_to_alternative_location,
-                                   output_folder=self.__entry_image_output_folder)
+                self.__copy_output(filelist=output_file_list, output_folder=self.__entry_output_folder)
+                self.__copy_output(
+                    filelist=output_file_list_to_alternative_location, output_folder=self.__entry_image_output_folder
+                )
 
             else:
-                self.__gzip_output(filelist=output_file_list,
-                                   output_folder=self.__entry_output_folder)
-                self.__gzip_output(filelist=output_file_list_to_alternative_location,
-                                   output_folder=self.__entry_image_output_folder)
+                self.__gzip_output(filelist=output_file_list, output_folder=self.__entry_output_folder)
+                self.__gzip_output(
+                    filelist=output_file_list_to_alternative_location, output_folder=self.__entry_image_output_folder
+                )
 
             self.__sds.setValidationRunning(False)
             return True, validation_run
@@ -678,27 +670,13 @@ def main():
     parser.add_argument("--emdbid", help="emdb_id to run on", type=str)
     parser.add_argument("--output_root", help="root folder to output to", type=str)
     parser.add_argument("--site_id", help="site id to get files from", type=str)
-    parser.add_argument(
-        "--python_site_id", help="site id to get python code from", type=str
-    )
-    parser.add_argument(
-        "--skip_gzip", help="skip gzipping of files", action="store_true"
-    )
-    parser.add_argument(
-        "--always_recalculate", help="always recalculate", action="store_true"
-    )
-    parser.add_argument(
-        "--keep_log", help="keep the log file from validation", action="store_true"
-    )
-    parser.add_argument(
-        "--nocache", help="Do not use the FTP cache", action="store_true"
-    )
-    parser.add_argument(
-        "--remove_files", help="clear out the existing files for a validation run", action="store_true"
-    )
-    parser.add_argument(
-        "--validation_sub_folder", help="validation subfolder", type=str, default='current'
-    )
+    parser.add_argument("--python_site_id", help="site id to get python code from", type=str)
+    parser.add_argument("--skip_gzip", help="skip gzipping of files", action="store_true")
+    parser.add_argument("--always_recalculate", help="always recalculate", action="store_true")
+    parser.add_argument("--keep_log", help="keep the log file from validation", action="store_true")
+    parser.add_argument("--nocache", help="Do not use the FTP cache", action="store_true")
+    parser.add_argument("--remove_files", help="clear out the existing files for a validation run", action="store_true")
+    parser.add_argument("--validation_sub_folder", help="validation subfolder", type=str, default="current")
     args = parser.parse_args()
     logger.setLevel(args.loglevel)
 
@@ -711,7 +689,7 @@ def main():
         "siteID": args.site_id,
         "keepLog": args.keep_log,
         "removeValFiles": args.remove_files,
-        "subfolder": args.validation_sub_folder
+        "subfolder": args.validation_sub_folder,
     }
 
     # If pass in None - overrides siteid

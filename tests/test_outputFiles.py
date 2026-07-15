@@ -1,5 +1,6 @@
-import unittest
 import os
+import unittest
+
 from wwpdb.apps.val_rel.utils.outputFiles import outputFiles
 
 
@@ -11,20 +12,12 @@ class OutputFilesTests(unittest.TestCase):
         self.emdb_accession = "emd_1234"
         self.emdb_accession_hyphen = "emd-1234"
         self.output_folder = os.path.join(os.sep, "nfs", "test")
-        self.final_pdb_output_folder = os.path.join(
-            self.output_folder, 'pdb', self.pdbid_hash, self.pdbid
-        )
-        self.final_emdb_output_folder = os.path.join(self.output_folder, 'emd', self.emdbid, 'validation')
+        self.final_pdb_output_folder = os.path.join(self.output_folder, "pdb", self.pdbid_hash, self.pdbid)
+        self.final_emdb_output_folder = os.path.join(self.output_folder, "emd", self.emdbid, "validation")
         self.pdb_core_files = {
-            "xml": os.path.join(
-                self.final_pdb_output_folder, self.pdbid + "_validation.xml"
-            ),
-            "pdf": os.path.join(
-                self.final_pdb_output_folder, self.pdbid + "_validation.pdf"
-            ),
-            "full_pdf": os.path.join(
-                self.final_pdb_output_folder, self.pdbid + "_full_validation.pdf"
-            ),
+            "xml": os.path.join(self.final_pdb_output_folder, self.pdbid + "_validation.xml"),
+            "pdf": os.path.join(self.final_pdb_output_folder, self.pdbid + "_validation.pdf"),
+            "full_pdf": os.path.join(self.final_pdb_output_folder, self.pdbid + "_full_validation.pdf"),
             "png": os.path.join(
                 self.final_pdb_output_folder,
                 self.pdbid + "_multipercentile_validation.png",
@@ -50,14 +43,11 @@ class OutputFilesTests(unittest.TestCase):
         }
         self.emdb_core_files = {
             "cif": os.path.join(
-                self.final_emdb_output_folder, self.emdb_accession + "_validation.cif",
+                self.final_emdb_output_folder,
+                self.emdb_accession + "_validation.cif",
             ),
-            "xml": os.path.join(
-                self.final_emdb_output_folder, self.emdb_accession + "_validation.xml"
-            ),
-            "pdf": os.path.join(
-                self.final_emdb_output_folder, self.emdb_accession + "_validation.pdf"
-            ),
+            "xml": os.path.join(self.final_emdb_output_folder, self.emdb_accession + "_validation.xml"),
+            "pdf": os.path.join(self.final_emdb_output_folder, self.emdb_accession + "_validation.pdf"),
             "full_pdf": os.path.join(
                 self.final_emdb_output_folder,
                 self.emdb_accession + "_full_validation.pdf",
@@ -94,10 +84,8 @@ class OutputFilesTests(unittest.TestCase):
         self.assertTrue(ret == self.final_pdb_output_folder)
 
     def test_get_pdbid_dir_skip_hash(self):
-        final_output_folder = os.path.join(self.output_folder, 'pdb', self.pdbid)
-        of = outputFiles(
-            pdbID=self.pdbid, outputRoot=self.output_folder, skip_pdb_hash=True
-        )
+        final_output_folder = os.path.join(self.output_folder, "pdb", self.pdbid)
+        of = outputFiles(pdbID=self.pdbid, outputRoot=self.output_folder, skip_pdb_hash=True)
         ret = of.get_entry_output_folder()
         self.assertTrue(ret == final_output_folder)
 
@@ -126,7 +114,7 @@ class OutputFilesTests(unittest.TestCase):
         of = outputFiles(pdbID=self.pdbid, emdbID=self.emdbid)
         of.set_accession_variables(with_emdb=True)
         ret = of.set_accession()
-        accession = "{}_{}".format(self.emdb_accession, self.pdbid)
+        accession = f"{self.emdb_accession}_{self.pdbid}"
         self.assertEqual(ret, accession)
 
     def test_set_accession_pdbid_get_core_files(self):
@@ -148,10 +136,9 @@ class OutputFilesTests(unittest.TestCase):
         self.assertEqual(ret, self.emdb_core_files)
 
     def test_ret_pdb_hash_skip_hash(self):
-        of = outputFiles(pdbID=self.pdbid, outputRoot=self.output_folder,
-                         skip_pdb_hash=True)
+        of = outputFiles(pdbID=self.pdbid, outputRoot=self.output_folder, skip_pdb_hash=True)
         ret = of.ret_pdb_hash()
-        self.assertEqual(ret, '')
+        self.assertEqual(ret, "")
 
     def test_ret_pdb_hash(self):
         of = outputFiles(pdbID=self.pdbid, outputRoot=self.output_folder)

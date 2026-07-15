@@ -1,14 +1,20 @@
-import os
 import logging
-from wwpdb.io.locator.ReleaseFileNames import ReleaseFileNames
+import os
+
 from wwpdb.io.locator.localFTPPathInfo import LocalFTPPathInfo
+from wwpdb.io.locator.ReleaseFileNames import ReleaseFileNames
+
 from wwpdb.apps.val_rel.config.ValConfig import ValConfig
-from wwpdb.apps.val_rel.utils.http_protocol.getRemoteFilesHTTP import GetRemoteFilesHttp, setup_local_temp_http, remove_local_temp_http
+from wwpdb.apps.val_rel.utils.http_protocol.getRemoteFilesHTTP import (
+    GetRemoteFilesHttp,
+    remove_local_temp_http,
+    setup_local_temp_http,
+)
 
 logger = logging.getLogger(__name__)
 
 
-class getFilesReleaseHttpPDB(object):
+class getFilesReleaseHttpPDB:
     def __init__(self, pdbid, site_id=None, cache=None):
         self.__cache = cache
 
@@ -52,9 +58,9 @@ class getFilesReleaseHttpPDB(object):
             temp_file_path = self.__get_remote_http_file(url=url, filename=zip_file_name)
         else:
             file_path = self.__local_ftp.get_model_fname(accession=self.__pdb_id)
-            logger.debug('checking local model filepath: %s', file_path)
+            logger.debug("checking local model filepath: %s", file_path)
             return self.__check_filename(file_path)
-        logger.debug('final model filepath: %s', temp_file_path)
+        logger.debug("final model filepath: %s", temp_file_path)
         return temp_file_path
 
     def get_sf(self):
@@ -68,9 +74,9 @@ class getFilesReleaseHttpPDB(object):
             temp_file_path = self.__get_remote_http_file(url=url, filename=zip_file_name)
         else:
             file_path = self.__local_ftp.get_structure_factors_fname(accession=self.__pdb_id)
-            logger.debug('checking local structure factor filepath: %s', file_path)
+            logger.debug("checking local structure factor filepath: %s", file_path)
             return self.__check_filename(file_path)
-        logger.debug('final structure factor filepath: %s', temp_file_path)
+        logger.debug("final structure factor filepath: %s", temp_file_path)
         return temp_file_path
 
     def get_cs(self):
@@ -84,9 +90,9 @@ class getFilesReleaseHttpPDB(object):
             temp_file_path = self.__get_remote_http_file(url=url, filename=zip_file_name)
         else:
             file_path = self.__local_ftp.get_chemical_shifts_fname(accession=self.__pdb_id)
-            logger.debug('checking local chemical shift filepath: %s', file_path)
+            logger.debug("checking local chemical shift filepath: %s", file_path)
             return self.__check_filename(file_path)
-        logger.debug('final chemical shift filepath: %s', temp_file_path)
+        logger.debug("final chemical shift filepath: %s", temp_file_path)
         return temp_file_path
 
     def get_nmr_data(self):
@@ -100,9 +106,9 @@ class getFilesReleaseHttpPDB(object):
             temp_file_path = self.__get_remote_http_file(url=url, filename=zip_file_name)
         else:
             file_path = self.__local_ftp.get_nmr_data_fname(accession=self.__pdb_id)
-            logger.debug('checking local NMR data filepath: %s', file_path)
+            logger.debug("checking local NMR data filepath: %s", file_path)
             return self.__check_filename(file_path)
-        logger.debug('final NMR data filepath: %s', temp_file_path)
+        logger.debug("final NMR data filepath: %s", temp_file_path)
         return temp_file_path
 
     def __get_remote_http_file(self, *, url, filename):
@@ -147,9 +153,9 @@ class getFilesReleaseHttpPDB(object):
         if not self.__local_http_path:
             if not session_path:
                 session_path = self.__session_path
-            self.__local_http_path = setup_local_temp_http(temp_dir=self.__temp_local_ftp,
-                                                           session_path=session_path,
-                                                           suffix=self.__pdb_id)
+            self.__local_http_path = setup_local_temp_http(
+                temp_dir=self.__temp_local_ftp, session_path=session_path, suffix=self.__pdb_id
+            )
         return self.__local_http_path
 
     @staticmethod

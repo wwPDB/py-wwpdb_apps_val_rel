@@ -15,10 +15,7 @@ def setup_local_temp_ftp(temp_dir, suffix, session_path):
     if not temp_dir:
         if not os.path.exists(session_path):
             os.makedirs(session_path)
-        temp_dir = tempfile.mkdtemp(
-            dir=session_path,
-            prefix="ftp_{}_".format(suffix)
-        )
+        temp_dir = tempfile.mkdtemp(dir=session_path, prefix=f"ftp_{suffix}_")
     return temp_dir
 
 
@@ -33,9 +30,8 @@ def remove_local_temp_ftp(temp_dir, require_empty=False):
         shutil.rmtree(temp_dir, ignore_errors=True)
 
 
-class GetRemoteFiles(object):
+class GetRemoteFiles:
     def __init__(self, server, cache=None):
-
         # Single underscore for __del__ to be able to find
         self._ftp = self.__connect(server)
         # logger.info("Connect!!! %s", self._ftp)
@@ -47,11 +43,11 @@ class GetRemoteFiles(object):
 
     def __del__(self):
         # for cases where ftplib.FTP.__init__() failed
-        if hasattr(self, '_ftp'):
+        if hasattr(self, "_ftp"):
             # possible exceptions in ftp.quit() will be ignored
             self.disconnect()
 
-    def __connect(self, server):
+    def __connect(self, server):  # noqa: RET503
         """Connects to remote server with retry"""
 
         retry = 0
@@ -60,7 +56,7 @@ class GetRemoteFiles(object):
 
         while 1:
             try:
-                ftp = ftplib.FTP(server)
+                ftp = ftplib.FTP(server)  # noqa: S321
                 return ftp
             except ftplib.error_temp as e:
                 ecode = str(e)[:3]
@@ -86,7 +82,8 @@ class GetRemoteFiles(object):
                 retries -= 1
                 self._ftp.login()
 
-        raise Exception("error connecting to server")  # pylint: disable=broad-exception-raised
+        emsg = "error connecting to server"
+        raise Exception(emsg)  # noqa: TRY002  pylint: disable=broad-exception-raised
 
     def _setup_output_path(self, output_path):
         if not os.path.exists(output_path):
@@ -109,7 +106,7 @@ class GetRemoteFiles(object):
                 return
             # logger.debug("Did not find %s in cache", remote_file)
 
-        with open(file_name, 'wb') as out_file:
+        with open(file_name, "wb") as out_file:
             self._ftp.retrbinary("RETR " + remote_file, out_file.write)
 
         # File always exist - but might be zero length.... Annoying interface
@@ -151,8 +148,8 @@ class GetRemoteFiles(object):
 
                 if not mlst:
                     return None
-                for line in mlst.split('\n'):
-                    if line[0:3] == '250':
+                for line in mlst.split("\n"):
+                    if line[0:3] == "250":
                         continue
                     ls = line.strip()
                     facts_found, _, _fname = ls.partition(" ")
@@ -161,7 +158,7 @@ class GetRemoteFiles(object):
                     for fact in facts_found[:-1].split(";"):
                         key, _dum, value = fact.partition("=")
                         factsd[key.lower()] = value
-                ts = factsd.get('modify', None)
+                ts = factsd.get("modify")
                 # None caught below
 
             except Exception:  # noqa: E722,BLE001
@@ -175,7 +172,7 @@ class GetRemoteFiles(object):
             # Parse string like 0200704134000  -- 14 digits ["." 1*digit]
             # Could have optional tenths of second after period
             bts = ts.split(".")[0]
-            dt = datetime.datetime.strptime(bts, "%Y%m%d%H%M%S")
+            dt = datetime.datetime.strptime(bts, "%Y%m%d%H%M%S")  # noqa: DTZ007
             time_tuple = dt.timetuple()
             timestamp = time.mktime(time_tuple)
             return timestamp
@@ -206,7 +203,7 @@ class GetRemoteFiles(object):
         if directory:
             try:
                 self._ftp.cwd(directory)
-                if directory[0] == '/':
+                if directory[0] == "/":
                     self.__curdir = directory
                 else:
                     self.__curdir = os.path.join(self.__curdir, directory)
@@ -231,10 +228,10 @@ class GetRemoteFiles(object):
             files = [filename]
         else:
             files = self._ftp.nlst()
-        for filename in files:
-            if self.is_file(filename):
-                self.get_file(filename, output_path)
-                ret_files.append(filename)
+        for fname in files:
+            if self.is_file(fname):
+                self.get_file(fname, output_path)
+                ret_files.append(fname)
         return ret_files
 
     def get_directory(self, directory, output_path):
@@ -250,12 +247,12 @@ class GetRemoteFiles(object):
             for obj in objects:
                 # Skip nfs turds... or any files that start with "."
                 if obj[0] == "." and len(obj) > 2:
-                    logging.debug("Skipping NFS garbage: %s %s", directory, obj)
+                    logger.debug("Skipping NFS garbage: %s %s", directory, obj)
                     continue
                 if self.is_file(obj):
                     self.get_file(obj, output_path)
                 else:
-                    logging.debug('not a file: %s', obj)
+                    logger.debug("not a file: %s", obj)
                     # Skip recursion
                     if obj == "." or obj == "..":
                         continue
@@ -264,8 +261,8 @@ class GetRemoteFiles(object):
                     self._setup_output_path(output_path)
                     self.get_directory(obj, output_path)
 
-                    self._ftp.cwd('..')
-                    output_path = os.path.join(output_path, '..')
+                    self._ftp.cwd("..")
+                    output_path = os.path.join(output_path, "..")
                     self.__curdir = os.path.join(self.__curdir, "..")
                     logger.debug("curr directory %s", self.__curdir)
             return True

@@ -1,14 +1,16 @@
-import requests
-from requests.adapters import HTTPAdapter
-import urllib.parse
-from urllib3.util.retry import Retry, MaxRetryError
 import logging
 import os
 import shutil
 import tempfile
-from wwpdb.apps.val_rel.utils.PersistFileCache import PersistFileCache
+import urllib.parse
+
+import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import MaxRetryError, Retry
+
 from wwpdb.apps.val_rel.config.ValConfig import ValConfig
 from wwpdb.apps.val_rel.utils.emailHandler import EmailHandler
+from wwpdb.apps.val_rel.utils.PersistFileCache import PersistFileCache
 
 logger = logging.getLogger(__name__)
 
@@ -17,10 +19,7 @@ def setup_local_temp_http(temp_dir, suffix, session_path):
     if not temp_dir:
         if not os.path.exists(session_path):
             os.makedirs(session_path)
-        temp_dir = tempfile.mkdtemp(
-            dir=session_path,
-            prefix="http_{}_".format(suffix)
-        )
+        temp_dir = tempfile.mkdtemp(dir=session_path, prefix=f"http_{suffix}_")
     return temp_dir
 
 
@@ -35,8 +34,8 @@ def remove_local_temp_http(temp_dir, require_empty=False):
         shutil.rmtree(temp_dir, ignore_errors=True)
 
 
-class GetRemoteFilesHttp(object):
-    def __init__(self, server=None, cache=None, site_id=None):  # pylint: disable=unused-argument
+class GetRemoteFilesHttp:
+    def __init__(self, server=None, cache=None, site_id=None):  # noqa: ARG002  pylint: disable=unused-argument
         self.__cache = cache
         vc = ValConfig(site_id=site_id)
         self.connection_timeout = vc.connection_timeout
@@ -50,7 +49,8 @@ class GetRemoteFilesHttp(object):
     def get_url(self, *, url=None, output_path=None):
         """Retrieve file from url.  Note:  This is a little backwards - should check cache instead of waiting for get_file"""
         if not url:
-            raise ValueError("url must be specified")
+            emsg = "url must be specified"
+            raise ValueError(emsg)
 
         # Old code would check is_file() - and then get_file. get_file checks cache before download so no need here to check remote if file. If we have it
         # cached, it is real.
@@ -62,13 +62,18 @@ class GetRemoteFilesHttp(object):
             try:
                 self.__mount_session_retry(s)
                 r = s.head(remote_file, timeout=self.__timeout, allow_redirects=True)
-                if r.status_code < 400 and r.headers and 'content-length' in r.headers and int(r.headers['content-length']) > 0:
+                if (
+                    r.status_code < 400
+                    and r.headers
+                    and "content-length" in r.headers
+                    and int(r.headers["content-length"]) > 0
+                ):
                     return True
                 return False
             except Exception as e:
-                logging.error("Failure to get head of file %s %s", remote_file, e)
+                logger.error("Failure to get head of file %s %s", remote_file, e)
                 # We re-raise the exception - as there is no other way to handle
-                raise e
+                raise e  # noqa: TRY201
 
     def get_file(self, remote_file, output_path):
         """
@@ -109,13 +114,18 @@ class GetRemoteFilesHttp(object):
 
     def __mount_session_retry(self, session):
         """Sets up retry for session"""
-        retries = Retry(total=self.__retries, backoff_factor=self.__backoff_factor, status_forcelist=self.__status_force_list, allowed_methods=["GET"])
-        session.mount('https://', HTTPAdapter(max_retries=retries))
-        session.mount('http://', HTTPAdapter(max_retries=retries))
+        retries = Retry(
+            total=self.__retries,
+            backoff_factor=self.__backoff_factor,
+            status_forcelist=self.__status_force_list,
+            allowed_methods=["GET"],
+        )
+        session.mount("https://", HTTPAdapter(max_retries=retries))
+        session.mount("http://", HTTPAdapter(max_retries=retries))
 
     def httpRequest(self, url, outfilepath):
-        """ download to session directory """
-        logging.info("http request for %s", url)
+        """download to session directory"""
+        logger.info("http request for %s", url)
         status_code = -1
         with requests.Session() as s:
             self.__mount_session_retry(s)
@@ -141,7 +151,7 @@ class GetRemoteFilesHttp(object):
                 msg = "Request for %s failed with status code %d" % (os.path.basename(url), status_code)
                 self.handle_exception(msg)
                 return False
-            except Exception as _e:  # noqa: F841
+            except Exception as _e:  # noqa: F841,BLE001
                 msg = "Request for %s failed with status code %d" % (os.path.basename(url), status_code)
                 self.handle_exception(msg)
                 return False
@@ -150,8 +160,8 @@ class GetRemoteFilesHttp(object):
             if r is not None:
                 status_code = r.status_code
                 # does not return correct length for text files
-                if r.headers and 'content-length' in r.headers:
-                    content_length = int(r.headers['content-length'])
+                if r.headers and "content-length" in r.headers:
+                    content_length = int(r.headers["content-length"])
                 logger.info("%s status code %d", os.path.basename(url), status_code)
 
             if 0 < status_code < 400:
@@ -169,10 +179,9 @@ class GetRemoteFilesHttp(object):
                     logger.warning("File size mismatch: %s != %s", filesize, content_length)
                 logger.info("downloaded %s size %d", os.path.basename(url), filesize)
                 return True
-            else:
-                msg = "Request for %s failed with status code %d" % (os.path.basename(url), status_code)
-                self.handle_exception(msg)
-                return False
+            msg = "Request for %s failed with status code %d" % (os.path.basename(url), status_code)
+            self.handle_exception(msg)
+            return False
         return False
 
     def handle_exception(self, msg):

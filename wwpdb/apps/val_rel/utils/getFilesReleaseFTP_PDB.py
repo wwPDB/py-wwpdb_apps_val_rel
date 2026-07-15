@@ -1,18 +1,20 @@
 import logging
 import os
 
+from wwpdb.io.locator.localFTPPathInfo import LocalFTPPathInfo
+from wwpdb.io.locator.ReleaseFileNames import ReleaseFileNames
 from wwpdb.utils.config.ConfigInfo import getSiteId
 
 from wwpdb.apps.val_rel.config.ValConfig import ValConfig
-from wwpdb.apps.val_rel.utils.getRemoteFilesFTP import GetRemoteFiles, setup_local_temp_ftp, remove_local_temp_ftp
-from wwpdb.io.locator.ReleaseFileNames import ReleaseFileNames
-from wwpdb.io.locator.localFTPPathInfo import LocalFTPPathInfo
+from wwpdb.apps.val_rel.utils.getRemoteFilesFTP import GetRemoteFiles, remove_local_temp_ftp, setup_local_temp_ftp
 
 logger = logging.getLogger(__name__)
 
 
-class getFilesReleaseFtpPDB(object):
-    def __init__(self, pdbid, site_id=getSiteId(), cache=None):
+class getFilesReleaseFtpPDB:
+    def __init__(self, pdbid, site_id=None, cache=None):
+        if site_id is None:
+            site_id = getSiteId()
         self.__site_id = site_id
         self.__cache = cache
         self.__rf = ReleaseFileNames()
@@ -48,14 +50,13 @@ class getFilesReleaseFtpPDB(object):
         if not self.__local_ftp_path:
             if not session_path:
                 session_path = self.session_path
-            self.__local_ftp_path = setup_local_temp_ftp(temp_dir=self.__temp_local_ftp,
-                                                         session_path=session_path,
-                                                         suffix=self.pdb_id)
+            self.__local_ftp_path = setup_local_temp_ftp(
+                temp_dir=self.__temp_local_ftp, session_path=session_path, suffix=self.pdb_id
+            )
         return self.__local_ftp_path
 
     def get_temp_local_ftp_path(self):
-        return os.path.join(self.setup_local_temp_ftp(),
-                            self.pdb_id)
+        return os.path.join(self.setup_local_temp_ftp(), self.pdb_id)
 
     def remove_local_temp_files(self):
         """Cleanup of local ftp directory if present"""
@@ -104,13 +105,12 @@ class getFilesReleaseFtpPDB(object):
         """
         if self.__local_ftp.get_ftp_pdb():
             file_path = self.__local_ftp.get_model_fname(accession=self.pdb_id)
-            logger.debug('checking local model filepath: %s', file_path)
+            logger.debug("checking local model filepath: %s", file_path)
             file_name = self.check_filename(file_path)
         else:
             fpart = self.__rf.get_model(accession=self.pdb_id, for_release=False)
-            file_name = self.get_remote_ftp_file(file_path=self.__remote_ftp.get_model_path(),
-                                                 filename=fpart)
-        logger.debug('final model filepath: %s', file_name)
+            file_name = self.get_remote_ftp_file(file_path=self.__remote_ftp.get_model_path(), filename=fpart)
+        logger.debug("final model filepath: %s", file_name)
         return file_name
 
     def get_sf(self):
@@ -122,13 +122,12 @@ class getFilesReleaseFtpPDB(object):
         if self.__local_ftp.get_ftp_pdb():
             file_path = self.__local_ftp.get_structure_factors_fname(accession=self.pdb_id)
             # file_path = os.path.join(self.get_temp_local_ftp_path(), fpart)
-            logger.debug('checking local structure factor filepath: %s', file_path)
+            logger.debug("checking local structure factor filepath: %s", file_path)
             file_name = self.check_filename(file_path)
         else:
             fpart = self.__rf.get_structure_factor(accession=self.pdb_id, for_release=False)
-            file_name = self.get_remote_ftp_file(file_path=self.__remote_ftp.get_sf_path(),
-                                                 filename=fpart)
-        logger.debug('final structure factor filepath: %s', file_name)
+            file_name = self.get_remote_ftp_file(file_path=self.__remote_ftp.get_sf_path(), filename=fpart)
+        logger.debug("final structure factor filepath: %s", file_name)
         return file_name
 
     def get_cs(self):
@@ -140,13 +139,12 @@ class getFilesReleaseFtpPDB(object):
         # file_path = os.path.join(self.get_temp_local_ftp_path(), fpart)
         if self.__local_ftp.get_ftp_pdb():
             file_path = self.__local_ftp.get_chemical_shifts_fname(accession=self.pdb_id)
-            logger.debug('checking local chemical shift filepath: %s', file_path)
+            logger.debug("checking local chemical shift filepath: %s", file_path)
             file_name = self.check_filename(file_path)
         else:
             fpart = self.__rf.get_chemical_shifts(accession=self.pdb_id, for_release=False)
-            file_name = self.get_remote_ftp_file(file_path=self.__remote_ftp.get_cs_path(),
-                                                 filename=fpart)
-        logger.debug('final chemical shift filepath: %s', file_name)
+            file_name = self.get_remote_ftp_file(file_path=self.__remote_ftp.get_cs_path(), filename=fpart)
+        logger.debug("final chemical shift filepath: %s", file_name)
         return file_name
 
     def get_nmr_data(self):
@@ -158,14 +156,13 @@ class getFilesReleaseFtpPDB(object):
         if self.__local_ftp.get_ftp_pdb():
             file_path = self.__local_ftp.get_nmr_data_fname(accession=self.pdb_id)
             # file_path = os.path.join(self.get_temp_local_ftp_path(), fpart)
-            logger.debug('checking local NMR data filepath: %s', file_path)
+            logger.debug("checking local NMR data filepath: %s", file_path)
             file_name = self.check_filename(file_path)
         else:
             fpart = self.__rf.get_nmr_data(accession=self.pdb_id, for_release=False)
-            file_name = self.get_remote_ftp_file(file_path=self.__remote_ftp.get_nmr_data_path(),
-                                                 filename=fpart)
+            file_name = self.get_remote_ftp_file(file_path=self.__remote_ftp.get_nmr_data_path(), filename=fpart)
 
-        logger.debug('final NMR data filepath: %s', file_name)
+        logger.debug("final NMR data filepath: %s", file_name)
         return file_name
 
     def close_connection(self):

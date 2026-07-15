@@ -10,15 +10,17 @@ logger = logging.getLogger(__name__)
 
 class outputFiles:
     def __init__(
-            self,
-            pdbID=None,
-            emdbID=None,
-            outputRoot="",
-            siteID=getSiteId(),
-            skip_pdb_hash=False,
-            validation_sub_directory="current",
-            temp_output_folder=None
+        self,
+        pdbID=None,
+        emdbID=None,
+        outputRoot="",
+        siteID=None,
+        skip_pdb_hash=False,
+        validation_sub_directory="current",
+        temp_output_folder=None,
     ):
+        if siteID is None:
+            siteID = getSiteId()
         self._pdbID = pdbID
         self._emdbID = emdbID
         self._siteID = siteID
@@ -41,9 +43,7 @@ class outputFiles:
 
     def get_pdb_root_folder(self):
         rp = ReleasePathInfo(self._siteID)
-        return os.path.join(
-            rp.getForReleasePath("val_reports"), self._validation_sub_directory
-        )
+        return os.path.join(rp.getForReleasePath("val_reports"), self._validation_sub_directory)
 
     def get_validation_images_root_folder(self):
         rp = ReleasePathInfo(self._siteID)
@@ -59,10 +59,7 @@ class outputFiles:
 
     def get_emdb_root_folder(self):
         rp = ReleasePathInfo(self._siteID)
-        return os.path.join(
-            rp.getForReleasePath("em_val_reports"),
-            self._validation_sub_directory
-        )
+        return os.path.join(rp.getForReleasePath("em_val_reports"), self._validation_sub_directory)
 
     def set_validation_subdirectory(self, sub_dir):
         self._validation_sub_directory = sub_dir
@@ -111,13 +108,13 @@ class outputFiles:
         self.copy_to_root_emdb = copy_to_root_emdb
 
     def set_accession(self):
-        self.accession = "{}".format(self._entryID)
+        self.accession = f"{self._entryID}"
         if self._emdbID and not self._pdbID:
             self.accession = self.get_emdb_lower_underscore()
         if self._pdbID and self._emdbID and self.with_emdb:
-            self.accession = "{}_{}".format(self.get_emdb_lower_underscore(), self._pdbID)
+            self.accession = f"{self.get_emdb_lower_underscore()}_{self._pdbID}"
         if self._emdbID and self.copy_to_root_emdb:
-            self.accession = "{}".format(self.get_emdb_lower_underscore())
+            self.accession = f"{self.get_emdb_lower_underscore()}"
 
         return self.accession
 
@@ -127,49 +124,31 @@ class outputFiles:
         return os.path.join(self.entry_output_folder, filename)
 
     def get_validation_xml(self):
-        return self.add_output_folder_accession(
-            self.rf.get_validation_xml(self.accession)
-        )
+        return self.add_output_folder_accession(self.rf.get_validation_xml(self.accession))
 
     def get_validation_png(self):
-        return self.add_output_folder_accession(
-            self.rf.get_validation_png(self.accession)
-        )
+        return self.add_output_folder_accession(self.rf.get_validation_png(self.accession))
 
     def get_validation_svg(self):
-        return self.add_output_folder_accession(
-            self.rf.get_validation_svg(self.accession)
-        )
+        return self.add_output_folder_accession(self.rf.get_validation_svg(self.accession))
 
     def get_validation_pdf(self):
-        return self.add_output_folder_accession(
-            self.rf.get_validation_pdf(self.accession)
-        )
+        return self.add_output_folder_accession(self.rf.get_validation_pdf(self.accession))
 
     def get_validation_full_pdf(self):
-        return self.add_output_folder_accession(
-            self.rf.get_validation_full_pdf(self.accession)
-        )
+        return self.add_output_folder_accession(self.rf.get_validation_full_pdf(self.accession))
 
     def get_validation_2fofc(self):
-        return self.add_output_folder_accession(
-            self.rf.get_validation_2fofc(self.accession)
-        )
+        return self.add_output_folder_accession(self.rf.get_validation_2fofc(self.accession))
 
     def get_validation_fofc(self):
-        return self.add_output_folder_accession(
-            self.rf.get_validation_fofc(self.accession)
-        )
+        return self.add_output_folder_accession(self.rf.get_validation_fofc(self.accession))
 
     def get_validation_image_tar(self):
-        return self.add_output_folder_accession(
-            self.rf.get_validation_image_tar(self.accession)
-        )
+        return self.add_output_folder_accession(self.rf.get_validation_image_tar(self.accession))
 
     def get_validation_cif(self):
-        return self.add_output_folder_accession(
-            self.rf.get_validation_cif(self.accession)
-        )
+        return self.add_output_folder_accession(self.rf.get_validation_cif(self.accession))
 
     def get_core_validation_files(self):
         logger.debug("getting core files for: %s", self._entryID)
@@ -178,28 +157,28 @@ class outputFiles:
         self.set_accession()
         logger.debug("accession set to %s", self.accession)
 
-        ret = {"pdf": self.get_validation_pdf(),
-               "full_pdf": self.get_validation_full_pdf(),
-               "xml": self.get_validation_xml(),
-               "png": self.get_validation_png(),
-               "svg": self.get_validation_svg(),
-               "cif": self.get_validation_cif()
-               }
+        ret = {
+            "pdf": self.get_validation_pdf(),
+            "full_pdf": self.get_validation_full_pdf(),
+            "xml": self.get_validation_xml(),
+            "png": self.get_validation_png(),
+            "svg": self.get_validation_svg(),
+            "cif": self.get_validation_cif(),
+        }
 
         logger.debug(ret)
 
         return ret
 
     def get_extra_validation_files(self):
-
-        ret = {"2fofc": self.get_validation_2fofc(),
-               "fofc": self.get_validation_fofc(),
-               }
+        ret = {
+            "2fofc": self.get_validation_2fofc(),
+            "fofc": self.get_validation_fofc(),
+        }
 
         return ret
 
     def get_validation_files_for_separate_location(self):
-
         ret = {"image_tar": self.get_validation_image_tar()}
 
         return ret
@@ -220,9 +199,8 @@ class outputFiles:
 
     def get_pdb_validation_images_output_folder(self):
         if self._output_root:
-            return os.path.join(self._output_root, 'val_images', self.get_pdb_id())
-        else:
-            return os.path.join(self.get_validation_images_root_folder(), self.get_pdb_id())
+            return os.path.join(self._output_root, "val_images", self.get_pdb_id())
+        return os.path.join(self.get_validation_images_root_folder(), self.get_pdb_id())
 
     def get_pdb_output_folder(self):
         """
@@ -232,13 +210,9 @@ class outputFiles:
         if self.get_pdb_id():
             self.set_entry_id(self.get_pdb_id())
             if self._output_root:
-                self.pdb_output_folder = os.path.join(
-                    self._output_root, 'pdb', self.ret_pdb_hash(), self.get_pdb_id()
-                )
+                self.pdb_output_folder = os.path.join(self._output_root, "pdb", self.ret_pdb_hash(), self.get_pdb_id())
             else:
-                self.pdb_output_folder = os.path.join(
-                    self.get_pdb_root_folder(), self.get_pdb_id()
-                )
+                self.pdb_output_folder = os.path.join(self.get_pdb_root_folder(), self.get_pdb_id())
         return self.pdb_output_folder
 
     def get_emdb_output_folder(self):
@@ -249,13 +223,9 @@ class outputFiles:
         if self.get_emdb_id():
             self.set_entry_id(self.get_emdb_id())
             if self._output_root:
-                self.emdb_output_folder = os.path.join(
-                    self._output_root, 'emd', self.get_emdb_id(), "validation"
-                )
+                self.emdb_output_folder = os.path.join(self._output_root, "emd", self.get_emdb_id(), "validation")
             else:
-                self.emdb_output_folder = os.path.join(
-                    self.get_emdb_root_folder(), self.get_emdb_id(), "validation"
-                )
+                self.emdb_output_folder = os.path.join(self.get_emdb_root_folder(), self.get_emdb_id(), "validation")
         return self.emdb_output_folder
 
     def get_entry_output_folder(self):
@@ -268,5 +238,4 @@ class outputFiles:
     def get_ftp_cache_folder(self):
         # Same for both x-ray/em
         rp = ReleasePathInfo(self._siteID)
-        return os.path.join(
-            rp.getForReleasePath("val_reports"), "cache")
+        return os.path.join(rp.getForReleasePath("val_reports"), "cache")

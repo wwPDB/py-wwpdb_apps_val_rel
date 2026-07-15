@@ -4,9 +4,8 @@ import xml.etree.ElementTree as ET
 
 
 class XmlInfo:
-
     def __init__(self, xml_file):
-        self.__tree = ET.parse(xml_file)
+        self.__tree = ET.parse(xml_file)  # noqa: S314
 
     def get_values_from_xpath(self, xpath):
         ret = []
@@ -16,5 +15,5 @@ class XmlInfo:
         return ret
 
     def get_pdbids_from_xml(self):
-        xpath = './/crossreferences/pdb_list/pdb_reference/pdb_id'
+        xpath = ".//crossreferences/pdb_list/pdb_reference/pdb_id"
         return self.get_values_from_xpath(xpath=xpath)

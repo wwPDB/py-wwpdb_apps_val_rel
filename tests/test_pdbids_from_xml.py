@@ -1,14 +1,15 @@
-import unittest
 import os
-import tempfile
 import shutil
+import tempfile
+import unittest
+
 from wwpdb.apps.val_rel.utils.XmlInfo import XmlInfo
 
 
 class XmlInfoTests(unittest.TestCase):
     def setUp(self):
         self.test_dir = tempfile.mkdtemp()
-        self.test_file = os.path.join(self.test_dir, 'test.xml')
+        self.test_file = os.path.join(self.test_dir, "test.xml")
 
     def tearDown(self):
         if self.test_dir:
@@ -30,11 +31,11 @@ d" emdb_id="EMD-3863" version="3.0.1.5">
     </crossreferences>
     </emd>
        """
-        with open(self.test_file, 'w') as outFile:
+        with open(self.test_file, "w") as outFile:
             outFile.write(test_xml_data)
 
         ret = XmlInfo(xml_file=self.test_file).get_pdbids_from_xml()
-        self.assertTrue(ret == ['5oyp'])
+        self.assertTrue(ret == ["5oyp"])
 
     def test_get_pdbs_from_xml(self):
         test_xml_data = """<?xml version="1.0" encoding="UTF-8"?>
@@ -59,11 +60,11 @@ d" emdb_id="EMD-3863" version="3.0.1.5">
     </emd>
        """
 
-        with open(self.test_file, 'w') as outFile:
+        with open(self.test_file, "w") as outFile:
             outFile.write(test_xml_data)
 
         ret = XmlInfo(xml_file=self.test_file).get_pdbids_from_xml()
-        self.assertTrue(ret == ['5oyp', '5oyt'])
+        self.assertTrue(ret == ["5oyp", "5oyt"])
 
     def test_get_pdbs_not_starting_from_xml(self):
         test_xml_data = """<?xml version="1.0" encoding="UTF-8"?>
@@ -94,11 +95,11 @@ d" emdb_id="EMD-3863" version="3.0.1.5">
     </crossreferences>
     </emd>
        """
-        with open(self.test_file, 'w') as outFile:
+        with open(self.test_file, "w") as outFile:
             outFile.write(test_xml_data)
 
         ret = XmlInfo(xml_file=self.test_file).get_pdbids_from_xml()
-        self.assertTrue(ret == ['5oyp', '5oyt'])
+        self.assertTrue(ret == ["5oyp", "5oyt"])
 
 
 if __name__ == "__main__":

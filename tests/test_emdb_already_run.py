@@ -1,8 +1,9 @@
-import unittest
 import os
-import tempfile
 import shutil
+import tempfile
 import time
+import unittest
+
 from wwpdb.apps.val_rel.ValidateRelease import runValidation
 
 

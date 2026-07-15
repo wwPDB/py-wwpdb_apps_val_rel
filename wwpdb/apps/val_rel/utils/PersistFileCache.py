@@ -6,23 +6,23 @@
 #
 ##
 """
- Implements a local file object cache for basic operations
+Implements a local file object cache for basic operations
 
- Will also allow negative caching of files using a per directory admin file
+Will also allow negative caching of files using a per directory admin file
 """
-import os
+
 import json
 import logging
+import os
 
 from oslo_concurrency import lockutils
-
 from wwpdb.io.file.DataFile import DataFile
 
 logger = logging.getLogger(__name__)
 
 
-class PersistFileCache(object):
-    def __init__(self, cache_dir="/tmp"):
+class PersistFileCache:
+    def __init__(self, cache_dir="/tmp"):  # noqa: S108
         self.__cache_dir = cache_dir
         lockutils.set_defaults(self.__cache_dir)
 
@@ -56,9 +56,9 @@ class PersistFileCache(object):
     @lockutils.synchronized("sessiondatastore.lock", external=True)
     def add_file(self, realfpath, fpath):
         """Adds the contents of realfpath to the cache as fpath.
-           Overwrites if present.
+        Overwrites if present.
 
-           Returns True on success
+        Returns True on success
         """
 
         cache_dir = self.__getcachedir(fpath)
@@ -78,9 +78,9 @@ class PersistFileCache(object):
     @lockutils.synchronized("sessiondatastore.lock", external=True)
     def get_file(self, fpath, realfpath, symlink=False):
         """Retrieves fpath from the cache and copies it to realfpath
-           If fpath is not in cache, returns False, else True.
+        If fpath is not in cache, returns False, else True.
 
-           Timestamp will be preserved
+        Timestamp will be preserved
         """
 
         cache_file = self.__getcachefile(fpath)
@@ -116,7 +116,7 @@ class PersistFileCache(object):
         mpath = self.__getmissingfilepath(fpath)
 
         if os.path.exists(mpath):
-            with open(mpath, "r") as fin:
+            with open(mpath) as fin:
                 jdata = json.load(fin)
                 return jdata
         return []

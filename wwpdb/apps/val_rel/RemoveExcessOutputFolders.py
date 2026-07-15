@@ -4,22 +4,23 @@ import os
 import shutil
 
 from wwpdb.utils.config.ConfigInfo import getSiteId
-from wwpdb.apps.val_rel.utils.FindAndProcessEntries import FindAndProcessEntries
 
+from wwpdb.apps.val_rel.utils.FindAndProcessEntries import FindAndProcessEntries
 from wwpdb.apps.val_rel.utils.outputFiles import outputFiles
 
 logger = logging.getLogger(__name__)
 
 
 class FindExcessEntries:
-
-    def __init__(self, site_id=getSiteId(), dry_run=False):
+    def __init__(self, site_id=None, dry_run=False):
+        if site_id is None:
+            site_id = getSiteId()
         self.site_id = site_id
         self.dry_run = dry_run
-        self.pdb_entries = list()
-        self.emdb_entries = list()
-        self.output_pdb_entries = list()
-        self.output_emdb_entries = list()
+        self.pdb_entries = ()
+        self.emdb_entries = ()
+        self.output_pdb_entries = ()
+        self.output_emdb_entries = ()
 
     def run_process(self):
         self.find_pdb_and_emdb_entries()
@@ -53,18 +54,18 @@ class FindExcessEntries:
 
     def check_pdb_entries_output_should_exist(self):
         for entry in self.output_pdb_entries:
-            logging.info(entry)
+            logger.info(entry)
             if entry not in self.pdb_entries:
-                logger.info('%s should be removed', entry)
+                logger.info("%s should be removed", entry)
                 path_to_remove = os.path.join(self.get_pdb_output_folder(), entry)
-                logger.info('%s being removed', path_to_remove)
+                logger.info("%s being removed", path_to_remove)
                 if not self.dry_run:
                     shutil.rmtree(path_to_remove, ignore_errors=True)
 
 
 def main():
     # Create logger -
-    FORMAT = '[%(asctime)s %(levelname)s]-%(module)s.%(funcName)s: %(message)s'
+    FORMAT = "[%(asctime)s %(levelname)s]-%(module)s.%(funcName)s: %(message)s"
     logging.basicConfig(format=FORMAT)
     logger.setLevel(logging.DEBUG)
 

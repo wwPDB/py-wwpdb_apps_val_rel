@@ -2,14 +2,15 @@
 Class to manage a state dictionary for validation runs.  Session state file is based on entryid
 """
 
-import os
 import logging
+import os
+
 from wwpdb.utils.ws_utils.ServiceDataStore import ServiceDataStore
 
 logger = logging.getLogger()
 
 
-class ValDataStore(object):
+class ValDataStore:
     def __init__(self, entryid, sessiondir):
         self.__sessiondir = sessiondir
         self.__sds = ServiceDataStore(self.__sessiondir, entryid)
@@ -24,11 +25,10 @@ class ValDataStore(object):
 
     def isValidationRunning(self):
         """Returns True is a validation report generation is running"""
-        val = self.__sds.get('status')
+        val = self.__sds.get("status")
         if val == "running":
             return True
-        else:
-            return False
+        return False
 
     def setValidationRunning(self, state):
         """Sets the status of if a validation run is in action"""

@@ -1,8 +1,7 @@
 import logging
 
-from mmcif.io.IoAdapterCore import IoAdapterCore as IoAdapterCore
 from mmcif.api.PdbxContainers import CifName
-
+from mmcif.io.IoAdapterCore import IoAdapterCore
 
 logger = logging.getLogger(__name__)
 
@@ -15,25 +14,84 @@ def is_simple_modification(model_path):
     """
 
     # database_2 is handled specially
-    SKIP_LIST = ['citation', 'citation_author', 'pdbx_audit_support', 'pdbx_contact_author',
-                 'database_PDB_caveat', 'diffrn', 'diffrn_detector', 'diffrn_radiation', 'diffrn_radiation_wavelength',
-                 'diffrn_source', 'entity_name_com', 'entity_src_gen', 'entity_src_nat', 'exptl_crystal', 'exptl_crystal_grow',
-                 'pdbx_audit_support', 'pdbx_contact_author', 'pdbx_entity_src_syn', 'pdbx_entry_details', 'pdbx_nmr_chem_shift_experiment',
-                 'pdbx_nmr_chem_shift_ref', 'pdbx_nmr_chem_shift_reference', 'pdbx_nmr_chem_shift_software', 'pdbx_nmr_computing',
-                 'pdbx_nmr_detail', 'pdbx_nmr_exptl', 'pdbx_nmr_exptl_sample', 'pdbx_nmr_exptl_sample_conditions',
-                 'pdbx_nmr_force_constants', 'pdbx_nmr_refine', 'pdbx_nmr_sample_details', 'pdbx_nmr_software_task', 'pdbx_nmr_spectral_dim',
-                 'pdbx_nmr_spectral_peak_list', 'pdbx_nmr_spectral_peak_software', 'pdbx_nmr_spectrometer', 'pdbx_nmr_systematic_chem_shift_offset',
-                 'pdbx_refine_tls', 'pdbx_refine_tls_group', 'pdbx_struct_assembly', 'pdbx_struct_assembly_auth_evidence',
-                 'pdbx_struct_assembly_gen', 'pdbx_struct_assembly_prop', 'pdbx_struct_oper_list', 'pdbx_struct_sheet_hbond',
-                 'refine_ls_restr', 'refine_ls_restr_ncs', 'refine_ls_shell', 'reflns_shell', 'struct_conf',
-                 'struct_conf_type', 'struct_keywords', 'struct_ncs_dom', 'struct_ncs_dom_lim', 'struct_ncs_ens',
-                 'struct_sheet', 'struct_sheet', 'struct_sheet_order', 'struct_sheet_order', 'struct_sheet_range',
-                 'struct_sheet_range', 'struct_site', 'pdbx_initial_refinement_model', 'database_2',
-                 'chem_comp_atom', 'chem_comp_bond', 'chem_comp_angle', 'pdbx_modification_feature',
-                 'pdbx_nonpoly_feature', 'pdbx_nonpoly_atom_feature', 'pdbx_nonpoly_atom_feature_evidence', 'pdbx_nonpoly_feature_evidence'
-                 'pdbx_nonpoly_atom_coordination', 'pdbx_nonpoly_atom_coordination_sphere', 'pdbx_nonpoly_atom_coordination_sphere_order']
+    SKIP_LIST = [
+        "citation",
+        "citation_author",
+        "pdbx_audit_support",
+        "pdbx_contact_author",
+        "database_PDB_caveat",
+        "diffrn",
+        "diffrn_detector",
+        "diffrn_radiation",
+        "diffrn_radiation_wavelength",
+        "diffrn_source",
+        "entity_name_com",
+        "entity_src_gen",
+        "entity_src_nat",
+        "exptl_crystal",
+        "exptl_crystal_grow",
+        "pdbx_audit_support",
+        "pdbx_contact_author",
+        "pdbx_entity_src_syn",
+        "pdbx_entry_details",
+        "pdbx_nmr_chem_shift_experiment",
+        "pdbx_nmr_chem_shift_ref",
+        "pdbx_nmr_chem_shift_reference",
+        "pdbx_nmr_chem_shift_software",
+        "pdbx_nmr_computing",
+        "pdbx_nmr_detail",
+        "pdbx_nmr_exptl",
+        "pdbx_nmr_exptl_sample",
+        "pdbx_nmr_exptl_sample_conditions",
+        "pdbx_nmr_force_constants",
+        "pdbx_nmr_refine",
+        "pdbx_nmr_sample_details",
+        "pdbx_nmr_software_task",
+        "pdbx_nmr_spectral_dim",
+        "pdbx_nmr_spectral_peak_list",
+        "pdbx_nmr_spectral_peak_software",
+        "pdbx_nmr_spectrometer",
+        "pdbx_nmr_systematic_chem_shift_offset",
+        "pdbx_refine_tls",
+        "pdbx_refine_tls_group",
+        "pdbx_struct_assembly",
+        "pdbx_struct_assembly_auth_evidence",
+        "pdbx_struct_assembly_gen",
+        "pdbx_struct_assembly_prop",
+        "pdbx_struct_oper_list",
+        "pdbx_struct_sheet_hbond",
+        "refine_ls_restr",
+        "refine_ls_restr_ncs",
+        "refine_ls_shell",
+        "reflns_shell",
+        "struct_conf",
+        "struct_conf_type",
+        "struct_keywords",
+        "struct_ncs_dom",
+        "struct_ncs_dom_lim",
+        "struct_ncs_ens",
+        "struct_sheet",
+        "struct_sheet",
+        "struct_sheet_order",
+        "struct_sheet_order",
+        "struct_sheet_range",
+        "struct_sheet_range",
+        "struct_site",
+        "pdbx_initial_refinement_model",
+        "database_2",
+        "chem_comp_atom",
+        "chem_comp_bond",
+        "chem_comp_angle",
+        "pdbx_modification_feature",
+        "pdbx_nonpoly_feature",
+        "pdbx_nonpoly_atom_feature",
+        "pdbx_nonpoly_atom_feature_evidence",
+        "pdbx_nonpoly_feature_evidencepdbx_nonpoly_atom_coordination",
+        "pdbx_nonpoly_atom_coordination_sphere",
+        "pdbx_nonpoly_atom_coordination_sphere_order",
+    ]
 
-    SKIP_ATTR = {'database_2': ['pdbx_DOI', 'pdbx_database_accession']}
+    SKIP_ATTR = {"database_2": ["pdbx_DOI", "pdbx_database_accession"]}
 
     cf = mmCIFInfo(model_path)
     modified_cats, latest_ordinal = cf.get_latest_modified_categories()
@@ -56,19 +114,20 @@ def is_simple_modification(model_path):
                     if attr not in SKIP_ATTR[item]:
                         return False
 
-        logger.debug('%s only a simple modification: %s', model_path, ','.join(modified_cats))
+        logger.debug("%s only a simple modification: %s", model_path, ",".join(modified_cats))
         return True
     return False
 
 
 class mmCIFInfo:
     """Class for parsing model file mmCIF file"""
-    def __init__(self, mmCIF_file, IoAdapter=IoAdapterCore()):
+
+    def __init__(self, mmCIF_file, IoAdapter=None):
         self.__mmcif = mmCIF_file
-        self.__io = IoAdapter
+        self.__io = IoAdapter if IoAdapter else IoAdapterCore()
         self.__mmcif_data = None
 
-        self.exclude_category_list = ['atom_site', 'atom_site_anisotrop']
+        self.exclude_category_list = ["atom_site", "atom_site_anisotrop"]
 
     def parse_mmcif(self):
         if self.__mmcif:
@@ -77,7 +136,7 @@ class mmCIFInfo:
                 cList = self.__io.readFile(self.__mmcif, selectList=self.exclude_category_list, excludeFlag=True)
                 self.__mmcif_data = cList[0]
                 return self.__mmcif_data
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.error("failed to parse: %s error %s", self.__mmcif, str(e))
 
         return None
@@ -107,9 +166,7 @@ class mmCIFInfo:
             for row in range(len(cat_data.data)):
                 row_dict = {}
                 for item in cat_items:
-                    value = cat_data.getValueOrDefault(
-                        attributeName=item, defaultValue="", rowIndex=row
-                    )
+                    value = cat_data.getValueOrDefault(attributeName=item, defaultValue="", rowIndex=row)
                     row_dict[item] = value
                 return_list.append(row_dict)
         return return_list
@@ -119,9 +176,7 @@ class mmCIFInfo:
         cat = self.get_category(category=category)
         if cat is not None:
             for row in range(len(cat.data)):
-                value = cat.getValueOrDefault(
-                    attributeName=item, defaultValue="", rowIndex=row
-                )
+                value = cat.getValueOrDefault(attributeName=item, defaultValue="", rowIndex=row)
                 value_list.append(value)
 
         return value_list
@@ -141,7 +196,7 @@ class mmCIFInfo:
                     emdb_ids.append(db_id)
         if emdb_ids:
             emdb_id = emdb_ids[0]
-            logger.debug('found EMDB ID: %s', emdb_id)
+            logger.debug("found EMDB ID: %s", emdb_id)
             return emdb_id
         return None
 
@@ -156,32 +211,31 @@ class mmCIFInfo:
         return None
 
     def get_latest_modified_categories(self):
-        '''Returns the latet modified categories and ordinal associated with it'''
+        """Returns the latet modified categories and ordinal associated with it"""
         latest_audit_ordinal = None
         latest_audit_categories = []
         ret = self.get_category_list_of_dictionaries(category="pdbx_audit_revision_history")
         if ret:
             for row in ret:
-                ordinal = row.get('ordinal')
+                ordinal = row.get("ordinal")
                 if latest_audit_ordinal:
-                    if ordinal > latest_audit_ordinal:
-                        latest_audit_ordinal = ordinal
+                    latest_audit_ordinal = max(latest_audit_ordinal, ordinal)
                 else:
                     latest_audit_ordinal = ordinal
         if latest_audit_ordinal:
-            logger.debug('latest audit ordinal: %s', latest_audit_ordinal)
+            logger.debug("latest audit ordinal: %s", latest_audit_ordinal)
             ret = self.get_category_list_of_dictionaries(category="pdbx_audit_revision_category")
             if ret:
                 for row in ret:
-                    revision_ordinal = row.get('revision_ordinal')
-                    category = row.get('category')
+                    revision_ordinal = row.get("revision_ordinal")
+                    category = row.get("category")
                     if revision_ordinal == latest_audit_ordinal:
                         latest_audit_categories.append(category)
 
         return latest_audit_categories, latest_audit_ordinal
 
     def get_modified_items(self, ordinal):
-        '''Returns the dictionary of latet modified attributes for ordinal keyed on category name'''
+        """Returns the dictionary of latet modified attributes for ordinal keyed on category name"""
         ret = {}
         cdata = self.get_category_list_of_dictionaries(category="pdbx_audit_revision_item")
 

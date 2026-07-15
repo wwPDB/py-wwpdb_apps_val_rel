@@ -1,27 +1,26 @@
-
-import unittest
 import os
+import unittest
 
 from wwpdb.apps.val_rel.utils.PersistFileCache import PersistFileCache
 
 
 class PersisFileCacheTests(unittest.TestCase):
     def setUp(self):
-        self.__cache = "/tmp/cache"
+        self.__cache = "/tmp/cache"  # noqa: S108
 
     def testFileAccess(self):
         """Test adding and access to file"""
 
         pfc = PersistFileCache(self.__cache)
         lfile = __file__
-        cfname = "/tmp/somewhere/file.txt"
+        cfname = "/tmp/somewhere/file.txt"  # noqa: S108
 
         ret = pfc.add_file(lfile, cfname)
         self.assertTrue(ret, "Adding file failed")
 
         self.assertTrue(pfc.exists(cfname))
 
-        outfile = "/tmp/testout.txt"
+        outfile = "/tmp/testout.txt"  # noqa: S108
         self.assertTrue(pfc.exists(cfname))
 
         self.assertTrue(pfc.get_file(cfname, outfile))
@@ -34,7 +33,7 @@ class PersisFileCacheTests(unittest.TestCase):
         """Test adding to negative cache"""
 
         pfc = PersistFileCache(self.__cache)
-        cfname = "/tmp/somewhereelse/file.txt-negative"
+        cfname = "/tmp/somewhereelse/file.txt-negative"  # noqa: S108
 
         self.assertTrue(pfc.add_negative_cache(cfname))
 
@@ -48,9 +47,9 @@ class PersisFileCacheTests(unittest.TestCase):
 
         pfc = PersistFileCache(self.__cache)
         lfile = __file__
-        cfname = "/tmp/somewherenew/file.txt"
-        cfname2 = "/tmp/somewhereelse/file.txt"
-        cfname3 = "/tmp/somewhereelse/file.txt.new"
+        cfname = "/tmp/somewherenew/file.txt"  # noqa: S108
+        cfname2 = "/tmp/somewhereelse/file.txt"  # noqa: S108
+        cfname3 = "/tmp/somewhereelse/file.txt.new"  # noqa: S108
 
         ret = pfc.add_file(lfile, cfname)
         self.assertTrue(ret, "Adding file failed")
@@ -66,14 +65,14 @@ class PersisFileCacheTests(unittest.TestCase):
 
         pfc = PersistFileCache(self.__cache)
         lfile = __file__
-        cfname = "/tmp/somewhere/file.txt"
+        cfname = "/tmp/somewhere/file.txt"  # noqa: S108
 
         ret = pfc.add_file(lfile, cfname)
         self.assertTrue(ret, "Adding file failed")
 
         self.assertTrue(pfc.exists(cfname))
 
-        outfile = "/tmp/testout.txt2"
+        outfile = "/tmp/testout.txt2"  # noqa: S108
         self.assertTrue(pfc.exists(cfname))
 
         self.assertTrue(pfc.get_file(cfname, outfile, symlink=True))

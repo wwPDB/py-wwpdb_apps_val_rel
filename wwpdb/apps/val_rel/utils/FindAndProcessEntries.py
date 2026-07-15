@@ -5,21 +5,28 @@ import os
 from wwpdb.utils.config.ConfigInfo import getSiteId
 
 from wwpdb.apps.val_rel.utils.FindEntries import FindEntries
-from wwpdb.apps.val_rel.utils.XmlInfo import XmlInfo
 from wwpdb.apps.val_rel.utils.getFilesRelease import getFilesRelease
 from wwpdb.apps.val_rel.utils.mmCIFInfo import mmCIFInfo
 from wwpdb.apps.val_rel.utils.outputFiles import outputFiles
+from wwpdb.apps.val_rel.utils.XmlInfo import XmlInfo
 
 logger = logging.getLogger(__name__)
 
 
 class FindAndProcessEntries:
-
-    def __init__(self, entry_string='', entry_list=None, entry_file='',
-                 skip_emdb=False,
-                 pdb_release=False, emdb_release=False,
-                 site_id=getSiteId(),
-                 nocache=False):  # pylint: disable=unused-argument
+    def __init__(
+        self,
+        entry_string="",
+        entry_list=None,
+        entry_file="",
+        skip_emdb=False,
+        pdb_release=False,
+        emdb_release=False,
+        site_id=None,
+        nocache=False,
+    ):  # pylint: disable=unused-argument
+        if site_id is None:
+            site_id = getSiteId()
         if entry_list is None:
             entry_list = []
         self.entry_list = entry_list
@@ -71,17 +78,17 @@ class FindAndProcessEntries:
                     for file_line in inFile:
                         self.entries.append(file_line.strip())
             else:
-                logging.error("file: %s not found", self.entry_file)
+                logger.error("file: %s not found", self.entry_file)
 
     def process_entry_list(self):
         if self.entry_list:
-            logging.info('entries from input list: %s', self.entry_list)
+            logger.info("entries from input list: %s", self.entry_list)
             self.entries.extend(self.entry_list)
 
     def process_entry_string(self):
         if self.entry_string:
             entries_from_entry_string = self.entry_string.split(",")
-            logging.info('entries from input string: %s', entries_from_entry_string)
+            logger.info("entries from input string: %s", entries_from_entry_string)
             self.entries.extend(entries_from_entry_string)
 
     def categorise_entries(self):
@@ -97,20 +104,17 @@ class FindAndProcessEntries:
                 # stop duplication of making EM validation reports twice
                 logger.debug(emdb_entry)
                 try:
-                    re = getFilesRelease(siteID=self.site_id, emdb_id=emdb_entry, pdb_id=None,
-                                         cache=self.__cache)
+                    re = getFilesRelease(siteID=self.site_id, emdb_id=emdb_entry, pdb_id=None, cache=self.__cache)
                     em_xml = re.get_emdb_xml()
 
                     em_vol = re.get_emdb_volume()
                     if em_vol:
-                        logger.debug('using XML: %s', em_xml)
+                        logger.debug("using XML: %s", em_xml)
                         pdbids = XmlInfo(em_xml).get_pdbids_from_xml()
                         if pdbids:
-                            logger.info(
-                                "PDB entries associated with %s: %s", emdb_entry, ",".join(pdbids)
-                            )
-                            for pdbid in pdbids:
-                                pdbid = pdbid.lower()
+                            logger.info("PDB entries associated with %s: %s", emdb_entry, ",".join(pdbids))
+                            for pdb_id in pdbids:
+                                pdbid = pdb_id.lower()
                                 re.set_pdb_id(pdb_id=pdbid)
                                 pdb_file = re.get_model()
                                 if pdb_file:
@@ -120,16 +124,15 @@ class FindAndProcessEntries:
                                         if pdbid in self.pdb_entries:
                                             logger.info(
                                                 "removing %s from the PDB queue to stop duplication of report generation",
-                                                pdbid
+                                                pdbid,
                                             )
                                             self.pdb_entries.remove(pdbid)
                                         else:
                                             self.all_pdb_entries.add(pdbid)
                                     # what if its not? should it be added to the queue?
-                                else:
-                                    if pdbid in self.pdb_entries:
-                                        logger.info('removing %s as pdb file does not exist', pdbid)
-                                        self.pdb_entries.remove(pdbid)
+                                elif pdbid in self.pdb_entries:
+                                    logger.info("removing %s as pdb file does not exist", pdbid)
+                                    self.pdb_entries.remove(pdbid)
 
                         message = {"emdbID": emdb_entry}
                         self.messages.append(message)
@@ -158,7 +161,7 @@ class FindAndProcessEntries:
 def main():
     # Create logger -
     logger = logging.getLogger()  # pylint: disable=redefined-outer-name
-    FORMAT = '[%(asctime)s %(levelname)s]-%(module)s.%(funcName)s: %(message)s'
+    FORMAT = "[%(asctime)s %(levelname)s]-%(module)s.%(funcName)s: %(message)s"
     logging.basicConfig(format=FORMAT)
 
     parser = argparse.ArgumentParser()
@@ -171,35 +174,25 @@ def main():
         const=logging.DEBUG,
         default=logging.INFO,
     )
-    parser.add_argument(
-        "--entry_list", help="comma separated list of entries", type=str
-    )
-    parser.add_argument(
-        "--entry_file", help="file containing list of entries - one per line", type=str
-    )
-    parser.add_argument(
-        "--pdb_release", help="run PDB entries scheduled for release", action="store_true"
-    )
-    parser.add_argument(
-        "--emdb_release", help="run EMDB entries scheduled for release", action="store_true"
-    )
-    parser.add_argument(
-        "--skip_emdb", help="skip emdb validation report calculation", action="store_true"
-    )
+    parser.add_argument("--entry_list", help="comma separated list of entries", type=str)
+    parser.add_argument("--entry_file", help="file containing list of entries - one per line", type=str)
+    parser.add_argument("--pdb_release", help="run PDB entries scheduled for release", action="store_true")
+    parser.add_argument("--emdb_release", help="run EMDB entries scheduled for release", action="store_true")
+    parser.add_argument("--skip_emdb", help="skip emdb validation report calculation", action="store_true")
     parser.add_argument("--siteID", help="siteID", type=str, default=getSiteId())
-    parser.add_argument(
-        "--nocache", help="Do not use the FTP cache", action="store_true"
-    )
+    parser.add_argument("--nocache", help="Do not use the FTP cache", action="store_true")
     args = parser.parse_args()
     logger.setLevel(args.loglevel)
 
-    fape = FindAndProcessEntries(entry_string=args.entry_list,
-                                 entry_file=args.entry_file,
-                                 pdb_release=args.pdb_release,
-                                 emdb_release=args.emdb_release,
-                                 site_id=args.siteID,
-                                 skip_emdb=args.skip_emdb,
-                                 nocache=args.nocache)
+    fape = FindAndProcessEntries(
+        entry_string=args.entry_list,
+        entry_file=args.entry_file,
+        pdb_release=args.pdb_release,
+        emdb_release=args.emdb_release,
+        site_id=args.siteID,
+        skip_emdb=args.skip_emdb,
+        nocache=args.nocache,
+    )
 
     fape.run_process()
     return fape.messages

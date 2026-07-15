@@ -4,9 +4,10 @@ import logging
 import os
 import sys
 
-from wwpdb.apps.val_rel.config.ValConfig import ValConfig
 from wwpdb.utils.config.ConfigInfo import getSiteId
 from wwpdb.utils.message_queue.MessagePublisher import MessagePublisher
+
+from wwpdb.apps.val_rel.config.ValConfig import ValConfig
 from wwpdb.apps.val_rel.utils.FindAndProcessEntries import FindAndProcessEntries
 from wwpdb.apps.val_rel.utils.FindEntries import FindEntries
 
@@ -14,12 +15,26 @@ logger = logging.getLogger(__name__)
 
 
 class PopulateValidateRelease:
-
-    def __init__(self, entry_string='', entry_list=None, entry_file='', keep_logs=False, output_root=None,
-                 always_recalculate=False, skip_gzip=False, skip_emdb=False, validation_sub_dir='current',
-                 pdb_release=False, emdb_release=False,
-                 site_id=getSiteId(), nocache=False,
-                 priority=False, subscribe=None):
+    def __init__(
+        self,
+        entry_string="",
+        entry_list=None,
+        entry_file="",
+        keep_logs=False,
+        output_root=None,
+        always_recalculate=False,
+        skip_gzip=False,
+        skip_emdb=False,
+        validation_sub_dir="current",
+        pdb_release=False,
+        emdb_release=False,
+        site_id=None,
+        nocache=False,
+        priority=False,
+        subscribe=None,
+    ):
+        if site_id is None:
+            site_id = getSiteId()
         if entry_list is None:
             entry_list = []
         self.entry_list = entry_list
@@ -43,7 +58,7 @@ class PopulateValidateRelease:
         self.priority_queue = priority
         self.subscribe = subscribe
         if self.priority_queue and self.subscribe:
-            logger.critical('error - mixing of priority queues and subscriber queues')
+            logger.critical("error - mixing of priority queues and subscriber queues")
             sys.exit()
         self.__nocache = nocache
         # priority queues
@@ -51,14 +66,16 @@ class PopulateValidateRelease:
             self.make_priorities()
 
     def find_and_process_entries(self):
-        fape = FindAndProcessEntries(entry_string=self.entry_string,
-                                     entry_file=self.entry_file,
-                                     entry_list=self.entry_list,
-                                     skip_emdb=self.skip_emdb,
-                                     pdb_release=self.pdb_release,
-                                     emdb_release=self.emdb_release,
-                                     site_id=self.site_id,
-                                     nocache=self.__nocache)
+        fape = FindAndProcessEntries(
+            entry_string=self.entry_string,
+            entry_file=self.entry_file,
+            entry_list=self.entry_list,
+            skip_emdb=self.skip_emdb,
+            pdb_release=self.pdb_release,
+            emdb_release=self.emdb_release,
+            site_id=self.site_id,
+            nocache=self.__nocache,
+        )
         fape.run_process()
         self.messages = fape.get_found_entries()
 
@@ -84,23 +101,21 @@ class PopulateValidateRelease:
         # modified emdb - 2
         # default - 1
         priority = 1
-        if self.validation_sub_dir and self.validation_sub_dir == 'missing':
+        if self.validation_sub_dir and self.validation_sub_dir == "missing":
             # find_and_run_missing always runs Populate with validation_sub_dir = missing
             priority = 10
         else:
             emd = "emdbID" in message
             pdb = "pdbID" in message
             if not emd and not pdb:
-                logger.warning(f"error - neither pdb or emdb {message}")
+                logger.warning("error - neither pdb or emdb %s", message)
                 return 1
-            elif emd and pdb:
-                logger.warning(f"error - both pdb and emdb {message}")
+            if emd and pdb:
+                logger.warning("error - both pdb and emdb %s", message)
                 pdb = False
                 emd = True
             modified = None
-            if self.always_recalculate:
-                modified = True
-            elif pdb and message["pdbID"] in self.modified_priorities:
+            if self.always_recalculate or (pdb and message["pdbID"] in self.modified_priorities):
                 modified = True
             elif pdb and message["pdbID"] in self.added_priorities:
                 modified = False
@@ -117,7 +132,7 @@ class PopulateValidateRelease:
                     else:
                         modified = True
             if modified is None:
-                logger.warning(f"error - could not get priority for {message}")
+                logger.warning("error - could not get priority for %s", message)
                 return 1
             if pdb and not modified:
                 priority = 8
@@ -132,14 +147,14 @@ class PopulateValidateRelease:
     def process_messages(self):
         if self.messages:
             # Set logging for pika to be lower
-            plogging = logging.getLogger('pika')
+            plogging = logging.getLogger("pika")
             plogging.setLevel(logging.ERROR)
             for message in self.messages:
                 if self.priority_queue:
                     priority = self.get_priority(message)
                 message["siteID"] = self.site_id
                 message["keepLog"] = self.keep_logs
-                message['subfolder'] = self.validation_sub_dir
+                message["subfolder"] = self.validation_sub_dir
                 if self.__nocache:
                     message["nocache"] = self.__nocache
                 if self.output_root:
@@ -149,8 +164,8 @@ class PopulateValidateRelease:
                 if self.skipGzip:
                     message["skipGzip"] = self.skipGzip
                 if self.skip_emdb:
-                    message['skip_emdb'] = self.skip_emdb
-                logger.info('MESSAGE req %s', message)
+                    message["skip_emdb"] = self.skip_emdb
+                logger.info("MESSAGE req %s", message)
                 vc = ValConfig(self.site_id)
                 if self.priority_queue:
                     ok = MessagePublisher().publish(
@@ -158,7 +173,7 @@ class PopulateValidateRelease:
                         exchangeName=vc.exchange,
                         queueName=vc.queue_name,
                         routingKey=vc.routing_key,
-                        priority=priority
+                        priority=priority,
                     )
 
                 elif self.subscribe:
@@ -171,28 +186,30 @@ class PopulateValidateRelease:
                         message=json.dumps(message),
                         exchangeName=vc.exchange,
                         queueName=vc.queue_name,
-                        routingKey=vc.routing_key
+                        routingKey=vc.routing_key,
                     )
                 if self.priority_queue:
-                    logger.info('MESSAGE %s PRIORITY %s', ok, priority)
+                    logger.info("MESSAGE %s PRIORITY %s", ok, priority)
                 else:
-                    logger.info('MESSAGE %s', ok)
+                    logger.info("MESSAGE %s", ok)
                 if not ok:
-                    logger.critical('error - could not publish')
+                    logger.critical("error - could not publish")
                     break
 
     def test(self):
         if not self.priority_queue:
-            logger.info('error - not a priority queue')
+            logger.info("error - not a priority queue")
             return None
-        fape = FindAndProcessEntries(entry_string=self.entry_string,
-                                     entry_file=self.entry_file,
-                                     entry_list=self.entry_list,
-                                     skip_emdb=self.skip_emdb,
-                                     pdb_release=self.pdb_release,
-                                     emdb_release=self.emdb_release,
-                                     site_id=self.site_id,
-                                     nocache=self.__nocache)
+        fape = FindAndProcessEntries(
+            entry_string=self.entry_string,
+            entry_file=self.entry_file,
+            entry_list=self.entry_list,
+            skip_emdb=self.skip_emdb,
+            pdb_release=self.pdb_release,
+            emdb_release=self.emdb_release,
+            site_id=self.site_id,
+            nocache=self.__nocache,
+        )
         fape.find_onedep_entries()
         fape.process_pdb_entries()
         fape.process_emdb_entries()
@@ -208,7 +225,7 @@ class PopulateValidateRelease:
                 priority = self.get_priority(message)
                 message["siteID"] = self.site_id
                 message["keepLog"] = self.keep_logs
-                message['subfolder'] = self.validation_sub_dir
+                message["subfolder"] = self.validation_sub_dir
                 if self.__nocache:
                     message["nocache"] = self.__nocache
                 if self.output_root:
@@ -218,16 +235,16 @@ class PopulateValidateRelease:
                 if self.skipGzip:
                     message["skipGzip"] = self.skipGzip
                 if self.skip_emdb:
-                    message['skip_emdb'] = self.skip_emdb
-                logger.info('priority %s msg %s', priority, message)
+                    message["skip_emdb"] = self.skip_emdb
+                logger.info("priority %s msg %s", priority, message)
                 vc = ValConfig(self.site_id)
-                logger.info(f'exchangeName {vc.exchange} queueName {vc.queue_name} routingKey {vc.routing_key}')
+                logger.info("exchangeName %s queueName %s routingKey %s", vc.exchange, vc.queue_name, vc.routing_key)
 
 
 def main():
     # Create logger -
     logger = logging.getLogger()  # pylint: disable=redefined-outer-name
-    FORMAT = '[%(asctime)s %(levelname)s]-%(module)s.%(funcName)s: %(message)s'
+    FORMAT = "[%(asctime)s %(levelname)s]-%(module)s.%(funcName)s: %(message)s"
     logging.basicConfig(format=FORMAT)
 
     parser = argparse.ArgumentParser()
@@ -240,70 +257,55 @@ def main():
         const=logging.DEBUG,
         default=logging.INFO,
     )
-    parser.add_argument(
-        "--entry_list", help="comma separated list of entries", type=str
-    )
-    parser.add_argument(
-        "--entry_file", help="file containing list of entries - one per line", type=str
-    )
-    parser.add_argument(
-        "--pdb_release", help="run PDB entries scheduled for release", action="store_true"
-    )
-    parser.add_argument(
-        "--emdb_release", help="run EMDB entries scheduled for release", action="store_true"
-    )
+    parser.add_argument("--entry_list", help="comma separated list of entries", type=str)
+    parser.add_argument("--entry_file", help="file containing list of entries - one per line", type=str)
+    parser.add_argument("--pdb_release", help="run PDB entries scheduled for release", action="store_true")
+    parser.add_argument("--emdb_release", help="run EMDB entries scheduled for release", action="store_true")
     parser.add_argument("--keep_logs", help="Keep the log files", action="store_true")
-    parser.add_argument(
-        "--always_recalculate", help="always recalculate", action="store_true"
-    )
-    parser.add_argument(
-        "--skipGzip", help="skip gizpping output files", action="store_true"
-    )
-    parser.add_argument(
-        "--skip_emdb", help="skip emdb validation report calculation", action="store_true"
-    )
+    parser.add_argument("--always_recalculate", help="always recalculate", action="store_true")
+    parser.add_argument("--skipGzip", help="skip gizpping output files", action="store_true")
+    parser.add_argument("--skip_emdb", help="skip emdb validation report calculation", action="store_true")
     parser.add_argument("--siteID", help="siteID", type=str, default=getSiteId())
     parser.add_argument("--python_siteID", help="siteID for the OneDep code", type=str)
-    parser.add_argument("--validation_subdir", help="validation sub directory", type=str, default='current')
+    parser.add_argument("--validation_subdir", help="validation sub directory", type=str, default="current")
     parser.add_argument(
         "--output_root",
         help="Folder to output the results to - overrides default OneDep folders",
         type=str,
     )
+    parser.add_argument("--nocache", help="Do not use the FTP cache", action="store_true")
+    parser.add_argument("--test", help="Testing priority values", action="store_true")
+    parser.add_argument("--priority", help="Make a priority queue", action="store_true")
     parser.add_argument(
-        "--nocache", help="Do not use the FTP cache", action="store_true"
-    )
-    parser.add_argument(
-        "--test", help="Testing priority values", action="store_true"
-    )
-    parser.add_argument(
-        "--priority", help="Make a priority queue", action='store_true'
-    )
-    parser.add_argument(
-        "--subscribe", help="Exchange name for optional subscriber rather than standard consumer", type=str, default=None
+        "--subscribe",
+        help="Exchange name for optional subscriber rather than standard consumer",
+        type=str,
+        default=None,
     )
     args = parser.parse_args()
     logger.setLevel(args.loglevel)
 
-    pvr = PopulateValidateRelease(entry_string=args.entry_list,
-                                  entry_file=args.entry_file,
-                                  pdb_release=args.pdb_release,
-                                  emdb_release=args.emdb_release,
-                                  site_id=args.siteID,
-                                  keep_logs=args.keep_logs,
-                                  always_recalculate=args.always_recalculate,
-                                  skip_gzip=args.skipGzip,
-                                  skip_emdb=args.skip_emdb,
-                                  validation_sub_dir=args.validation_subdir,
-                                  output_root=args.output_root,
-                                  nocache=args.nocache,
-                                  priority=args.priority,
-                                  subscribe=args.subscribe)
+    pvr = PopulateValidateRelease(
+        entry_string=args.entry_list,
+        entry_file=args.entry_file,
+        pdb_release=args.pdb_release,
+        emdb_release=args.emdb_release,
+        site_id=args.siteID,
+        keep_logs=args.keep_logs,
+        always_recalculate=args.always_recalculate,
+        skip_gzip=args.skipGzip,
+        skip_emdb=args.skip_emdb,
+        validation_sub_dir=args.validation_subdir,
+        output_root=args.output_root,
+        nocache=args.nocache,
+        priority=args.priority,
+        subscribe=args.subscribe,
+    )
 
     if not args.test:
         pvr.run_process()
     elif args.test:
-        logger.info('running unit test')
+        logger.info("running unit test")
         pvr.test()
 
 

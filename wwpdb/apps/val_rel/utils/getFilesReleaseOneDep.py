@@ -11,7 +11,9 @@ logger = logging.getLogger(__name__)
 class getFilesReleaseOneDep:
     """Class to access prior/public release files"""
 
-    def __init__(self, pdb_id, emdb_id, siteID=getSiteId()):
+    def __init__(self, pdb_id, emdb_id, siteID=None):
+        if siteID is None:
+            siteID = getSiteId()
         self.__siteID = siteID
         self.pdb_id = pdb_id
         self.emdb_id = emdb_id
@@ -30,10 +32,7 @@ class getFilesReleaseOneDep:
         return ret_list
 
     def _get_previous_onedep_pdb_folder_paths(self):
-        ret_list = [
-            self.__rp.get_previous_added_path(),
-            self.__rp.get_previous_modified_path()
-        ]
+        ret_list = [self.__rp.get_previous_added_path(), self.__rp.get_previous_modified_path()]
         return ret_list
 
     def _get_onedep_pdb_file_paths(self, filename):
@@ -82,7 +81,9 @@ class getFilesReleaseOneDep:
         file_path = os.path.join(for_release_current_path, filename)
         if os.path.exists(file_path):
             return file_path, True
-        for_release_previous_path = self.__rp.get_previous_emd_subfolder_path(accession=self.emdb_id, subfolder=subfolder)
+        for_release_previous_path = self.__rp.get_previous_emd_subfolder_path(
+            accession=self.emdb_id, subfolder=subfolder
+        )
         file_path = os.path.join(for_release_previous_path, filename)
         if os.path.exists(file_path):
             return file_path, False
@@ -111,9 +112,7 @@ class getFilesReleaseOneDep:
         )
 
     def get_emdb_volume(self):
-        return self.check_emdb_current_then_previous(
-            filename=self.__rf.get_emdb_map(self.emdb_id), subfolder="map")
+        return self.check_emdb_current_then_previous(filename=self.__rf.get_emdb_map(self.emdb_id), subfolder="map")
 
     def get_emdb_fsc(self):
-        return self.check_emdb_current_then_previous(
-            filename=self.__rf.get_emdb_fsc(self.emdb_id), subfolder="fsc")
+        return self.check_emdb_current_then_previous(filename=self.__rf.get_emdb_fsc(self.emdb_id), subfolder="fsc")

@@ -3,13 +3,14 @@ import os
 import sys
 
 from wwpdb.utils.dp.ValidationWrapper import ValidationWrapper
+
 from wwpdb.apps.val_rel.config.ValConfig import ValConfig
 
 logger = logging.getLogger(__name__)
 
 
-class ValidationRun(object):
-    def __init__(self, siteId, verbose=False, log=sys.stderr):  # pylint: disable=unused-argument
+class ValidationRun:
+    def __init__(self, siteId, verbose=False, log=sys.stderr):  # noqa: ARG002 pylint: disable=unused-argument
         self.__siteid = siteId
         # self.__verbose = verbose
         vc = ValConfig(self.__siteid)
@@ -100,9 +101,9 @@ class ValidationRun(object):
 
         ok = vw.expList(dstPathList=output_file_list)
         if not ok:
-            logger.error('failed to copy files from %s to %s', run_dir, entry_output_folder)
+            logger.error("failed to copy files from %s to %s", run_dir, entry_output_folder)
 
-        logger.info('validation run finished')
+        logger.info("validation run finished")
 
         # clean up temp folder after run
         vw.cleanup()

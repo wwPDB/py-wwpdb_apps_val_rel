@@ -1,6 +1,6 @@
-import unittest
-import tempfile
 import logging
+import tempfile
+import unittest
 
 from wwpdb.apps.val_rel.utils.ValDataStore import ValDataStore
 
@@ -13,7 +13,7 @@ logger.setLevel(logging.INFO)
 class ValDataStoreTests(unittest.TestCase):
     def setUp(self):
         self.sessiondir = tempfile.mkdtemp()
-        self.entry = '1abc'
+        self.entry = "1abc"
 
     def testStore(self):
         v = ValDataStore(self.entry, self.sessiondir)

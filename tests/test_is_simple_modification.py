@@ -1,7 +1,8 @@
-import unittest
 import os
-import tempfile
 import shutil
+import tempfile
+import unittest
+
 from wwpdb.apps.val_rel.utils.mmCIFInfo import is_simple_modification
 
 
@@ -39,8 +40,8 @@ _exptl.method            'X-RAY DIFFRACTION'
     def write_mmcif(self):
         mmcif_data = self.base_mmcif_content
         mmcif_data += self.additional_content
-        self.mmCIF_file = os.path.join(self.test_dir, 'test.cif')
-        with open(self.mmCIF_file, 'w') as outFile:
+        self.mmCIF_file = os.path.join(self.test_dir, "test.cif")
+        with open(self.mmCIF_file, "w") as outFile:
             outFile.write(mmcif_data)
 
     def test_get_simple_revision(self):

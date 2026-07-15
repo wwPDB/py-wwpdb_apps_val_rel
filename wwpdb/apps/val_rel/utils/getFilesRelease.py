@@ -1,12 +1,13 @@
 import logging
-from wwpdb.utils.config.ConfigInfo import getSiteId
-from wwpdb.apps.val_rel.config.ValConfig import ValConfig
-from wwpdb.apps.val_rel.utils.getFilesReleaseOneDep import getFilesReleaseOneDep
 
-from wwpdb.apps.val_rel.utils.http_protocol.getFilesReleaseHTTP_EMDB import getFilesReleaseHttpEMDB
-from wwpdb.apps.val_rel.utils.http_protocol.getFilesReleaseHTTP_PDB import getFilesReleaseHttpPDB
+from wwpdb.utils.config.ConfigInfo import getSiteId
+
+from wwpdb.apps.val_rel.config.ValConfig import ValConfig
 from wwpdb.apps.val_rel.utils.getFilesReleaseFTP_EMDB import getFilesReleaseFtpEMDB
 from wwpdb.apps.val_rel.utils.getFilesReleaseFTP_PDB import getFilesReleaseFtpPDB
+from wwpdb.apps.val_rel.utils.getFilesReleaseOneDep import getFilesReleaseOneDep
+from wwpdb.apps.val_rel.utils.http_protocol.getFilesReleaseHTTP_EMDB import getFilesReleaseHttpEMDB
+from wwpdb.apps.val_rel.utils.http_protocol.getFilesReleaseHTTP_PDB import getFilesReleaseHttpPDB
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +15,9 @@ logger = logging.getLogger(__name__)
 class getFilesRelease:
     """Class to access prior/public release files"""
 
-    def __init__(self, pdb_id=None, emdb_id=None, siteID=getSiteId(), cache=None):
+    def __init__(self, pdb_id=None, emdb_id=None, siteID=None, cache=None):
+        if siteID is None:
+            siteID = getSiteId()
         self.__siteID = siteID
         self.pdb_id = pdb_id
         self.emdb_id = emdb_id
@@ -35,8 +38,12 @@ class getFilesRelease:
             self.__files_emdb_func = getFilesReleaseFtpEMDB
 
         self.__release_file_from_onedep = getFilesReleaseOneDep(siteID=self.__siteID, pdb_id=pdb_id, emdb_id=emdb_id)
-        self.__release_file_from_remote_emdb = self.__files_emdb_func(site_id=self.__siteID, emdbid=emdb_id, cache=self.__cache)
-        self.__release_file_from_remote_pdb = self.__files_pdb_func(site_id=self.__siteID, pdbid=pdb_id, cache=self.__cache)
+        self.__release_file_from_remote_emdb = self.__files_emdb_func(
+            site_id=self.__siteID, emdbid=emdb_id, cache=self.__cache
+        )
+        self.__release_file_from_remote_pdb = self.__files_pdb_func(
+            site_id=self.__siteID, pdbid=pdb_id, cache=self.__cache
+        )
 
     def close_connections(self):
         """This method should be used to close all open
@@ -51,13 +58,15 @@ class getFilesRelease:
         # Do not create a new path if same pdb_id. Prevents excessive downloads
         if self.pdb_id != pdb_id:
             self.pdb_id = pdb_id
-            self.__release_file_from_onedep = getFilesReleaseOneDep(siteID=self.__siteID,
-                                                                    pdb_id=self.pdb_id,
-                                                                    emdb_id=self.emdb_id)
+            self.__release_file_from_onedep = getFilesReleaseOneDep(
+                siteID=self.__siteID, pdb_id=self.pdb_id, emdb_id=self.emdb_id
+            )
             if self.__release_file_from_remote_pdb is not None:
                 self.__release_file_from_remote_pdb.close_connection()
 
-            self.__release_file_from_remote_pdb = self.__files_pdb_func(site_id=self.__siteID, pdbid=pdb_id, cache=self.__cache)
+            self.__release_file_from_remote_pdb = self.__files_pdb_func(
+                site_id=self.__siteID, pdbid=pdb_id, cache=self.__cache
+            )
 
     def set_emdb_id(self, emdb_id):
         """Sets up emdb_id for processing release files"""
@@ -65,14 +74,16 @@ class getFilesRelease:
         # Do not create a new path if same pdb_id
         if self.emdb_id != emdb_id:
             self.emdb_id = emdb_id
-            self.__release_file_from_onedep = getFilesReleaseOneDep(siteID=self.__siteID,
-                                                                    pdb_id=self.pdb_id,
-                                                                    emdb_id=emdb_id)
+            self.__release_file_from_onedep = getFilesReleaseOneDep(
+                siteID=self.__siteID, pdb_id=self.pdb_id, emdb_id=emdb_id
+            )
 
             if self.__release_file_from_remote_emdb is not None:
                 self.__release_file_from_remote_emdb.close_connection()
 
-            self.__release_file_from_remote_emdb = self.__files_emdb_func(site_id=self.__siteID, emdbid=emdb_id, cache=self.__cache)
+            self.__release_file_from_remote_emdb = self.__files_emdb_func(
+                site_id=self.__siteID, emdbid=emdb_id, cache=self.__cache
+            )
 
     def remove_local_temp_files(self):
         """Removes any temporary FTP directories"""

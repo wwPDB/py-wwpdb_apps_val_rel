@@ -1,7 +1,8 @@
-import unittest
 import os
-import tempfile
 import shutil
+import tempfile
+import unittest
+
 from wwpdb.apps.val_rel.utils.mmCIFInfo import mmCIFInfo
 
 
@@ -39,15 +40,15 @@ _exptl.method            'X-RAY DIFFRACTION'
     def write_mmcif(self):
         mmcif_data = self.base_mmcif_content
         mmcif_data += self.additional_content
-        self.mmCIF_file = os.path.join(self.test_dir, 'test.cif')
-        with open(self.mmCIF_file, 'w') as outFile:
+        self.mmCIF_file = os.path.join(self.test_dir, "test.cif")
+        with open(self.mmCIF_file, "w") as outFile:
             outFile.write(mmcif_data)
 
     def test_get_exptl(self):
         self.write_mmcif()
         mf = mmCIFInfo(mmCIF_file=self.mmCIF_file)
         exptl = mf.get_exp_methods()
-        self.assertTrue(exptl == ['X-RAY DIFFRACTION'])
+        self.assertTrue(exptl == ["X-RAY DIFFRACTION"])
 
     def test_get_associated_with_none(self):
         self.additional_content = """
@@ -77,7 +78,7 @@ EMDB EMD-1234 ? 'associated EM volume'
         self.write_mmcif()
         mf = mmCIFInfo(mmCIF_file=self.mmCIF_file)
         emdb_id = mf.get_associated_emdb()
-        self.assertTrue(emdb_id == 'EMD-1234')
+        self.assertTrue(emdb_id == "EMD-1234")
 
     def test_get_modified_categories(self):
         self.additional_content = """
@@ -104,7 +105,7 @@ loop_
         self.write_mmcif()
         mf = mmCIFInfo(mmCIF_file=self.mmCIF_file)
         cats = mf.get_latest_modified_categories()
-        self.assertTrue(cats == ['citation_author', 'citation'])
+        self.assertTrue(cats == ["citation_author", "citation"])
 
 
 if __name__ == "__main__":
