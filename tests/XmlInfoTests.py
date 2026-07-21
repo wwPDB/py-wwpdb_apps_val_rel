@@ -102,5 +102,5 @@ d" emdb_id="EMD-3863" version="3.0.1.5">
         self.assertTrue(ret == ["5oyp", "5oyt"])
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     unittest.main()

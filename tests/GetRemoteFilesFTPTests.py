@@ -8,14 +8,14 @@ from wwpdb.apps.val_rel.utils.getRemoteFilesFTP import GetRemoteFiles
 
 
 class TestRemoteFiles(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.output_dir = tempfile.mkdtemp()
         self.gfr = GetRemoteFiles(server="ftp.ebi.ac.uk")
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         shutil.rmtree(self.output_dir, ignore_errors=True)
 
-    def test_emdb_header(self):
+    def test_emdb_header(self) -> None:
         ret = self.gfr.get_url(
             output_path=self.output_dir,
             directory="pub/databases/emdb/structures/EMD-0070/header",
@@ -25,27 +25,27 @@ class TestRemoteFiles(unittest.TestCase):
         expected_file = os.path.join(self.output_dir, ret[0])
         self.assertTrue(os.path.exists(expected_file))
 
-    def test_emdb_folder(self):
+    def test_emdb_folder(self) -> None:
         ok = self.gfr.get_directory(
             output_path=self.output_dir, directory="pub/databases/emdb/structures/EMD-0070/header"
         )
         self.assertTrue(ok)
         ret = glob.glob(os.path.join(self.output_dir, "*"))
-        self.assertEqual(len(ret), 3)
+        self.assertEqual(len(ret), 2)
         for f in ret:
             expected_file = os.path.join(self.output_dir, f)
             self.assertTrue(os.path.exists(expected_file))
 
-    def test_emdb_sub_folders(self):
+    def test_emdb_sub_folders(self) -> None:
         ok = self.gfr.get_directory(
             output_path=self.output_dir,
             directory="pub/databases/emdb/structures/EMD-0070",
         )
         self.assertTrue(ok)
         ret = glob.glob(os.path.join(self.output_dir, "*"))
-        self.assertEqual(len(ret), 3)
+        self.assertEqual(len(ret), 4)
 
-    def test_emdb_header_missing_entry(self):
+    def test_emdb_header_missing_entry(self) -> None:
         ret = self.gfr.get_url(
             output_path=self.output_dir, filename="pub/databases/emdb/structures/EMD-ABCD/header/emd-ABCD-v30.xml"
         )
@@ -54,7 +54,7 @@ class TestRemoteFiles(unittest.TestCase):
             expected_file = os.path.join(self.output_dir, f)
             self.assertFalse(os.path.exists(expected_file))
 
-    def test_emdb_missing_directory(self):
+    def test_emdb_missing_directory(self) -> None:
         ok = self.gfr.get_directory(
             output_path=self.output_dir,
             directory="pub/databases/emdb/structures/EMD-ABCD",
@@ -64,5 +64,5 @@ class TestRemoteFiles(unittest.TestCase):
         self.assertEqual(len(ret), 0)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     unittest.main()

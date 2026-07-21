@@ -97,5 +97,5 @@ loop_
         self.assertFalse(ret)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     unittest.main()

@@ -4,6 +4,18 @@ import os
 import shutil
 import tempfile
 import unittest
+from unittest.mock import patch
+
+if __package__ is None or __package__ == "":
+    import sys
+    from os import path
+
+    sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
+    from commonsetup import FtpStandardConfig  # type: ignore[import-not-found]  # pylint: disable=import-error
+else:
+    from .commonsetup import (  # noqa: TID252  # pragma: no cover
+        FtpStandardConfig,
+    )
 
 from wwpdb.apps.val_rel.config.ValConfig import ValConfig
 from wwpdb.apps.val_rel.utils.http_protocol.getFilesReleaseHTTP_EMDB import getFilesReleaseHttpEMDB
@@ -11,13 +23,13 @@ from wwpdb.apps.val_rel.utils.http_protocol.getFilesReleaseHTTP_PDB import getFi
 from wwpdb.apps.val_rel.utils.http_protocol.getRemoteFilesHTTP import GetRemoteFilesHttp
 from wwpdb.apps.val_rel.utils.XmlInfo import XmlInfo
 
-logging.basicConfig(level=logging.INFO)
-
 logger = logging.getLogger(__name__)
 
 
 class TestHTTP(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
+        self.patcher = patch("wwpdb.utils.config.ConfigInfoApp.ConfigInfo", side_effect=FtpStandardConfig)
+        self.patcher.start()
         logger.info("running setup")
         pdb_testpath = "https://files.wwpdb.org/pub/pdb/data/structures/all/mmCIF"
         emdb_testpath = "https://files.wwpdb.org/pub/emdb/structures"
@@ -40,7 +52,7 @@ class TestHTTP(unittest.TestCase):
         self.temp_paths = []
         logger.info("created temp dir %s", self.temp_dir)
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         logger.info("running teardown")
         if os.path.exists(self.temp_dir):
             for f in os.listdir(self.temp_dir):
@@ -52,12 +64,12 @@ class TestHTTP(unittest.TestCase):
         if self.temp_paths and len(self.temp_paths) > 0:
             vc = ValConfig()
             session_path = vc.session_path
-            for path in self.temp_paths:
-                entry = path.replace(session_path, "")
+            for pth in self.temp_paths:
+                entry = pth.replace(session_path, "")
                 if entry.startswith("/"):
                     entry = entry[1:]
                 basename = entry.split("/")[0]
-                self.assertNotEqual(basename, "", "error - could not parse path %s" % path)
+                self.assertNotEqual(basename, "", "error - could not parse path %s" % pth)
                 temp_path = os.path.join(session_path, basename)
                 if os.path.exists(temp_path):
                     shutil.rmtree(temp_path)
@@ -65,7 +77,7 @@ class TestHTTP(unittest.TestCase):
                 else:
                     logger.warning("could not remove temp path %s", temp_path)
 
-    def test_is_file(self):
+    def test_is_file(self) -> None:
         logger.info("testing is_file")
         grf = GetRemoteFilesHttp()
         # test status code 200
@@ -76,7 +88,7 @@ class TestHTTP(unittest.TestCase):
         for file in self.non_existent_files:
             self.assertFalse(grf.is_file(file), "error - %s" % os.path.basename(file))
 
-    def test_streaming_http_request(self):
+    def test_streaming_http_request(self) -> None:
         logger.info("testing streaming http_request")
         grf = GetRemoteFilesHttp()
         logger.info("saving files to %s", self.temp_dir)
@@ -94,7 +106,7 @@ class TestHTTP(unittest.TestCase):
                 "error downloading - %s" % os.path.basename(file),
             )
 
-    def test_xml_header_file(self):
+    def test_xml_header_file(self) -> None:
         logger.info("testing xml header file")
         grf = GetRemoteFilesHttp()
         logger.info("saving files to %s", self.temp_dir)
@@ -108,7 +120,7 @@ class TestHTTP(unittest.TestCase):
             self.assertTrue(isinstance(pdbids, list), "error - no pdbids found in xml file %s" % os.path.basename(file))
             self.assertTrue(len(pdbids) > 0, "error - no pdbids found in xml file %s" % os.path.basename(file))
 
-    def test_gfr_pdb(self):
+    def test_gfr_pdb(self) -> None:
         logger.info("testing get files release pdb")
         # test xray
         pdbid = self.xray_id
@@ -140,7 +152,7 @@ class TestHTTP(unittest.TestCase):
         sf_path = gfr.get_sf()
         self.assertFalse(sf_path, "error - downloaded %s" % sf_path)
 
-    def test_gfr_emdb(self):
+    def test_gfr_emdb(self) -> None:
         logger.info("testing get files release emdb")
         emdbid = self.emdb_id
         gfr = getFilesReleaseHttpEMDB(emdbid)
@@ -203,4 +215,5 @@ class TestHTTP(unittest.TestCase):
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG)
     unittest.main()

@@ -70,5 +70,5 @@ class TestingTimeCutoff(unittest.TestCase):
         self.assertIsNotNone(end)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     unittest.main()

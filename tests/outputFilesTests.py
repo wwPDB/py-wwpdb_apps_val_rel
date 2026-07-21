@@ -1,11 +1,24 @@
 import os
 import unittest
+from unittest.mock import patch
+
+if __package__ is None or __package__ == "":
+    import sys
+    from os import path
+
+    sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
+    from commonsetup import StandardConfig  # type: ignore[import-not-found]  # pylint: disable=import-error
+else:
+    from .commonsetup import (  # noqa: TID252  # pragma: no cover
+        StandardConfig,
+    )
+
 
 from wwpdb.apps.val_rel.utils.outputFiles import outputFiles
 
 
 class OutputFilesTests(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.pdbid = "1cbs"
         self.pdbid_hash = self.pdbid[1:3]
         self.emdbid = "EMD-1234"
@@ -62,89 +75,94 @@ class OutputFilesTests(unittest.TestCase):
             ),
         }
 
-    def test_get_dir(self):
-        final_output_folder = None
-        of = outputFiles(outputRoot=self.output_folder)
-        ret = of.get_entry_output_folder()
-        self.assertTrue(ret == final_output_folder)
+    def test_get_dir(self) -> None:
+        with patch("wwpdb.utils.config.ConfigInfoApp.ConfigInfo", side_effect=StandardConfig) as _mock_method:  # noqa: F841
+            final_output_folder = None
+            of = outputFiles(outputRoot=self.output_folder)
+            ret = of.get_entry_output_folder()
+            self.assertTrue(ret == final_output_folder)
 
-    def test_get_pdbid_dir(self):
+    def test_get_pdbid_dir(self) -> None:
         of = outputFiles(pdbID=self.pdbid, outputRoot=self.output_folder)
         ret = of.get_entry_output_folder()
         self.assertTrue(ret == self.final_pdb_output_folder)
 
-    def test_get_emdb_dir(self):
+    def test_get_emdb_dir(self) -> None:
         of = outputFiles(emdbID=self.emdbid, outputRoot=self.output_folder)
         ret = of.get_entry_output_folder()
         self.assertTrue(ret == self.final_emdb_output_folder)
 
-    def test_get_pdbid_and_emdb_dir(self):
+    def test_get_pdbid_and_emdb_dir(self) -> None:
         of = outputFiles(pdbID=self.pdbid, outputRoot=self.output_folder)
         ret = of.get_entry_output_folder()
         self.assertTrue(ret == self.final_pdb_output_folder)
 
-    def test_get_pdbid_dir_skip_hash(self):
+    def test_get_pdbid_dir_skip_hash(self) -> None:
         final_output_folder = os.path.join(self.output_folder, "pdb", self.pdbid)
         of = outputFiles(pdbID=self.pdbid, outputRoot=self.output_folder, skip_pdb_hash=True)
         ret = of.get_entry_output_folder()
         self.assertTrue(ret == final_output_folder)
 
-    def test_get_pdbid_dir_emdb_set_first(self):
+    def test_get_pdbid_dir_emdb_set_first(self) -> None:
         of = outputFiles(emdbID=self.emdbid, outputRoot=self.output_folder)
         of.set_pdb_id(entry_id=self.pdbid)
         ret = of.get_entry_output_folder()
         self.assertTrue(ret == self.final_pdb_output_folder)
 
-    def test_set_accession_pdbid(self):
-        of = outputFiles(pdbID=self.pdbid)
-        ret = of.set_accession()
-        self.assertTrue(ret == self.pdbid)
+    def test_set_accession_pdbid(self) -> None:
+        with patch("wwpdb.utils.config.ConfigInfoApp.ConfigInfo", side_effect=StandardConfig) as _mock_method:  # noqa: F841
+            of = outputFiles(pdbID=self.pdbid)
+            ret = of.set_accession()
+            self.assertTrue(ret == self.pdbid)
 
-    def test_set_accession_emdbid(self):
-        of = outputFiles(emdbID=self.emdbid)
-        ret = of.set_accession()
-        self.assertEqual(ret, self.emdb_accession)
+    def test_set_accession_emdbid(self) -> None:
+        with patch("wwpdb.utils.config.ConfigInfoApp.ConfigInfo", side_effect=StandardConfig) as _mock_method:  # noqa: F841
+            of = outputFiles(emdbID=self.emdbid)
+            ret = of.set_accession()
+            self.assertEqual(ret, self.emdb_accession)
 
-    def test_set_accession_pdbid_and_not_set_emdbid(self):
-        of = outputFiles(pdbID=self.pdbid, emdbID=self.emdbid)
-        ret = of.set_accession()
-        self.assertTrue(ret == self.pdbid)
+    def test_set_accession_pdbid_and_not_set_emdbid(self) -> None:
+        with patch("wwpdb.utils.config.ConfigInfoApp.ConfigInfo", side_effect=StandardConfig) as _mock_method:  # noqa: F841
+            of = outputFiles(pdbID=self.pdbid, emdbID=self.emdbid)
+            ret = of.set_accession()
+            self.assertTrue(ret == self.pdbid)
 
-    def test_set_accession_pdbid_and_emdbid(self):
-        of = outputFiles(pdbID=self.pdbid, emdbID=self.emdbid)
-        of.set_accession_variables(with_emdb=True)
-        ret = of.set_accession()
-        accession = f"{self.emdb_accession}_{self.pdbid}"
-        self.assertEqual(ret, accession)
+    def test_set_accession_pdbid_and_emdbid(self) -> None:
+        with patch("wwpdb.utils.config.ConfigInfoApp.ConfigInfo", side_effect=StandardConfig) as _mock_method:  # noqa: F841
+            of = outputFiles(pdbID=self.pdbid, emdbID=self.emdbid)
+            of.set_accession_variables(with_emdb=True)
+            ret = of.set_accession()
+            accession = f"{self.emdb_accession}_{self.pdbid}"
+            self.assertEqual(ret, accession)
 
-    def test_set_accession_pdbid_get_core_files(self):
+    def test_set_accession_pdbid_get_core_files(self) -> None:
         of = outputFiles(pdbID=self.pdbid, outputRoot=self.output_folder)
         of.set_accession()
         ret = of.get_core_validation_files()
         self.assertTrue(ret == self.pdb_core_files)
 
-    def test_set_accession_pdbid_get_map_files(self):
+    def test_set_accession_pdbid_get_map_files(self) -> None:
         of = outputFiles(pdbID=self.pdbid, outputRoot=self.output_folder)
         of.set_accession()
         ret = of.get_extra_validation_files()
         self.assertTrue(ret == self.pdb_aux_files)
 
-    def test_set_accession_emdbid_get_core_files(self):
+    def test_set_accession_emdbid_get_core_files(self) -> None:
         of = outputFiles(emdbID=self.emdbid, outputRoot=self.output_folder)
         of.set_accession()
         ret = of.get_core_validation_files()
         self.assertEqual(ret, self.emdb_core_files)
 
-    def test_ret_pdb_hash_skip_hash(self):
+    def test_ret_pdb_hash_skip_hash(self) -> None:
         of = outputFiles(pdbID=self.pdbid, outputRoot=self.output_folder, skip_pdb_hash=True)
         ret = of.ret_pdb_hash()
         self.assertEqual(ret, "")
 
-    def test_ret_pdb_hash(self):
+    def test_ret_pdb_hash(self) -> None:
         of = outputFiles(pdbID=self.pdbid, outputRoot=self.output_folder)
         ret = of.ret_pdb_hash()
         self.assertEqual(ret, self.pdbid_hash)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     unittest.main()

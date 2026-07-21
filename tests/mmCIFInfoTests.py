@@ -104,9 +104,10 @@ loop_
 """
         self.write_mmcif()
         mf = mmCIFInfo(mmCIF_file=self.mmCIF_file)
-        cats = mf.get_latest_modified_categories()
+        cats, ordinal = mf.get_latest_modified_categories()
         self.assertTrue(cats == ["citation_author", "citation"])
+        self.assertEqual(ordinal, "2")
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     unittest.main()

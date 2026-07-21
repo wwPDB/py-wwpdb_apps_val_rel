@@ -86,6 +86,7 @@ explicit-preview-rules = true
 ignore = [
   "C402",     #  Unnecessary generator (rewrite as a `dict` comprehension)
   "EXE001",   # Shebang is present but file is not executabl
+  "FA100",    # Add `from __future__ import annotations` to simplify `typing.Optional`
   "FBT002",   # Boolean default positional argument in function definition
   "FBT001",   # Boolean-typed positional argument in function definition
   "FURB113",  # Use `stPL.extend(...)` instead of repeatedly calling `stPL.append()`
@@ -123,7 +124,7 @@ ignore = [
 # -------------------- default environment scripts ------------------
 [tool.hatch.envs.default]
 skip-install = true
-dependencies = ["mypy", "ruff >=0.6.9", "wwpdb.utils.testing"]
+dependencies = ["mypy", "ruff >=0.6.9", "wwpdb.utils.config"]
 
 
 [tool.hatch.envs.default.scripts]
@@ -159,7 +160,7 @@ run = ["tox"]
 
 # -------------------------  Mypy disable ---------
 [[tool.mypy.overrides]]
-module = ["oslo_concurrency.*", "wwpdb.*", "mmcif.*", "filelock"]
+module = ["oslo_concurrency.*", "wwpdb.io.*", "mmcif.*", "wwpdb.utils.ws_utils.*", "wwpdb.utils.dp.*", "wwpdb.apps.validation.*", "wwpdb.utils.detach.*","wwpdb.utils.message_queue.*", "wwpdb.utils.session.*", "filelock"]
 ignore_missing_imports = true
 
 [tool.mypy]
@@ -171,7 +172,3 @@ exclude = [
 [tool.ruff.lint.per-file-ignores]
 "wwpdb/apps/val_rel/utils/check_results.py" = ["T201", "T203"]  # Command line script
 "tests/test_get_files_release_ftp_emdb.py" = ["T201"]
-
-#"awwpdb/utils/config/ConfigInfoData.py" = ["RUF012"]  # typing.ClassVar
-#"wwpdb/utils/config/ConfigInfoData.py" = ["SLF001", "RUF012", "F401"]  # Private member access, should use typing.ClassVar, do not remove unused imports
-

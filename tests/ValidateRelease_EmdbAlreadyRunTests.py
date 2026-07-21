@@ -3,17 +3,34 @@ import shutil
 import tempfile
 import time
 import unittest
+from typing import Optional, Tuple, Union
+from unittest.mock import patch
+
+if __package__ is None or __package__ == "":
+    import sys
+    from os import path
+
+    sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
+    from commonsetup import StandardConfig  # type: ignore[import-not-found]  # pylint: disable=import-error
+else:
+    from .commonsetup import (  # noqa: TID252  # pragma: no cover
+        StandardConfig,
+    )
 
 from wwpdb.apps.val_rel.ValidateRelease import runValidation
 
 
-def touch(fname, times=None):
+def touch(fname, times: Optional[Tuple[Union[int, float], Union[int, float]]] = None) -> None:
     with open(fname, "a"):
         os.utime(fname, times)
 
 
 class ModifiedFolderTests(unittest.TestCase):
     def setUp(self):
+        self.patcher = patch("wwpdb.utils.config.ConfigInfoApp.ConfigInfo", side_effect=StandardConfig)
+
+        self.patcher.start()
+
         self.input_dir = tempfile.mkdtemp()
         self.pdbid = "1cbs"
         self.pdbid_hash = self.pdbid[1:3]
@@ -35,6 +52,8 @@ class ModifiedFolderTests(unittest.TestCase):
             shutil.rmtree(self.output_dir, ignore_errors=True)
         if os.path.exists(self.input_dir):
             shutil.rmtree(self.input_dir, ignore_errors=True)
+
+        self.patcher.stop()
 
     def test_always_run(self):
         self.rv.setPdbId(self.pdbid)
@@ -112,5 +131,5 @@ class ModifiedFolderTests(unittest.TestCase):
         self.assertFalse(ret)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pramga: no cover
     unittest.main()
