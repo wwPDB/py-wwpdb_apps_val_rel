@@ -4,7 +4,7 @@ import shutil
 import tempfile
 import unittest
 
-from wwpdb.apps.val_rel.utils.getRemoteFilesFTP import GetRemoteFiles
+from wwpdb.apps.val_rel.utils.ftp_protocol.getRemoteFilesFTP import GetRemoteFiles
 
 
 class TestRemoteFiles(unittest.TestCase):

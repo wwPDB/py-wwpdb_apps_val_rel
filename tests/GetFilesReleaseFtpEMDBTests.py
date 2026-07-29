@@ -14,7 +14,7 @@ else:
         FtpStandardConfig,
     )
 
-from wwpdb.apps.val_rel.utils.getFilesReleaseFTP_EMDB import getFilesReleaseFtpEMDB
+from wwpdb.apps.val_rel.utils.ftp_protocol.getFilesReleaseFTP_EMDB import getFilesReleaseFtpEMDB
 
 
 class TestsGettingEMDBData(unittest.TestCase):

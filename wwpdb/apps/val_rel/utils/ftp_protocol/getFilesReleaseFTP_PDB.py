@@ -7,8 +7,12 @@ from wwpdb.io.locator.ReleaseFileNames import ReleaseFileNames
 from wwpdb.utils.config.ConfigInfo import getSiteId
 
 from wwpdb.apps.val_rel.config.ValConfig import ValConfig
+from wwpdb.apps.val_rel.utils.ftp_protocol.getRemoteFilesFTP import (
+    GetRemoteFiles,
+    remove_local_temp_ftp,
+    setup_local_temp_ftp,
+)
 from wwpdb.apps.val_rel.utils.getFilesReleaseBase import GetFilesReleaseBasePDB
-from wwpdb.apps.val_rel.utils.getRemoteFilesFTP import GetRemoteFiles, remove_local_temp_ftp, setup_local_temp_ftp
 
 logger = logging.getLogger(__name__)
 

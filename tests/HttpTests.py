@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 
 class MygetFilesReleaseHttpEMDB(getFilesReleaseHttpEMDB):
     """Subclass of getFilesReleaseHttpEMDB for testing purposes"""
+
     def __init__(self, emdb_id: str, site_id: Optional[str] = None) -> None:
         super().__init__(emdb_id, site_id)
 

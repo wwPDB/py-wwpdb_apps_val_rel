@@ -4,9 +4,9 @@ from typing import Optional, Type
 from wwpdb.utils.config.ConfigInfo import getSiteId
 
 from wwpdb.apps.val_rel.config.ValConfig import ValConfig
+from wwpdb.apps.val_rel.utils.ftp_protocol.getFilesReleaseFTP_EMDB import getFilesReleaseFtpEMDB
+from wwpdb.apps.val_rel.utils.ftp_protocol.getFilesReleaseFTP_PDB import getFilesReleaseFtpPDB
 from wwpdb.apps.val_rel.utils.getFilesReleaseBase import GetFilesReleaseBaseEMDB, GetFilesReleaseBasePDB
-from wwpdb.apps.val_rel.utils.getFilesReleaseFTP_EMDB import getFilesReleaseFtpEMDB
-from wwpdb.apps.val_rel.utils.getFilesReleaseFTP_PDB import getFilesReleaseFtpPDB
 from wwpdb.apps.val_rel.utils.getFilesReleaseOneDep import getFilesReleaseOneDep
 from wwpdb.apps.val_rel.utils.http_protocol.getFilesReleaseHTTP_EMDB import getFilesReleaseHttpEMDB
 from wwpdb.apps.val_rel.utils.http_protocol.getFilesReleaseHTTP_PDB import getFilesReleaseHttpPDB
