@@ -21,7 +21,7 @@ else:
 from wwpdb.apps.val_rel.ValidateRelease import runValidation
 
 
-def touch(fname, times: Optional[Tuple[Union[int, float], Union[int, float]]] = None) -> None:
+def touch(fname: str, times: Optional[Tuple[Union[int, float], Union[int, float]]] = None) -> None:
     with open(fname, "a"):
         os.utime(fname, times)
 

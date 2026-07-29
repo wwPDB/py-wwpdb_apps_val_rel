@@ -18,7 +18,7 @@ from wwpdb.apps.val_rel.utils.getFilesReleaseFTP_PDB import getFilesReleaseFtpPD
 
 
 class TestsGettingEMDBData(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.patcher = patch("wwpdb.utils.config.ConfigInfoApp.ConfigInfo", side_effect=FtpStandardConfig)
         self.patcher2 = patch("wwpdb.apps.val_rel.config.ValConfig.ConfigInfo", side_effect=FtpStandardConfig)
         self.patcher.start()
@@ -27,12 +27,12 @@ class TestsGettingEMDBData(unittest.TestCase):
         self.server = "ftp.ebi.ac.uk"
         self.url_prefix = "pub/databases/pdb/data/structures/all/"
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         shutil.rmtree(self.temp_folder, ignore_errors=True)
         self.patcher.stop()
         self.patcher2.stop()
 
-    def test_checking_model_existing_pdb(self):
+    def test_checking_model_existing_pdb(self) -> None:
         gfrf = getFilesReleaseFtpPDB(pdbid="1cbs")
         gfrf.setup_local_temp_ftp(session_path=self.temp_folder)
         gfrf.server = self.server
@@ -40,7 +40,7 @@ class TestsGettingEMDBData(unittest.TestCase):
         ret = gfrf.get_model()
         self.assertTrue(ret)
 
-    def test_checking_header_invalid_pdb(self):
+    def test_checking_header_invalid_pdb(self) -> None:
         gfrf = getFilesReleaseFtpPDB(pdbid="1cbssFDSDFSF")
         gfrf.setup_local_temp_ftp(session_path=self.temp_folder)
         gfrf.server = self.server

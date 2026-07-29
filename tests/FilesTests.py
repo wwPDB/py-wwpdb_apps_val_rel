@@ -7,7 +7,7 @@ from typing import Optional, Tuple, Union
 from wwpdb.apps.val_rel.utils.Files import copy_file, get_gzip_name, gzip_file
 
 
-def touch(fname, times: Optional[Tuple[Union[int, float], Union[int, float]]] = None):
+def touch(fname: str, times: Optional[Tuple[Union[int, float], Union[int, float]]] = None) -> None:
     with open(fname, "a"):
         os.utime(fname, times)
 

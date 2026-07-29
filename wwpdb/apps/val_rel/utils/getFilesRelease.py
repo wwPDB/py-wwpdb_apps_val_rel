@@ -1,8 +1,10 @@
 import logging
+from typing import Optional, Type
 
 from wwpdb.utils.config.ConfigInfo import getSiteId
 
 from wwpdb.apps.val_rel.config.ValConfig import ValConfig
+from wwpdb.apps.val_rel.utils.getFilesReleaseBase import GetFilesReleaseBaseEMDB, GetFilesReleaseBasePDB
 from wwpdb.apps.val_rel.utils.getFilesReleaseFTP_EMDB import getFilesReleaseFtpEMDB
 from wwpdb.apps.val_rel.utils.getFilesReleaseFTP_PDB import getFilesReleaseFtpPDB
 from wwpdb.apps.val_rel.utils.getFilesReleaseOneDep import getFilesReleaseOneDep
@@ -15,7 +17,18 @@ logger = logging.getLogger(__name__)
 class getFilesRelease:
     """Class to access prior/public release files"""
 
-    def __init__(self, pdb_id=None, emdb_id=None, siteID=None, cache=None):
+    __files_pdb_func: Type[GetFilesReleaseBasePDB]
+    __files_emdb_func: Type[GetFilesReleaseBaseEMDB]
+    __release_file_from_remote_pdb: GetFilesReleaseBasePDB
+    __release_file_from_remote_emdb: GetFilesReleaseBaseEMDB
+
+    def __init__(
+        self,
+        pdb_id: Optional[str] = None,
+        emdb_id: Optional[str] = None,
+        siteID: Optional[str] = None,
+        cache: Optional[str] = None,
+    ) -> None:
         if siteID is None:
             siteID = getSiteId()
         self.__siteID = siteID
@@ -45,14 +58,14 @@ class getFilesRelease:
             site_id=self.__siteID, pdbid=pdb_id, cache=self.__cache
         )
 
-    def close_connections(self):
+    def close_connections(self) -> None:
         """This method should be used to close all open
         connections in subclasses.
         """
         self.__release_file_from_remote_pdb.close_connection()
         self.__release_file_from_remote_emdb.close_connection()
 
-    def set_pdb_id(self, pdb_id):
+    def set_pdb_id(self, pdb_id: str) -> None:
         """Sets up pdb_id for processing release files"""
 
         # Do not create a new path if same pdb_id. Prevents excessive downloads
@@ -68,7 +81,7 @@ class getFilesRelease:
                 site_id=self.__siteID, pdbid=pdb_id, cache=self.__cache
             )
 
-    def set_emdb_id(self, emdb_id):
+    def set_emdb_id(self, emdb_id: str) -> None:
         """Sets up emdb_id for processing release files"""
 
         # Do not create a new path if same pdb_id
@@ -85,12 +98,12 @@ class getFilesRelease:
                 site_id=self.__siteID, emdbid=emdb_id, cache=self.__cache
             )
 
-    def remove_local_temp_files(self):
+    def remove_local_temp_files(self) -> None:
         """Removes any temporary FTP directories"""
         self.__release_file_from_remote_pdb.remove_local_temp_files()
         self.__release_file_from_remote_emdb.remove_local_temp_files()
 
-    def get_model(self):
+    def get_model(self) -> Optional[str]:
         """
         get the PDB model file - from OneDep then local FTP
         :param pdbid: PDB ID
@@ -101,7 +114,7 @@ class getFilesRelease:
             file_name = self.__release_file_from_remote_pdb.get_model()
         return file_name
 
-    def get_sf(self):
+    def get_sf(self) -> Optional[str]:
         """
         get the PDB structure factor file - from OneDep then local FTP
         :param pdbid: PDB ID
@@ -112,7 +125,7 @@ class getFilesRelease:
             file_name = self.__release_file_from_remote_pdb.get_sf()
         return file_name
 
-    def get_cs(self):
+    def get_cs(self) -> Optional[str]:
         """
         get the PDB chemical shift file - from OneDep then local FTP
         :param pdbid: PDB ID
@@ -123,7 +136,7 @@ class getFilesRelease:
             file_name = self.__release_file_from_remote_pdb.get_cs()
         return file_name
 
-    def get_nmr_data(self):
+    def get_nmr_data(self) -> Optional[str]:
         """
         Get the PDB combined NMR data file - from OneDep then local FTP
         :param pdbid: PDB ID
@@ -134,34 +147,34 @@ class getFilesRelease:
             file_name = self.__release_file_from_remote_pdb.get_nmr_data()
         return file_name
 
-    def get_emdb_xml(self):
+    def get_emdb_xml(self) -> Optional[str]:
         file_name, self.em_xml_current = self.__release_file_from_onedep.get_emdb_xml()
         if not file_name:
             file_name = self.__release_file_from_remote_emdb.get_emdb_xml()
         return file_name
 
-    def get_emdb_volume(self):
+    def get_emdb_volume(self) -> Optional[str]:
         file_name, _ = self.__release_file_from_onedep.get_emdb_volume()
         if not file_name:
             file_name = self.__release_file_from_remote_emdb.get_emdb_volume()
 
         return file_name
 
-    def get_emdb_fsc(self):
+    def get_emdb_fsc(self) -> Optional[str]:
         file_name, _ = self.__release_file_from_onedep.get_emdb_fsc()
         if not file_name:
             file_name = self.__release_file_from_remote_emdb.get_emdb_fsc()
 
         return file_name
 
-    def is_sf_current(self):
+    def is_sf_current(self) -> bool:
         return self.sf_current
 
-    def is_cs_current(self):
+    def is_cs_current(self) -> bool:
         return self.cs_current
 
-    def is_em_xml_current(self):
+    def is_em_xml_current(self) -> bool:
         return self.em_xml_current
 
-    def set_cache(self, fpath):
+    def set_cache(self, fpath: Optional[str]) -> None:
         self.__cache = fpath

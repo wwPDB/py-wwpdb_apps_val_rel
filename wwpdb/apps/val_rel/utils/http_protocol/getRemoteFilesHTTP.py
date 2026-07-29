@@ -3,10 +3,12 @@ import os
 import shutil
 import tempfile
 import urllib.parse
+from typing import Optional
 
 import requests
 from requests.adapters import HTTPAdapter
-from urllib3.util.retry import MaxRetryError, Retry
+from urllib3.exceptions import MaxRetryError
+from urllib3.util.retry import Retry
 
 from wwpdb.apps.val_rel.config.ValConfig import ValConfig
 from wwpdb.apps.val_rel.utils.emailHandler import EmailHandler
@@ -15,7 +17,7 @@ from wwpdb.apps.val_rel.utils.PersistFileCache import PersistFileCache
 logger = logging.getLogger(__name__)
 
 
-def setup_local_temp_http(temp_dir, suffix, session_path):
+def setup_local_temp_http(temp_dir: Optional[str], suffix: str, session_path: str) -> str:
     if not temp_dir:
         if not os.path.exists(session_path):
             os.makedirs(session_path)
@@ -23,7 +25,7 @@ def setup_local_temp_http(temp_dir, suffix, session_path):
     return temp_dir
 
 
-def remove_local_temp_http(temp_dir, require_empty=False):
+def remove_local_temp_http(temp_dir: str, require_empty: bool = False) -> None:
     """Removes the temporary directory. If require_empty true, will skip if not"""
     if temp_dir and os.path.exists(temp_dir):
         if require_empty:
@@ -35,7 +37,7 @@ def remove_local_temp_http(temp_dir, require_empty=False):
 
 
 class GetRemoteFilesHttp:
-    def __init__(self, server=None, cache=None, site_id=None):  # noqa: ARG002  pylint: disable=unused-argument
+    def __init__(self, server: Optional[str] = None, cache: Optional[str] = None, site_id: Optional[str] = None):  # noqa: ARG002  pylint: disable=unused-argument
         self.__cache = cache
         vc = ValConfig(site_id=site_id)
         self.connection_timeout = vc.connection_timeout
@@ -46,18 +48,21 @@ class GetRemoteFilesHttp:
         self.__status_force_list = vc.status_force_list
         self.emailHandler = EmailHandler(site_id)
 
-    def get_url(self, *, url=None, output_path=None):
+    def get_url(self, url: Optional[str] = None, output_path: Optional[str] = None) -> str:
         """Retrieve file from url.  Note:  This is a little backwards - should check cache instead of waiting for get_file"""
         if not url:
             emsg = "url must be specified"
             raise ValueError(emsg)
 
+        if not output_path:
+            emsg = "output_path must be specified"
+            raise ValueError(emsg)
         # Old code would check is_file() - and then get_file. get_file checks cache before download so no need here to check remote if file. If we have it
         # cached, it is real.
         self.get_file(url, output_path)
         return os.path.basename(url)
 
-    def is_file(self, remote_file):
+    def is_file(self, remote_file: str) -> bool:
         with requests.Session() as s:
             try:
                 self.__mount_session_retry(s)
@@ -75,7 +80,7 @@ class GetRemoteFilesHttp:
                 # We re-raise the exception - as there is no other way to handle
                 raise e  # noqa: TRY201
 
-    def get_file(self, remote_file, output_path):
+    def get_file(self, remote_file: str, output_path: str) -> None:
         """
         get from cache if found
         otherwise, download to temp dir in sessions path
@@ -108,11 +113,11 @@ class GetRemoteFilesHttp:
                     pfc.add_file(temp_file_name, cache_file_path)
                     logger.debug("Adding %s to cache", cache_file_path)
 
-    def _setup_output_path(self, output_path):
+    def _setup_output_path(self, output_path: str) -> None:
         if not os.path.exists(output_path):
             os.makedirs(output_path)
 
-    def __mount_session_retry(self, session):
+    def __mount_session_retry(self, session: requests.Session) -> None:
         """Sets up retry for session"""
         retries = Retry(
             total=self.__retries,
@@ -123,7 +128,7 @@ class GetRemoteFilesHttp:
         session.mount("https://", HTTPAdapter(max_retries=retries))
         session.mount("http://", HTTPAdapter(max_retries=retries))
 
-    def httpRequest(self, url, outfilepath):
+    def httpRequest(self, url: str, outfilepath: str) -> bool:
         """download to session directory"""
         logger.info("http request for %s", url)
         status_code = -1
@@ -184,10 +189,10 @@ class GetRemoteFilesHttp:
             return False
         return False
 
-    def handle_exception(self, msg):
+    def handle_exception(self, msg: str) -> None:
         self.emailHandler.send_email_admins(msg)
         logger.exception(msg)
 
-    def disconnect(self):
+    def disconnect(self) -> None:
         # maintained for backward compatibility with ftp version
         pass

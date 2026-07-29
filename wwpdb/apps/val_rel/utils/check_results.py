@@ -4,6 +4,7 @@ import json
 import logging
 import os
 from pprint import pformat, pprint
+from typing import Dict, List, Optional, Set, Tuple, Union, cast
 
 from wwpdb.apps.validation.src.utils.validation_xml_reader import ValidationXMLReader
 from wwpdb.io.locator.ReleasePathInfo import ReleasePathInfo
@@ -18,20 +19,27 @@ logger = logging.getLogger(__name__)
 
 
 class CheckResult:
-    def __init__(self, output_folder=None, pdbid=None, emdbid=None, siteID=None, validation_sub_folder="current"):
+    def __init__(
+        self,
+        output_folder: Optional[str] = None,
+        pdbid: Optional[str] = None,
+        emdbid: Optional[str] = None,
+        siteID: Optional[str] = None,
+        validation_sub_folder: str = "current",
+    ) -> None:
         self.__output_folder = output_folder
         self.__pdbid = pdbid
         self.__emdbid = emdbid
         self.__siteid = siteID
         self.__validation_sub_folder = validation_sub_folder
-        self.__message = {}
+        self.__message: Dict[str, Union[Optional[str], bool]] = {}
         self.__prepare_message()
-        self.expected_files = {}
-        self.missing_files = {}
-        self.validation_xml = None
-        self.failed_programs = []
+        self.expected_files: Dict[str, str] = {}
+        self.missing_files: Dict[str, List[Dict[str, str]]] = {}
+        self.validation_xml: Optional[str] = None
+        self.failed_programs: List[str] = []
 
-    def __prepare_message(self):
+    def __prepare_message(self) -> None:
         self.__message["pdbID"] = self.__pdbid
         self.__message["emdbID"] = self.__emdbid
         self.__message["outputRoot"] = self.__output_folder
@@ -39,14 +47,14 @@ class CheckResult:
             self.__message["siteID"] = self.__siteid
         self.__message["subfolder"] = self.__validation_sub_folder
 
-    def is_expected_file_type(self, file_type):
+    def is_expected_file_type(self, file_type: str) -> bool:
         if not self.__pdbid and self.__emdbid:
             expected_missing_file_types = ["svg", "png"]
             if file_type in expected_missing_file_types:
                 return False
         return True
 
-    def check_entry(self):
+    def check_entry(self) -> None:
         self.rv = runValidation()  # pylint: disable=attribute-defined-outside-init
         self.rv.process_message(self.__message)
         self.rv.set_entry_id()
@@ -76,54 +84,59 @@ class CheckResult:
                     self.expected_files[output_file_type] = gzipped_output_file
                     if not os.path.exists(gzipped_output_file):
                         self.missing_files.setdefault(output_file_type, []).append(
-                            {self.rv.getEntryId(): gzipped_output_file}
+                            {cast("str", self.rv.getEntryId()): gzipped_output_file}
                         )
 
             self.check_failed_programs()
 
-    def get_missing_files(self):
+    def get_missing_files(self) -> Dict[str, List[Dict[str, str]]]:
+        #  {'pdf': [{'9bgf': '/wwpdb_da/da_top/data_devel/for_release/val_reports/current/9bgf/9bgf_validation.pdf.gz'}], ...
         return self.missing_files
 
-    def get_expected_files(self):
+    def get_expected_files(self) -> Dict[str, str]:
         return self.expected_files
 
-    def did_all_files_fail(self):
+    def did_all_files_fail(self) -> bool:
+        """Returns true if none of the expected files are found"""
         if self.missing_files:
             if len(self.expected_files) - len(self.missing_files) == 0:
                 return True
         return False
 
-    def check_failed_programs(self):
+    def check_failed_programs(self) -> None:
+        """If a validation_xml file exists, parse file and set self.failed_programs"""
         if self.validation_xml:
             if os.path.exists(self.validation_xml):
                 vfx = ValidationXMLReader(self.validation_xml)
                 self.failed_programs = vfx.get_failed_programs()
 
-    def get_failed_programs(self):
+    def get_failed_programs(self) -> List[str]:
         return self.failed_programs
 
 
 class CheckEntries:
-    def __init__(self, siteID=None):
+    def __init__(self, siteID: Optional[str] = None) -> None:
         self.__siteid = siteID
-        self.entry_list = []
-        self.return_dictionary = {}
-        self.failed_entries = {}
-        self.entries_with_failed_programs = []
+        self.entry_list: List[Tuple[str, str]] = []  # List of (entry_id, "emdb"/"pdb")
+        self.return_dictionary: Dict[str, Dict[str, Union[List[str], Dict[str, List[List[Dict[str, str]]]]]]] = {}
+        # {'missing_output': {'pdb': {'pdf': [[{'0304': '/wwpdb_da/da_top/data_devel/for_release/val_reports/current/0304/0304_validation.pdf.gz'}], ...
+        # {'failed_programs': {'molprobity': ['1abc']}}
+        self.failed_entries: Dict[str, Set[str]] = {}
+        self.entries_with_failed_programs: List[str] = []
         self.rpi = ReleasePathInfo(siteId=self.__siteid)
 
-    def clear_entry_list(self):
+    def clear_entry_list(self) -> None:
         self.entry_list = []
         self.return_dictionary = {}
         self.failed_entries = {}
         self.entries_with_failed_programs = []
 
-    def get_missing_file_path(self):
+    def get_missing_file_path(self) -> str:
         return os.path.join(self.rpi.get_for_release_path(), "missing.ids")
 
-    def read_missing_file(self):
-        missing_entries = []
-        entries_to_add = {}
+    def read_missing_file(self) -> List[str]:
+        missing_entries: List[str] = []
+        entries_to_add: Dict[str, List[str]] = {}
         if os.path.exists(self.get_missing_file_path()):
             with open(self.get_missing_file_path()) as csvfile:
                 try:
@@ -148,7 +161,7 @@ class CheckEntries:
 
         return missing_entries
 
-    def write_missing_file(self):
+    def write_missing_file(self) -> None:
         logger.info("writing out: %s", self.get_missing_file_path())
         with open(self.get_missing_file_path(), "w") as out_file:
             if self.failed_entries:
@@ -161,7 +174,9 @@ class CheckEntries:
                         entry_row = {"entry_type": entry_type, "entry_id": entry_id}
                         writer.writerow(entry_row)
 
-    def get_entries(self, skip_emdb=False, pdb_entry_file=None, emdb_entry_file=None):
+    def get_entries(
+        self, skip_emdb: bool = False, pdb_entry_file: Optional[str] = None, emdb_entry_file: Optional[str] = None
+    ) -> None:
         fe = FindEntries(siteID=self.__siteid)
         pdb_entries = []
         emdb_entries = []
@@ -186,17 +201,19 @@ class CheckEntries:
         self.add_pdb_entries(pdb_entries=pdb_entries)
         self.add_emdb_entries(emdb_entries=emdb_entries)
 
-    def add_emdb_entries(self, emdb_entries):
+    def add_emdb_entries(self, emdb_entries: List[str]) -> None:
         logger.info("There are %s EMDB entries to check", len(emdb_entries))
         for emdb_entry in emdb_entries:
             self.entry_list.append((emdb_entry, "emdb"))
 
-    def add_pdb_entries(self, pdb_entries):
+    def add_pdb_entries(self, pdb_entries: List[str]) -> None:
         logger.info("There are %s PDB entries to check", len(pdb_entries))
         for pdb_entry in pdb_entries:
             self.entry_list.append((pdb_entry, "pdb"))
 
-    def check_entries(self, output_folder=None, validation_sub_folder="current"):
+    def check_entries(
+        self, output_folder: Optional[str] = None, validation_sub_folder: str = "current"
+    ) -> Dict[str, str]:  # Always empty
         if self.entry_list:
             for entry in self.entry_list:
                 entry_id = entry[0]
@@ -222,44 +239,48 @@ class CheckEntries:
                 if cr.did_all_files_fail():
                     self.failed_entries.setdefault(entry_type, set()).add(entry_id)
 
-                missing_ret = cr.get_missing_files()
+                missing_ret = cr.get_missing_files()  # dict[str, list[dict[str, str]]]
                 for missing_type in missing_ret:
-                    self.return_dictionary.setdefault("missing_output", {}).setdefault(entry_type, {}).setdefault(
-                        missing_type, []
-                    ).append(missing_ret[missing_type])
+                    cast(
+                        "Dict[str, Dict[str, Dict[str, List[List[Dict[str, str]]]]]]", self.return_dictionary
+                    ).setdefault("missing_output", {}).setdefault(entry_type, {}).setdefault(missing_type, []).append(
+                        missing_ret[missing_type]
+                    )
 
                 ret_failed = cr.get_failed_programs()
                 if ret_failed:
                     self.entries_with_failed_programs.append(entry_id)
                     for program in ret_failed:
-                        self.return_dictionary.setdefault("failed_programs", {}).setdefault(program, []).append(
-                            entry_id
-                        )
+                        cast("Dict[str, Dict[str, List[str]]]", self.return_dictionary).setdefault(
+                            "failed_programs", {}
+                        ).setdefault(program, []).append(entry_id)
         return {}
 
-    def get_full_details(self):
+    def get_full_details(self) -> Dict[str, Dict[str, Union[List[str], Dict[str, List[List[Dict[str, str]]]]]]]:
         return self.return_dictionary
 
-    def get_failed_programs(self):
-        return self.return_dictionary.get("failed_programs", {})
+    def get_failed_programs(self) -> Dict[str, List[str]]:
+        return cast("Dict[str, List[str]]", self.return_dictionary.get("failed_programs", {}))
 
-    def get_missing_output(self):
-        return self.return_dictionary.get("missing_output", {})
+    def get_missing_output(self) -> Dict[str, Dict[str, List[List[Dict[str, str]]]]]:
+        return cast("Dict[str, Dict[str, Dict[str, List[List[Dict[str, str]]]]]]", self.return_dictionary).get(
+            "missing_output", {}
+        )
 
-    def get_entries_with_failed_programs(self):
+    def get_entries_with_failed_programs(self) -> List[str]:
         return self.entries_with_failed_programs
 
-    def get_failed_entries(self):
+    def get_failed_entries(self) -> Dict[str, Set[str]]:
         return self.failed_entries
 
-    def get_entry_list(self):
+    def get_entry_list(self) -> List[Tuple[str, str]]:
         return self.entry_list
 
-    def write_missing_json(self, output_file):
+    def write_missing_json(self, output_file: str) -> None:
         with open(output_file, "w") as out_file:
             json.dump(self.get_failed_entries(), out_file)
 
-    def write_missing(self, output_file):
+    def write_missing(self, output_file: str) -> None:
         with open(output_file, "w") as out_file:
             for entry_type in self.get_failed_entries():
                 entries = self.get_failed_entries()[entry_type]
@@ -268,14 +289,14 @@ class CheckEntries:
 
 
 def prepare_entries_and_check(
-    siteID=None,
-    output_folder=None,
-    failed_entries_file=None,
-    skip_emdb=False,
-    pdb_entry_file=None,
-    emdb_entry_file=None,
-    validation_sub_folder=None,
-):
+    siteID: Optional[str] = None,
+    output_folder: Optional[str] = None,
+    failed_entries_file: Optional[str] = None,
+    skip_emdb: bool = False,
+    pdb_entry_file: Optional[str] = None,
+    emdb_entry_file: Optional[str] = None,
+    validation_sub_folder: Optional[str] = None,
+) -> None:
     ce = CheckEntries(siteID=siteID)
     failed_entries = {}
     failed_programs = {}
@@ -323,7 +344,7 @@ def prepare_entries_and_check(
         ce.write_missing(failed_entries_file)
 
 
-def main():
+def main() -> None:
     logger = logging.getLogger()  # pylint: disable=redefined-outer-name
     log_format = "%(funcName)s (%(levelname)s) - %(message)s"
     logging.basicConfig(format=log_format)

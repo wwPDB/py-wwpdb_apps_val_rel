@@ -14,6 +14,7 @@ Will also allow negative caching of files using a per directory admin file
 import json
 import logging
 import os
+from typing import List, Optional, cast
 
 from oslo_concurrency import lockutils
 from wwpdb.io.file.DataFile import DataFile
@@ -22,11 +23,11 @@ logger = logging.getLogger(__name__)
 
 
 class PersistFileCache:
-    def __init__(self, cache_dir="/tmp"):  # noqa: S108
+    def __init__(self, cache_dir: str = "/tmp") -> None:  # noqa: S108
         self.__cache_dir = cache_dir
         lockutils.set_defaults(self.__cache_dir)
 
-    def __getcachedir(self, fpath):
+    def __getcachedir(self, fpath: Optional[str]) -> Optional[str]:
         """Returns the internal cachedir for fpath"""
         if fpath is None:
             return None
@@ -41,7 +42,7 @@ class PersistFileCache:
         basedir = os.path.dirname(os.path.normpath(fpath))
         return os.path.join(self.__cache_dir, basedir)
 
-    def __getcachefile(self, fpath):
+    def __getcachefile(self, fpath: str) -> Optional[str]:
         """Returns filepath of fpath in cache"""
         cd = self.__getcachedir(fpath)
         if cd is None:
@@ -53,8 +54,8 @@ class PersistFileCache:
         cache_path = os.path.normpath(os.path.join(cd, bname))
         return cache_path
 
-    @lockutils.synchronized("sessiondatastore.lock", external=True)
-    def add_file(self, realfpath, fpath):
+    @lockutils.synchronized("sessiondatastore.lock", external=True)  # type: ignore[untyped-decorator,unused-ignore]
+    def add_file(self, realfpath: str, fpath: str) -> bool:
         """Adds the contents of realfpath to the cache as fpath.
         Overwrites if present.
 
@@ -75,8 +76,8 @@ class PersistFileCache:
 
         return True
 
-    @lockutils.synchronized("sessiondatastore.lock", external=True)
-    def get_file(self, fpath, realfpath, symlink=False):
+    @lockutils.synchronized("sessiondatastore.lock", external=True)  # type: ignore[untyped-decorator,unused-ignore]
+    def get_file(self, fpath: str, realfpath: str, symlink: bool = False) -> bool:
         """Retrieves fpath from the cache and copies it to realfpath
         If fpath is not in cache, returns False, else True.
 
@@ -100,28 +101,33 @@ class PersistFileCache:
             df.copy(dstPath=realfpath)
         return True
 
-    @lockutils.synchronized("sessiondatastore.lock", external=True)
-    def exists(self, fpath):
+    @lockutils.synchronized("sessiondatastore.lock", external=True)  # type: ignore[untyped-decorator,unused-ignore]
+    def exists(self, fpath: str) -> bool:
         """Returns True if fpath in cache, else False"""
         cache_file = self.__getcachefile(fpath)
+        if cache_file is None:
+            return False
         return os.path.exists(cache_file)
 
-    def __getmissingfilepath(self, fpath):
+    def __getmissingfilepath(self, fpath: str) -> str:
         """Returns the file path for the missing file"""
         cache_dir = self.__getcachedir(fpath)
+        if cache_dir is None:
+            emsg = "Could not determing cachefile"
+            raise ValueError(emsg)
         return os.path.join(cache_dir, "missing.json")
 
-    def __getmissinglist(self, fpath):
+    def __getmissinglist(self, fpath: str) -> List[str]:
         """Retrieves the json data for missing files"""
         mpath = self.__getmissingfilepath(fpath)
 
         if os.path.exists(mpath):
             with open(mpath) as fin:
-                jdata = json.load(fin)
+                jdata = cast("List[str]", json.load(fin))
                 return jdata
         return []
 
-    def __writemissinglist(self, fpath, mlist):
+    def __writemissinglist(self, fpath: str, mlist: List[str]) -> bool:
         """Writes the json data for missing files"""
         mpath = self.__getmissingfilepath(fpath)
 
@@ -129,9 +135,13 @@ class PersistFileCache:
             json.dump(mlist, fout)
         return True
 
-    @lockutils.synchronized("sessiondatastore.lock", external=True)
-    def add_negative_cache(self, fpath):
+    @lockutils.synchronized("sessiondatastore.lock", external=True)  # type: ignore[untyped-decorator,unused-ignore]
+    def add_negative_cache(self, fpath: str) -> bool:
         cache_dir = self.__getcachedir(fpath)
+
+        if cache_dir is None:
+            emsg = "Could not determine cache dir"
+            raise ValueError(emsg)  # should never happen
 
         if not os.path.exists(cache_dir):
             os.makedirs(cache_dir)
@@ -146,8 +156,8 @@ class PersistFileCache:
 
         return ret
 
-    @lockutils.synchronized("sessiondatastore.lock", external=True)
-    def is_negative_cache(self, fpath):
+    @lockutils.synchronized("sessiondatastore.lock", external=True)  # type: ignore[untyped-decorator,unused-ignore]
+    def is_negative_cache(self, fpath: str) -> bool:
         mlist = self.__getmissinglist(fpath)
 
         npath = os.path.normpath(fpath)
@@ -155,8 +165,8 @@ class PersistFileCache:
             return True
         return False
 
-    @lockutils.synchronized("sessiondatastore.lock", external=True)
-    def cache_file_status(self, fpath):
+    @lockutils.synchronized("sessiondatastore.lock", external=True)  # type: ignore[untyped-decorator,unused-ignore]
+    def cache_file_status(self, fpath: str) -> Optional[bool]:
         """Returns one of three statuses for fpath
         True if have a file
         False if negative cache

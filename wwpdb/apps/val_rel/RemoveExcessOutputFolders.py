@@ -2,6 +2,7 @@ import argparse
 import logging
 import os
 import shutil
+from typing import List, Optional, Set
 
 from wwpdb.utils.config.ConfigInfo import getSiteId
 
@@ -12,23 +13,23 @@ logger = logging.getLogger(__name__)
 
 
 class FindExcessEntries:
-    def __init__(self, site_id=None, dry_run=False):
+    def __init__(self, site_id: Optional[str] = None, dry_run: bool = False) -> None:
         if site_id is None:
             site_id = getSiteId()
         self.site_id = site_id
         self.dry_run = dry_run
-        self.pdb_entries = ()
-        self.emdb_entries = ()
-        self.output_pdb_entries = ()
-        self.output_emdb_entries = ()
+        self.pdb_entries: Set[str] = set()
+        self.emdb_entries: List[str] = []
+        self.output_pdb_entries: List[str] = []
+        self.output_emdb_entries: List[str] = []
 
-    def run_process(self):
+    def run_process(self) -> None:
         self.find_pdb_and_emdb_entries()
         self.find_pdb_output_entries()
         self.find_emdb_output_entries()
         self.check_pdb_entries_output_should_exist()
 
-    def find_pdb_and_emdb_entries(self):
+    def find_pdb_and_emdb_entries(self) -> None:
         pvr = FindAndProcessEntries(
             pdb_release=True,
             emdb_release=True,
@@ -40,19 +41,19 @@ class FindExcessEntries:
         self.pdb_entries = pvr.all_pdb_entries
         self.emdb_entries = pvr.emdb_entries
 
-    def get_pdb_output_folder(self):
+    def get_pdb_output_folder(self) -> str:
         return outputFiles(siteID=self.site_id).get_pdb_root_folder()
 
-    def get_emdb_output_folder(self):
+    def get_emdb_output_folder(self) -> str:
         return outputFiles(siteID=self.site_id).get_emdb_root_folder()
 
-    def find_pdb_output_entries(self):
+    def find_pdb_output_entries(self) -> None:
         self.output_pdb_entries = os.listdir(self.get_pdb_output_folder())
 
-    def find_emdb_output_entries(self):
+    def find_emdb_output_entries(self) -> None:
         self.output_emdb_entries = os.listdir(self.get_emdb_output_folder())
 
-    def check_pdb_entries_output_should_exist(self):
+    def check_pdb_entries_output_should_exist(self) -> None:
         for entry in self.output_pdb_entries:
             logger.info(entry)
             if entry not in self.pdb_entries:
@@ -63,7 +64,7 @@ class FindExcessEntries:
                     shutil.rmtree(path_to_remove, ignore_errors=True)
 
 
-def main():
+def main() -> None:
     # Create logger -
     FORMAT = "[%(asctime)s %(levelname)s]-%(module)s.%(funcName)s: %(message)s"
     logging.basicConfig(format=FORMAT)

@@ -4,18 +4,34 @@ import gzip
 import logging
 import os
 import shutil
+from typing import Collection, Optional, overload
 
 logger = logging.getLogger(__name__)
 
 
-def get_gzip_name(f):
+@overload
+def get_gzip_name(f: str) -> str:  # fmt: skip
+    ...
+
+
+@overload
+def get_gzip_name(f: None) -> None:  # fmt: skip
+    ...
+
+
+@overload
+def get_gzip_name(f: Optional[str]) -> Optional[str]:  # fmt: skip
+    ...
+
+
+def get_gzip_name(f: Optional[str]) -> Optional[str]:
     """Returns compressed filename"""
     if f:
         return f + ".gz"
     return None
 
 
-def gzip_file(in_file, output_folder):
+def gzip_file(in_file: Optional[str], output_folder: Optional[str]) -> bool:
     """Compresses file in_file to in_file.gz.  Not be memory efficient as reads in file at one"""
     if in_file and output_folder:
         if os.path.exists(in_file):
@@ -29,7 +45,7 @@ def gzip_file(in_file, output_folder):
     return False
 
 
-def copy_file(in_file, output_folder):
+def copy_file(in_file: Optional[str], output_folder: Optional[str]) -> bool:
     if in_file and output_folder:
         if os.path.exists(in_file):
             input_filename = os.path.basename(in_file)
@@ -41,7 +57,7 @@ def copy_file(in_file, output_folder):
     return False
 
 
-def remove_files(file_list):
+def remove_files(file_list: Optional[Collection[str]]) -> None:
     """Removes a list of files if present"""
     if file_list:
         logger.debug("removing existing files")

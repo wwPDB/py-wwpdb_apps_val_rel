@@ -4,6 +4,7 @@ import shutil
 import tempfile
 import time
 import unittest
+from typing import Optional, Tuple, Union
 
 from wwpdb.apps.val_rel.utils.checkModifications import already_run
 
@@ -11,40 +12,40 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
-def touch(fname, times=None):
+def touch(fname: str, times: Optional[Tuple[Union[int, float], Union[int, float]]] = None) -> None:
     with open(fname, "a"):
         os.utime(fname, times)
 
 
 class TestModification(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.input_folder = tempfile.mkdtemp()
         self.input_file = os.path.join(self.input_folder, "test.file")
         touch(self.input_file)
         time.sleep(1)
         self.output_folder = tempfile.mkdtemp()
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         if os.path.exists(self.output_folder):
             shutil.rmtree(self.output_folder)
         if os.path.exists(self.input_folder):
             shutil.rmtree(self.input_folder, ignore_errors=True)
 
-    def test_newer_file(self):
+    def test_newer_file(self) -> None:
         touch(self.input_file)
         ret = already_run(test_file=self.input_file, output_folder=self.output_folder)
         self.assertFalse(ret)
 
-    def test_older_file(self):
+    def test_older_file(self) -> None:
         ret = already_run(test_file=self.input_file, output_folder=self.output_folder)
         self.assertTrue(ret)
 
-    def test_missing_file(self):
+    def test_missing_file(self) -> None:
         os.remove(self.input_file)
         ret = already_run(test_file=self.input_file, output_folder=self.output_folder)
         self.assertTrue(ret)
 
-    def test_missing_folder(self):
+    def test_missing_folder(self) -> None:
         shutil.rmtree(self.output_folder)
         ret = already_run(test_file=self.input_file, output_folder=self.output_folder)
         self.assertFalse(ret)

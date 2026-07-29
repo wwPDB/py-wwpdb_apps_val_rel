@@ -1,5 +1,6 @@
 import logging
 import os
+from typing import Optional
 
 from wwpdb.apps.validation.src.scripts.star_to_cif import starToPdbx
 from wwpdb.io.file.DataFile import DataFile
@@ -7,7 +8,7 @@ from wwpdb.io.file.DataFile import DataFile
 logger = logging.getLogger(__name__)
 
 
-def convert_cs_file(entry_id, cs_file, model_file, working_dir):
+def convert_cs_file(entry_id: str, cs_file: str, model_file: str, working_dir: str) -> Optional[str]:
     """convert star format CS file to CIF format for the validator"""
 
     if os.path.exists(cs_file):

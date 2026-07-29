@@ -1,5 +1,6 @@
 import argparse
 import logging
+from typing import List, Optional
 
 from wwpdb.io.locator.ReleasePathInfo import ReleasePathInfo
 
@@ -11,34 +12,40 @@ logger = logging.getLogger(__name__)
 
 
 class FindAndRunMissing:
-    def __init__(self, write_missing=False, read_missing=True, siteID=None, priority=False):
+    def __init__(
+        self,
+        write_missing: bool = False,
+        read_missing: bool = True,
+        siteID: Optional[str] = None,
+        priority: bool = False,
+    ) -> None:
         self.__siteid = siteID
         self.ce = CheckEntries(siteID=self.__siteid)
-        self.missing_ids = []
+        self.missing_ids: List[str] = []
         self.missing_file = "missing.ids"
         self.rpi = ReleasePathInfo(siteId=self.__siteid)
         self.write_missing = write_missing
         self.read_missing = read_missing
         self.priority = priority
 
-    def find_missing(self):
+    def find_missing(self) -> None:
         self.ce.get_entries()
         self.ce.check_entries()
         failed_entries = self.ce.get_failed_entries()
         logger.debug("failed_entries")
         logger.debug(failed_entries)
 
-    def write_out_missing(self):
+    def write_out_missing(self) -> None:
         """Writes out the list of missing ids.
         If the list is empty - create empty file to prevent reruns the following week
         """
         self.ce.write_missing_file()
 
-    def read_missing_file(self):
+    def read_missing_file(self) -> None:
         self.missing_ids = self.ce.read_missing_file()
         logger.debug("missing IDs: %s", ",".join(self.missing_ids))
 
-    def populate_queue(self):
+    def populate_queue(self) -> None:
         if self.missing_ids:
             pvr = PopulateValidateRelease(
                 entry_list=self.missing_ids,
@@ -50,7 +57,7 @@ class FindAndRunMissing:
             )
             pvr.run_process()
 
-    def run_process(self):
+    def run_process(self) -> None:
         if self.read_missing:
             self.read_missing_file()
             self.populate_queue()
@@ -59,7 +66,7 @@ class FindAndRunMissing:
             self.write_out_missing()
 
 
-def main():
+def main() -> None:
     # Root logger
     logger = logging.getLogger()  # pylint: disable=redefined-outer-name
     log_format = "%(funcName)s (%(levelname)s) - %(message)s"

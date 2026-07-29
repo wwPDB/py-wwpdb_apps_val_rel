@@ -1,6 +1,7 @@
 import logging
 import os
 import sys
+from typing import Dict, List, Optional, TextIO, Union, cast
 
 from wwpdb.utils.dp.ValidationWrapper import ValidationWrapper
 
@@ -10,30 +11,30 @@ logger = logging.getLogger(__name__)
 
 
 class ValidationRun:
-    def __init__(self, siteId, verbose=False, log=sys.stderr):  # noqa: ARG002 pylint: disable=unused-argument
+    def __init__(self, siteId: Optional[str], verbose: bool = False, log: TextIO = sys.stderr) -> None:  # noqa: ARG002 pylint: disable=unused-argument
         self.__siteid = siteId
         # self.__verbose = verbose
         vc = ValConfig(self.__siteid)
         self.__disablemulti = vc.val_disable_multithread
 
-    def run(self, dD):
+    def run(self, dD: Dict[str, Union[Optional[str], Dict[str, str], bool]]) -> List[Optional[str]]:
         """Produces a validation report based on data in the dD dictionry"""
 
-        model = dD.get("model")
-        sfPath = dD.get("sf")
-        csPath = dD.get("cs")
-        resPath = dD.get("res")
-        volPath = dD.get("emvol")
-        emXmlPath = dD.get("emxml")
-        pdbid = dD.get("pdb_id")
-        emdbid = dD.get("emdb_id")
+        model = cast("Optional[str]", dD.get("model"))
+        sfPath = cast("Optional[str]", dD.get("sf"))
+        csPath = cast("Optional[str]", dD.get("cs"))
+        resPath = cast("Optional[str]", dD.get("res"))
+        volPath = cast("Optional[str]", dD.get("emvol"))
+        emXmlPath = cast("Optional[str]", dD.get("emxml"))
+        pdbid = cast("Optional[str]", dD.get("pdb_id"))
+        emdbid = cast("Optional[str]", dD.get("emdb_id"))
         tempDir = dD.get("tempDir")
         entry_id = dD.get("entry_id")
         run_dir = dD.get("rundir")
-        fscPath = dD.get("fsc")
+        fscPath = cast("Optional[str]", dD.get("fsc"))
         keepLog = dD.get("keeplog")
         logPath = dD.get("logpath")
-        output_file_dict = dD["outfiledict"]
+        output_file_dict = cast("Dict[str, str]", dD["outfiledict"])
         entry_output_folder = dD["entry_output_folder"]
 
         logger.info("input files")

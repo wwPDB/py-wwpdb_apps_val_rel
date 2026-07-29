@@ -1,10 +1,12 @@
 import logging
 import os
+from typing import Optional
 
 from wwpdb.io.locator.localFTPPathInfo import LocalFTPPathInfo
 from wwpdb.io.locator.ReleaseFileNames import ReleaseFileNames
 
 from wwpdb.apps.val_rel.config.ValConfig import ValConfig
+from wwpdb.apps.val_rel.utils.getFilesReleaseBase import GetFilesReleaseBasePDB
 from wwpdb.apps.val_rel.utils.http_protocol.getRemoteFilesHTTP import (
     GetRemoteFilesHttp,
     remove_local_temp_http,
@@ -14,8 +16,9 @@ from wwpdb.apps.val_rel.utils.http_protocol.getRemoteFilesHTTP import (
 logger = logging.getLogger(__name__)
 
 
-class getFilesReleaseHttpPDB:
-    def __init__(self, pdbid, site_id=None, cache=None):
+class getFilesReleaseHttpPDB(GetFilesReleaseBasePDB):
+    def __init__(self, pdbid: Optional[str], site_id: Optional[str] = None, cache: Optional[str] = None) -> None:
+        super().__init__(pdbid=pdbid, site_id=site_id, cache=cache)
         self.__cache = cache
 
         # This provides access to local ftp tree.  If SITE_PDB_FTP_ROOT_DIR site-config variable not set
@@ -40,14 +43,14 @@ class getFilesReleaseHttpPDB:
         self.__pdb_id = pdbid
 
         # The local sessiondir download path
-        self.__local_http_path = None
+        self.__local_http_path: Optional[str] = None
 
         self.grf = None
 
         if not self.__local_ftp.get_ftp_pdb():
             self.grf = GetRemoteFilesHttp(server=self.__server, cache=self.__cache, site_id=self.__site_id)
 
-    def get_model(self):
+    def get_model(self) -> Optional[str]:
         """
         get the PDB model file - from OneDep then local FTP and then the remote HTTP
         :return: file name if present or None
@@ -63,7 +66,7 @@ class getFilesReleaseHttpPDB:
         logger.debug("final model filepath: %s", temp_file_path)
         return temp_file_path
 
-    def get_sf(self):
+    def get_sf(self) -> Optional[str]:
         """
         get the PDB structure factor file - from OneDep then local FTP and then the remote HTTP
         :return: file name if present or None
@@ -79,7 +82,7 @@ class getFilesReleaseHttpPDB:
         logger.debug("final structure factor filepath: %s", temp_file_path)
         return temp_file_path
 
-    def get_cs(self):
+    def get_cs(self) -> Optional[str]:
         """
         get the PDB chemical shift file - from OneDep then local FTP and then the remote HTP
         :return: file name if present or None
@@ -95,7 +98,7 @@ class getFilesReleaseHttpPDB:
         logger.debug("final chemical shift filepath: %s", temp_file_path)
         return temp_file_path
 
-    def get_nmr_data(self):
+    def get_nmr_data(self) -> Optional[str]:
         """
         Get the PDB combined NMR data file - from OneDep then local FTP and then the remote HTTP
         :return: file name if present or None
@@ -111,7 +114,7 @@ class getFilesReleaseHttpPDB:
         logger.debug("final NMR data filepath: %s", temp_file_path)
         return temp_file_path
 
-    def __get_remote_http_file(self, *, url, filename):
+    def __get_remote_http_file(self, url: str, filename: str) -> Optional[str]:
         """
         Get a file from the remote HTTP service - or cached
         :param url: path for download
@@ -126,7 +129,7 @@ class getFilesReleaseHttpPDB:
         remove_local_temp_http(self.__setup_local_temp_http(), require_empty=True)
         return None
 
-    def __get_file_from_remote_http(self, *, url, filename):
+    def __get_file_from_remote_http(self, url: str, filename: str) -> bool:
         """
         gets file from HTTP site
         :param url: path for download
@@ -145,21 +148,27 @@ class getFilesReleaseHttpPDB:
             logger.error(str(e))
         return False
 
-    def __get_temp_local_http_path(self):
+    def __get_temp_local_http_path(self) -> str:
+        if not self.__pdb_id:
+            emsg = "PDB ID must be specified"
+            raise ValueError(emsg)
         return os.path.join(self.__setup_local_temp_http(), self.__pdb_id)
 
-    def __setup_local_temp_http(self, session_path=None):
+    def __setup_local_temp_http(self, session_path: Optional[str] = None) -> str:
         """Creats a session directory local file name for download - unles using local ftp tree"""
         if not self.__local_http_path:
             if not session_path:
                 session_path = self.__session_path
+            if not self.__pdb_id:
+                emsg = "PDB ID must be specified"
+                raise ValueError(emsg)
             self.__local_http_path = setup_local_temp_http(
                 temp_dir=self.__temp_local_ftp, session_path=session_path, suffix=self.__pdb_id
             )
         return self.__local_http_path
 
     @staticmethod
-    def __check_filename(file_name):
+    def __check_filename(file_name: str) -> Optional[str]:
         """
         check that a file name actually exists
         :param file_name: file name
@@ -170,13 +179,13 @@ class getFilesReleaseHttpPDB:
                 return file_name
         return None
 
-    def remove_local_temp_files(self):
+    def remove_local_temp_files(self) -> None:
         """Cleanup of local ftp directory if present"""
         logger.debug("Cleaning up HTTP local directory %s", self.__local_http_path)
         if self.__local_http_path and os.path.exists(self.__local_http_path):
             remove_local_temp_http(self.__local_http_path, require_empty=False)
 
-    def close_connection(self):
+    def close_connection(self) -> None:
         # maintained for backward compatibility with ftp version
         if self.grf is not None:
             self.grf.disconnect()

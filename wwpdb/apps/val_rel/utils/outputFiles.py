@@ -1,5 +1,6 @@
 import logging
 import os
+from typing import Dict, Optional, cast
 
 from wwpdb.io.locator.ReleaseFileNames import ReleaseFileNames
 from wwpdb.io.locator.ReleasePathInfo import ReleasePathInfo
@@ -11,13 +12,13 @@ logger = logging.getLogger(__name__)
 class outputFiles:
     def __init__(
         self,
-        pdbID=None,
-        emdbID=None,
-        outputRoot="",
-        siteID=None,
-        skip_pdb_hash=False,
-        validation_sub_directory="current",
-        temp_output_folder=None,
+        pdbID: Optional[str] = None,
+        emdbID: Optional[str] = None,
+        outputRoot: Optional[str] = "",
+        siteID: Optional[str] = None,
+        skip_pdb_hash: bool = False,
+        validation_sub_directory: str = "current",
+        temp_output_folder: Optional[str] = None,
     ):
         if siteID is None:
             siteID = getSiteId()
@@ -27,11 +28,11 @@ class outputFiles:
         self._output_root = outputRoot
         self._validation_sub_directory = validation_sub_directory
         self._temp_output_folder = temp_output_folder
-        self._entryID = None
+        self._entryID: Optional[str] = None
         self.skip_pdb_hash = skip_pdb_hash
-        self.pdb_output_folder = None
-        self.emdb_output_folder = None
-        self.entry_output_folder = None
+        self.pdb_output_folder: Optional[str] = None
+        self.emdb_output_folder: Optional[str] = None
+        self.entry_output_folder: Optional[str] = None
         self.with_emdb = False
         self.copy_to_root_emdb = False
         self.accession = ""
@@ -41,15 +42,15 @@ class outputFiles:
         self.get_emdb_output_folder()
         self.get_entry_output_folder()
 
-    def get_pdb_root_folder(self):
+    def get_pdb_root_folder(self) -> str:
         rp = ReleasePathInfo(self._siteID)
         return os.path.join(rp.getForReleasePath("val_reports"), self._validation_sub_directory)
 
-    def get_validation_images_root_folder(self):
+    def get_validation_images_root_folder(self) -> str:
         rp = ReleasePathInfo(self._siteID)
-        return rp.getForReleasePath("val_images")
+        return cast("str", rp.getForReleasePath("val_images"))
 
-    def get_root_state_folder(self):
+    def get_root_state_folder(self) -> str:
         # Place under pdb val-reports as extra directory
         rp = ReleasePathInfo(self._siteID)
         return os.path.join(
@@ -57,57 +58,57 @@ class outputFiles:
             self._validation_sub_directory + "_state",
         )
 
-    def get_emdb_root_folder(self):
+    def get_emdb_root_folder(self) -> str:
         rp = ReleasePathInfo(self._siteID)
         return os.path.join(rp.getForReleasePath("em_val_reports"), self._validation_sub_directory)
 
-    def set_validation_subdirectory(self, sub_dir):
+    def set_validation_subdirectory(self, sub_dir: str) -> None:
         self._validation_sub_directory = sub_dir
 
-    def set_entry_id(self, entry_id):
+    def set_entry_id(self, entry_id: str) -> None:
         self._entryID = entry_id
 
-    def set_pdb_id(self, entry_id):
+    def set_pdb_id(self, entry_id: str) -> None:
         self._pdbID = entry_id
 
-    def set_emdb_id(self, entry_id):
+    def set_emdb_id(self, entry_id: str) -> None:
         self._emdbID = entry_id
 
-    def get_pdb_id(self):
+    def get_pdb_id(self) -> str:
         if self._pdbID:
             return self._pdbID
         return ""
 
-    def get_pdb_id_hash(self):
+    def get_pdb_id_hash(self) -> str:  # Extended PDB ids issue
         if self.get_pdb_id():
             return self.get_pdb_id()[1:3]
         return ""
 
-    def get_emdb_id(self):
+    def get_emdb_id(self) -> str:
         if self._emdbID:
             return self._emdbID
         return ""
 
-    def get_emdb_lower_hyphen(self):
+    def get_emdb_lower_hyphen(self) -> str:
         if self.get_emdb_id():
-            return self.rf.get_lower_emdb_hyphen_format(self.get_emdb_id())
+            return cast("str", self.rf.get_lower_emdb_hyphen_format(self.get_emdb_id()))
         return ""
 
-    def get_emdb_lower_underscore(self):
+    def get_emdb_lower_underscore(self) -> str:
         if self.get_emdb_id():
-            return self.rf.get_lower_emdb_underscore_format(self.get_emdb_id())
+            return cast("str", self.rf.get_lower_emdb_underscore_format(self.get_emdb_id()))
         return ""
 
-    def get_entry_id(self):
+    def get_entry_id(self) -> str:
         if self._entryID:
             return self._entryID
         return ""
 
-    def set_accession_variables(self, with_emdb=False, copy_to_root_emdb=False):
+    def set_accession_variables(self, with_emdb: bool = False, copy_to_root_emdb: bool = False) -> None:
         self.with_emdb = with_emdb
         self.copy_to_root_emdb = copy_to_root_emdb
 
-    def set_accession(self):
+    def set_accession(self) -> str:
         self.accession = f"{self._entryID}"
         if self._emdbID and not self._pdbID:
             self.accession = self.get_emdb_lower_underscore()
@@ -118,39 +119,42 @@ class outputFiles:
 
         return self.accession
 
-    def add_output_folder_accession(self, filename):
+    def add_output_folder_accession(self, filename: str) -> str:
         if self._temp_output_folder:
             return os.path.join(self._temp_output_folder, filename)
+        if not self.entry_output_folder:
+            emsg = "entry_output_folder not set"
+            raise ValueError(emsg)
         return os.path.join(self.entry_output_folder, filename)
 
-    def get_validation_xml(self):
+    def get_validation_xml(self) -> str:
         return self.add_output_folder_accession(self.rf.get_validation_xml(self.accession))
 
-    def get_validation_png(self):
+    def get_validation_png(self) -> str:
         return self.add_output_folder_accession(self.rf.get_validation_png(self.accession))
 
-    def get_validation_svg(self):
+    def get_validation_svg(self) -> str:
         return self.add_output_folder_accession(self.rf.get_validation_svg(self.accession))
 
-    def get_validation_pdf(self):
+    def get_validation_pdf(self) -> str:
         return self.add_output_folder_accession(self.rf.get_validation_pdf(self.accession))
 
-    def get_validation_full_pdf(self):
+    def get_validation_full_pdf(self) -> str:
         return self.add_output_folder_accession(self.rf.get_validation_full_pdf(self.accession))
 
-    def get_validation_2fofc(self):
+    def get_validation_2fofc(self) -> str:
         return self.add_output_folder_accession(self.rf.get_validation_2fofc(self.accession))
 
-    def get_validation_fofc(self):
+    def get_validation_fofc(self) -> str:
         return self.add_output_folder_accession(self.rf.get_validation_fofc(self.accession))
 
-    def get_validation_image_tar(self):
+    def get_validation_image_tar(self) -> str:
         return self.add_output_folder_accession(self.rf.get_validation_image_tar(self.accession))
 
-    def get_validation_cif(self):
+    def get_validation_cif(self) -> str:
         return self.add_output_folder_accession(self.rf.get_validation_cif(self.accession))
 
-    def get_core_validation_files(self):
+    def get_core_validation_files(self) -> Dict[str, str]:
         logger.debug("getting core files for: %s", self._entryID)
         logger.debug("path: %s", self.entry_output_folder)
 
@@ -170,7 +174,7 @@ class outputFiles:
 
         return ret
 
-    def get_extra_validation_files(self):
+    def get_extra_validation_files(self) -> Dict[str, str]:
         ret = {
             "2fofc": self.get_validation_2fofc(),
             "fofc": self.get_validation_fofc(),
@@ -178,31 +182,31 @@ class outputFiles:
 
         return ret
 
-    def get_validation_files_for_separate_location(self):
+    def get_validation_files_for_separate_location(self) -> Dict[str, str]:
         ret = {"image_tar": self.get_validation_image_tar()}
 
         return ret
 
-    def get_all_validation_files(self):
+    def get_all_validation_files(self) -> Dict[str, str]:
         all_file_dict = self.get_core_validation_files().copy()
         all_file_dict.update(self.get_extra_validation_files())
         all_file_dict.update(self.get_validation_files_for_separate_location())
 
         return all_file_dict
 
-    def ret_pdb_hash(self):
+    def ret_pdb_hash(self) -> str:
         if self.skip_pdb_hash:
             pdb_hash = ""
         else:
             pdb_hash = self.get_pdb_id_hash()
         return pdb_hash
 
-    def get_pdb_validation_images_output_folder(self):
+    def get_pdb_validation_images_output_folder(self) -> str:
         if self._output_root:
             return os.path.join(self._output_root, "val_images", self.get_pdb_id())
         return os.path.join(self.get_validation_images_root_folder(), self.get_pdb_id())
 
-    def get_pdb_output_folder(self):
+    def get_pdb_output_folder(self) -> str:
         """
         Gets the PDB output folder
         :return: PDB output folder
@@ -213,9 +217,9 @@ class outputFiles:
                 self.pdb_output_folder = os.path.join(self._output_root, "pdb", self.ret_pdb_hash(), self.get_pdb_id())
             else:
                 self.pdb_output_folder = os.path.join(self.get_pdb_root_folder(), self.get_pdb_id())
-        return self.pdb_output_folder
+        return cast("str", self.pdb_output_folder)
 
-    def get_emdb_output_folder(self):
+    def get_emdb_output_folder(self) -> str:
         """
         gets the EMDB output folder
         :return: EMDB output folder
@@ -226,16 +230,16 @@ class outputFiles:
                 self.emdb_output_folder = os.path.join(self._output_root, "emd", self.get_emdb_id(), "validation")
             else:
                 self.emdb_output_folder = os.path.join(self.get_emdb_root_folder(), self.get_emdb_id(), "validation")
-        return self.emdb_output_folder
+        return cast("str", self.emdb_output_folder)
 
-    def get_entry_output_folder(self):
+    def get_entry_output_folder(self) -> Optional[str]:
         if self.get_pdb_id():
             self.entry_output_folder = self.get_pdb_output_folder()
         elif self.get_emdb_id():
             self.entry_output_folder = self.get_emdb_output_folder()
         return self.entry_output_folder
 
-    def get_ftp_cache_folder(self):
+    def get_ftp_cache_folder(self) -> str:
         # Same for both x-ray/em
         rp = ReleasePathInfo(self._siteID)
         return os.path.join(rp.getForReleasePath("val_reports"), "cache")

@@ -2,12 +2,15 @@ import os
 import shutil
 import tempfile
 import unittest
+from typing import Optional, cast
 
 from wwpdb.apps.val_rel.utils.mmCIFInfo import is_simple_modification
 
 
 class mmCIFInfoTests(unittest.TestCase):
-    def setUp(self):
+    mmCIF_file: Optional[str]
+
+    def setUp(self) -> None:
         self.test_dir = tempfile.mkdtemp()
         self.mmCIF_file = None
         self.additional_content = ""
@@ -33,18 +36,18 @@ _exptl.method            'X-RAY DIFFRACTION'
 #
 """
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         if os.path.exists(self.test_dir):
             shutil.rmtree(self.test_dir, ignore_errors=True)
 
-    def write_mmcif(self):
+    def write_mmcif(self) -> None:
         mmcif_data = self.base_mmcif_content
         mmcif_data += self.additional_content
         self.mmCIF_file = os.path.join(self.test_dir, "test.cif")
         with open(self.mmCIF_file, "w") as outFile:
             outFile.write(mmcif_data)
 
-    def test_get_simple_revision(self):
+    def test_get_simple_revision(self) -> None:
         self.additional_content = """
 loop_
     _pdbx_audit_revision_history.ordinal
@@ -67,10 +70,10 @@ loop_
 #
 """
         self.write_mmcif()
-        ret = is_simple_modification(self.mmCIF_file)
+        ret = is_simple_modification(cast("str", self.mmCIF_file))
         self.assertTrue(ret)
 
-    def test_get_complex_revision(self):
+    def test_get_complex_revision(self) -> None:
         self.additional_content = """
 loop_
     _pdbx_audit_revision_history.ordinal
@@ -92,8 +95,8 @@ loop_
     4 2 'Structure Model' 'atom_site'
 #
 """
-        self.write_mmcif()
-        ret = is_simple_modification(self.mmCIF_file)
+        self.write_mmcif()  # updates self.mmCIF_file
+        ret = is_simple_modification(cast("str", self.mmCIF_file))
         self.assertFalse(ret)
 
 

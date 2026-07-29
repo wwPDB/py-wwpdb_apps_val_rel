@@ -10,7 +10,6 @@
 #       10-Jul-2018 ep  use default connection URL instead of SSL exclusive
 #
 ##
-import contextlib
 import glob
 import json
 import logging
@@ -19,6 +18,7 @@ import platform
 import sys
 import time
 from argparse import ArgumentParser as ArgParser
+from typing import Optional, Union
 
 from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
 from wwpdb.utils.detach.DetachedProcessBase import DetachedProcessBase
@@ -41,11 +41,11 @@ logging.basicConfig(
 logging.getLogger("pika").setLevel(logging.INFO)
 
 
-class MessageConsumer(MessageConsumerBase):
-    def __init__(self, amqpUrl, priority):
+class MessageConsumer(MessageConsumerBase):  # type: ignore[misc]
+    def __init__(self, amqpUrl: str, priority: bool) -> None:
         super(MessageConsumer, self).__init__(amqpUrl, priority)
 
-    def workerMethod(self, msgBody, deliveryTag=None):  # noqa: ARG002
+    def workerMethod(self, msgBody: str, deliveryTag: Optional[str] = None) -> bool:  # noqa: ARG002
         try:
             logger.debug("Message body %r", msgBody)
             pD = json.loads(msgBody)
@@ -62,11 +62,11 @@ class MessageConsumer(MessageConsumerBase):
         return successFlag
 
 
-class MessageSubscriber(MessageSubscriberBase):
-    def __init__(self, amqpUrl):
+class MessageSubscriber(MessageSubscriberBase):  # type: ignore[misc]
+    def __init__(self, amqpUrl: str) -> None:
         super(MessageSubscriber, self).__init__(amqpUrl)
 
-    def workerMethod(self, msgBody, deliveryTag=None):  # noqa: ARG002
+    def workerMethod(self, msgBody: str, deliveryTag: Optional[str] = None) -> bool:  # noqa: ARG002
         try:
             logger.debug("Message body %r", msgBody)
             pD = json.loads(msgBody)
@@ -84,12 +84,12 @@ class MessageSubscriber(MessageSubscriberBase):
 
 
 class MessageConsumerWorker:
-    def __init__(self, siteID, priority=False):
+    def __init__(self, siteID: Optional[str], priority: bool = False) -> None:
         self.__siteID = siteID
         self.__priority = priority
         self.__setup()
 
-    def __setup(self):
+    def __setup(self) -> None:
         mqc = MessageQueueConnection()
         url = mqc._getDefaultConnectionUrl()  # noqa: SLF001  pylint: disable=protected-access
         self.__mc = MessageConsumer(amqpUrl=url, priority=self.__priority)
@@ -97,7 +97,7 @@ class MessageConsumerWorker:
         self.__mc.setQueue(queueName=vc.queue_name, routingKey=vc.routing_key)
         self.__mc.setExchange(exchange=vc.exchange, exchangeType="topic")
 
-    def run(self):
+    def run(self) -> None:
         """Run async consumer"""
         startTime = time.time()
         logger.info("Starting ")
@@ -113,25 +113,25 @@ class MessageConsumerWorker:
         endTime = time.time()
         logger.info("Completed (%f seconds)", (endTime - startTime))
 
-    def suspend(self):
+    def suspend(self) -> None:
         logger.info("Suspending consumer worker... ")
         self.__mc.stop()
 
 
 class MessageSubscriberWorker:
-    def __init__(self, siteID, exchange_name):  # noqa: ARG002  pylint: disable=unused-argument
+    def __init__(self, siteID: Optional[str], exchange_name: str) -> None:  # noqa: ARG002  pylint: disable=unused-argument
         # self.__siteID = siteID
         self.__exchange_name = exchange_name
         self.__setup()
 
-    def __setup(self):
+    def __setup(self) -> None:
         # No siteID available in the API
         mqc = MessageQueueConnection()
         url = mqc._getDefaultConnectionUrl()  # noqa: SLF001 pylint: disable=protected-access
         self.__subscriber = MessageSubscriber(amqpUrl=url)
         self.__subscriber.add_exchange(self.__exchange_name)
 
-    def run(self):
+    def run(self) -> None:
         """Run async consumer"""
         startTime = time.time()
         logger.info("Starting ")
@@ -148,30 +148,32 @@ class MessageSubscriberWorker:
         endTime = time.time()
         logger.info("Completed (%f seconds)", (endTime - startTime))
 
-    def suspend(self):
+    def suspend(self) -> None:
         logger.info("Suspending consumer worker... ")
         self.__subscriber.stop()
 
 
-class MyDetachedProcess(DetachedProcessBase):
+class MyDetachedProcess(DetachedProcessBase):  # type: ignore[misc]
     """This class implements the run() method of the DetachedProcessBase() utility class.
 
     Illustrates the use of python logging and various I/O channels in detached process.
     """
 
+    __mcw: Union[MessageConsumerWorker, MessageSubscriberWorker]
+
     def __init__(
         self,
-        pidFile="/tmp/DetachedProcessBase.pid",  # noqa: S108
-        stdin=os.devnull,
-        stdout=os.devnull,
-        stderr=os.devnull,
-        wrkDir="/",
-        siteID=None,
-        gid=None,
-        uid=None,
-        priority=False,
-        subscribe=None,
-    ):
+        pidFile: str = "/tmp/DetachedProcessBase.pid",  # noqa: S108
+        stdin: str = os.devnull,
+        stdout: str = os.devnull,
+        stderr: str = os.devnull,
+        wrkDir: str = "/",
+        siteID: Optional[str] = None,
+        gid: Optional[int] = None,
+        uid: Optional[int] = None,
+        priority: bool = False,
+        subscribe: Optional[str] = None,
+    ) -> None:
         super(MyDetachedProcess, self).__init__(
             pidFile=pidFile,
             stdin=stdin,
@@ -187,11 +189,11 @@ class MyDetachedProcess(DetachedProcessBase):
         else:
             self.__mcw = MessageSubscriberWorker(siteID, exchange_name=subscribe)
 
-    def run(self):
+    def run(self) -> None:
         logger.info("STARTING detached run method")
         self.__mcw.run()
 
-    def suspend(self):
+    def suspend(self) -> None:
         logger.info("SUSPENDING detached process")
         try:
             self.__mcw.suspend()
@@ -199,7 +201,7 @@ class MyDetachedProcess(DetachedProcessBase):
             logger.error("SUSPENDING failed %r", str(e))
 
 
-def main():
+def main() -> None:
     # adding a conservative permission mask for this
     # os.umask(0o022)
     #
@@ -208,10 +210,6 @@ def main():
 
     description = "Validation release service handler"
     parser = ArgParser(description=description)
-    # py 2/3 issue  for optparse.OptionParser add an `add_argument` method for
-    # compatibility with argparse.ArgumentParser
-    with contextlib.suppress(AttributeError):
-        parser.add_argument = parser.add_option
 
     parser.add_argument(
         "--start",

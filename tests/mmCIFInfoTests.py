@@ -7,9 +7,9 @@ from wwpdb.apps.val_rel.utils.mmCIFInfo import mmCIFInfo
 
 
 class mmCIFInfoTests(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.test_dir = tempfile.mkdtemp()
-        self.mmCIF_file = None
+        self.mmCIF_file = ""  # Filename
         self.additional_content = ""
         self.base_mmcif_content = """
 data_2GC2
@@ -33,24 +33,24 @@ _exptl.method            'X-RAY DIFFRACTION'
 #
 """
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         if os.path.exists(self.test_dir):
             shutil.rmtree(self.test_dir, ignore_errors=True)
 
-    def write_mmcif(self):
+    def write_mmcif(self) -> None:
         mmcif_data = self.base_mmcif_content
         mmcif_data += self.additional_content
         self.mmCIF_file = os.path.join(self.test_dir, "test.cif")
         with open(self.mmCIF_file, "w") as outFile:
             outFile.write(mmcif_data)
 
-    def test_get_exptl(self):
+    def test_get_exptl(self) -> None:
         self.write_mmcif()
         mf = mmCIFInfo(mmCIF_file=self.mmCIF_file)
         exptl = mf.get_exp_methods()
         self.assertTrue(exptl == ["X-RAY DIFFRACTION"])
 
-    def test_get_associated_with_none(self):
+    def test_get_associated_with_none(self) -> None:
         self.additional_content = """
 loop_
 _pdbx_database_related.db_name
@@ -65,7 +65,7 @@ PDB 1X7N ? unspecified
         emdb_id = mf.get_associated_emdb()
         self.assertTrue(emdb_id is None)
 
-    def test_get_associated_with_emd_1234(self):
+    def test_get_associated_with_emd_1234(self) -> None:
         self.additional_content = """
 loop_
 _pdbx_database_related.db_name
@@ -80,7 +80,7 @@ EMDB EMD-1234 ? 'associated EM volume'
         emdb_id = mf.get_associated_emdb()
         self.assertTrue(emdb_id == "EMD-1234")
 
-    def test_get_modified_categories(self):
+    def test_get_modified_categories(self) -> None:
         self.additional_content = """
 loop_
     _pdbx_audit_revision_history.ordinal

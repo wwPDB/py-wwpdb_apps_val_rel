@@ -20,13 +20,13 @@ else:
 from wwpdb.apps.val_rel.ValidateRelease import runValidation
 
 
-def touch(fname, times: Optional[Tuple[Union[int, float], Union[int, float]]] = None) -> None:
+def touch(fname: str, times: Optional[Tuple[Union[int, float], Union[int, float]]] = None) -> None:
     with open(fname, "a"):
         os.utime(fname, times)
 
 
 class ModifiedFolderTests(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.patcher = patch("wwpdb.utils.config.ConfigInfoApp.ConfigInfo", side_effect=StandardConfig)
 
         self.patcher.start()
@@ -43,11 +43,11 @@ class ModifiedFolderTests(unittest.TestCase):
         # self.pdb_output_folder =  os.path.join(self.output_dir, self.pdbid_hash, self.pdbid)
         self.emdb_output_folder = os.path.join(self.output_dir, self.emdb)
         self.rv = runValidation()
-        self.rv.outputRoot = self.output_dir
+        self.rv.setOutputRoot(self.output_dir)
         time.sleep(1)
         os.makedirs(self.emdb_output_folder)
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         if os.path.exists(self.output_dir):
             shutil.rmtree(self.output_dir, ignore_errors=True)
         if os.path.exists(self.input_dir):
@@ -55,39 +55,39 @@ class ModifiedFolderTests(unittest.TestCase):
 
         self.patcher.stop()
 
-    def test_always_run(self):
+    def test_always_run(self) -> None:
         self.rv.setPdbId(self.pdbid)
         self.rv.setAlwaysRecalculate(True)
         ret = self.rv.check_emdb_already_run()
         # expected True - is modified - run validation
         self.assertTrue(ret)
 
-    def test_pdb_not_modified(self):
+    def test_pdb_not_modified(self) -> None:
         self.rv.setPdbId(self.pdbid)
-        self.rv.modelPath = self.pdbid_file
-        self.rv.emdb_output_folder = self.emdb_output_folder
+        self.rv.setModelPath(self.pdbid_file)
+        self.rv.setEmdbOutputFolder(self.emdb_output_folder)
         ret = self.rv.check_emdb_already_run()
         # expected False - not modified - don't run validation
         self.assertFalse(ret)
 
-    def test_emdb_not_modified(self):
-        self.rv.emdbid = self.emdb
-        self.rv.emXmlPath = self.emdb_file
-        self.rv.emdb_output_folder = self.emdb_output_folder
+    def test_emdb_not_modified(self) -> None:
+        self.rv.setEmdbId(self.emdb)
+        self.rv.setEmXmlPath(self.emdb_file)
+        self.rv.setEmdbOutputFolder(self.emdb_output_folder)
         ret = self.rv.check_emdb_already_run()
         # expected False - not modified - don't run validation
         self.assertFalse(ret)
 
-    def test_pdb_modified(self):
+    def test_pdb_modified(self) -> None:
         self.rv.setPdbId(self.pdbid)
-        self.rv.modelPath = self.pdbid_file
-        self.rv.emdb_output_folder = self.emdb_output_folder
+        self.rv.setModelPath(self.pdbid_file)
+        self.rv.setEmdbOutputFolder(self.emdb_output_folder)
         touch(self.pdbid_file)
         ret = self.rv.check_emdb_already_run()
         # expected False - EMDB not modified - do not run validation
         self.assertFalse(ret)
 
-    def test_emdb_modified(self):
+    def test_emdb_modified(self) -> None:
         self.rv.setEmdbId(self.emdb)
         self.rv.setEmXmlPath(self.emdb_file)
         self.rv.setEmdbOutputFolder(self.emdb_output_folder)
@@ -97,17 +97,17 @@ class ModifiedFolderTests(unittest.TestCase):
         # expected True - modified - do run validation
         self.assertTrue(ret)
 
-    def test_pdb_and_emdb_with_pdb_modified(self):
+    def test_pdb_and_emdb_with_pdb_modified(self) -> None:
         self.rv.setPdbId(self.pdbid)
-        self.rv.emdbid = self.emdb
-        self.rv.modelPath = self.pdbid_file
-        self.rv.emdb_output_folder = self.emdb_output_folder
+        self.rv.setEmdbId(self.emdb)
+        self.rv.setModelPath(self.pdbid_file)
+        self.rv.setEmdbOutputFolder(self.emdb_output_folder)
         touch(self.pdbid_file)
         ret = self.rv.check_emdb_already_run()
         # expected False - EMDB not modified - do not run validation
         self.assertFalse(ret)
 
-    def test_pdb_and_emdb_with_emdb_modified(self):
+    def test_pdb_and_emdb_with_emdb_modified(self) -> None:
         self.rv.setPdbId(self.pdbid)
         self.rv.setEmdbId(self.emdb)
         self.rv.setEmXmlPath(self.emdb_file)
@@ -118,7 +118,7 @@ class ModifiedFolderTests(unittest.TestCase):
         # expected True - modified - do run validation
         self.assertTrue(ret)
 
-    def test_output_folder_modified(self):
+    def test_output_folder_modified(self) -> None:
         self.rv.setEmdbId(self.emdb)
         self.rv.setEmXmlPath(self.emdb_file)
         self.rv.setEmdbOutputFolder(self.emdb_output_folder)

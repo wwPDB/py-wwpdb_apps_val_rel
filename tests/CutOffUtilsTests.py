@@ -5,7 +5,7 @@ from wwpdb.apps.val_rel.utils.CutOffUtils import get_start_end_cut_off, ok_to_co
 
 
 class TestingTimeCutoff(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         weeknum = datetime.today().strftime("%U")  # noqa: DTZ002
         this_year = datetime.today().strftime("%G")  # noqa: DTZ002
         start_time = "Thu:19:00:00"
@@ -15,7 +15,7 @@ class TestingTimeCutoff(unittest.TestCase):
         end_date = f"{this_year}:{weeknum}:{end_time}"
         self.end_cut_off_time = datetime.strptime(end_date, "%Y:%U:%a:%H:%M:%S")  # noqa: DTZ007
 
-    def test_ok_time(self):
+    def test_ok_time(self) -> None:
         weeknum = datetime.today().strftime("%U")  # noqa: DTZ002
         this_year = datetime.today().strftime("%G")  # noqa: DTZ002
         timestr = "Wed:19:00:00"
@@ -27,7 +27,7 @@ class TestingTimeCutoff(unittest.TestCase):
             )
         )
 
-    def test_incorrect_time_thu(self):
+    def test_incorrect_time_thu(self) -> None:
         weeknum = datetime.today().strftime("%U")  # noqa: DTZ002
         this_year = datetime.today().strftime("%G")  # noqa: DTZ002
         timestr = "Thu:20:00:00"
@@ -39,7 +39,7 @@ class TestingTimeCutoff(unittest.TestCase):
             )
         )
 
-    def test_incorrect_time_fri(self):
+    def test_incorrect_time_fri(self) -> None:
         weeknum = datetime.today().strftime("%U")  # noqa: DTZ002
         this_year = datetime.today().strftime("%G")  # noqa: DTZ002
         timestr = "Fri:06:00:00"
@@ -51,7 +51,7 @@ class TestingTimeCutoff(unittest.TestCase):
             )
         )
 
-    def test_correct_time_after(self):
+    def test_correct_time_after(self) -> None:
         weeknum = datetime.today().strftime("%U")  # noqa: DTZ002
         this_year = datetime.today().strftime("%G")  # noqa: DTZ002
         timestr = "Sat:01:00:00"
@@ -63,7 +63,7 @@ class TestingTimeCutoff(unittest.TestCase):
             )
         )
 
-    def test_get_start_end_cut_off(self):
+    def test_get_start_end_cut_off(self) -> None:
         data = {"start": "Thu:19:00:00", "end": "Sat:00:01:00"}
         start, end = get_start_end_cut_off(cut_off_times=data)
         self.assertIsNotNone(start)

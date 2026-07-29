@@ -1,6 +1,5 @@
 import os
 import unittest
-from typing import Optional, Tuple, Union
 from unittest.mock import patch
 
 if __package__ is None or __package__ == "":
@@ -15,11 +14,6 @@ else:
     )
 
 from wwpdb.apps.val_rel.ValidateRelease import runValidation
-
-
-def touch(fname, times: Optional[Tuple[Union[int, float], Union[int, float]]] = None) -> None:
-    with open(fname, "a"):
-        os.utime(fname, times)
 
 
 class OuputFolderTests(unittest.TestCase):

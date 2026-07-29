@@ -1,6 +1,7 @@
 import argparse
 import logging
 import os
+from typing import Dict, List, Optional, Set, Union
 
 from wwpdb.utils.config.ConfigInfo import getSiteId
 
@@ -16,15 +17,15 @@ logger = logging.getLogger(__name__)
 class FindAndProcessEntries:
     def __init__(
         self,
-        entry_string="",
-        entry_list=None,
-        entry_file="",
-        skip_emdb=False,
-        pdb_release=False,
-        emdb_release=False,
-        site_id=None,
-        nocache=False,
-    ):  # pylint: disable=unused-argument
+        entry_string: str = "",
+        entry_list: Optional[List[str]] = None,
+        entry_file: str = "",
+        skip_emdb: bool = False,
+        pdb_release: bool = False,
+        emdb_release: bool = False,
+        site_id: Optional[str] = None,
+        nocache: bool = False,
+    ) -> None:  # pylint: disable=unused-argument
         if site_id is None:
             site_id = getSiteId()
         if entry_list is None:
@@ -33,12 +34,12 @@ class FindAndProcessEntries:
         self.entry_string = entry_string
         self.entry_file = entry_file
         self.site_id = site_id
-        self.entries = []
-        self.pdb_entries = []
-        self.emdb_entries = []
-        self.all_pdb_entries = set()
-        self.added_entries = []
-        self.messages = []
+        self.entries: List[str] = []
+        self.pdb_entries: List[str] = []
+        self.emdb_entries: List[str] = []
+        self.all_pdb_entries: Set[str] = set()
+        self.added_entries: List[str] = []
+        self.messages: List[Dict[str, Union[Optional[str], bool]]] = []
         self.pdb_release = pdb_release
         self.emdb_release = emdb_release
         self.skip_emdb = skip_emdb
@@ -50,7 +51,7 @@ class FindAndProcessEntries:
         else:
             self.__cache = of.get_ftp_cache_folder()
 
-    def find_and_process_entries(self):
+    def find_and_process_entries(self) -> None:
         self.find_onedep_entries()
         self.process_entry_file()
         self.process_entry_list()
@@ -59,10 +60,10 @@ class FindAndProcessEntries:
         self.process_emdb_entries()
         self.process_pdb_entries()
 
-    def run_process(self):
+    def run_process(self) -> None:
         self.find_and_process_entries()
 
-    def find_onedep_entries(self):
+    def find_onedep_entries(self) -> None:
         fe = FindEntries(siteID=self.site_id)
         if self.pdb_release:
             self.pdb_entries.extend(fe.get_added_pdb_entries())
@@ -71,7 +72,7 @@ class FindAndProcessEntries:
         if self.emdb_release:
             self.emdb_entries.extend(fe.get_emdb_entries())
 
-    def process_entry_file(self):
+    def process_entry_file(self) -> None:
         if self.entry_file:
             if os.path.exists(self.entry_file):
                 with open(self.entry_file) as inFile:
@@ -80,25 +81,25 @@ class FindAndProcessEntries:
             else:
                 logger.error("file: %s not found", self.entry_file)
 
-    def process_entry_list(self):
+    def process_entry_list(self) -> None:
         if self.entry_list:
             logger.info("entries from input list: %s", self.entry_list)
             self.entries.extend(self.entry_list)
 
-    def process_entry_string(self):
+    def process_entry_string(self) -> None:
         if self.entry_string:
             entries_from_entry_string = self.entry_string.split(",")
             logger.info("entries from input string: %s", entries_from_entry_string)
             self.entries.extend(entries_from_entry_string)
 
-    def categorise_entries(self):
+    def categorise_entries(self) -> None:
         for entry in self.entries:
             if "EMD-" in entry.upper():
                 self.emdb_entries.append(entry)
             else:
                 self.pdb_entries.append(entry)
 
-    def process_emdb_entries(self):
+    def process_emdb_entries(self) -> None:
         for emdb_entry in self.emdb_entries:
             if emdb_entry not in self.added_entries:
                 # stop duplication of making EM validation reports twice
@@ -110,6 +111,9 @@ class FindAndProcessEntries:
                     em_vol = re.get_emdb_volume()
                     if em_vol:
                         logger.debug("using XML: %s", em_xml)
+                        if em_xml is None:
+                            logger.warning("No EMDB XML file found for %s", emdb_entry)
+                            continue
                         pdbids = XmlInfo(em_xml).get_pdbids_from_xml()
                         if pdbids:
                             logger.info("PDB entries associated with %s: %s", emdb_entry, ",".join(pdbids))
@@ -134,31 +138,31 @@ class FindAndProcessEntries:
                                     logger.info("removing %s as pdb file does not exist", pdbid)
                                     self.pdb_entries.remove(pdbid)
 
-                        message = {"emdbID": emdb_entry}
+                        message: Dict[str, Union[Optional[str], bool]] = {"emdbID": emdb_entry}
                         self.messages.append(message)
                         self.added_entries.append(emdb_entry)
                     re.remove_local_temp_files()
                 except:  # noqa: E722,BLE001 pylint: disable=bare-except
                     logger.exception("ERROR processing %s", emdb_entry)
 
-    def process_pdb_entries(self):
+    def process_pdb_entries(self) -> None:
         for pdb_entry in self.pdb_entries:
             if pdb_entry not in self.added_entries:
-                message = {"pdbID": pdb_entry}
+                message: Dict[str, Union[Optional[str], bool]] = {"pdbID": pdb_entry}
                 self.messages.append(message)
                 self.added_entries.append(pdb_entry)
 
-    def get_found_entries(self):
+    def get_found_entries(self) -> List[Dict[str, Union[Optional[str], bool]]]:
         return self.messages
 
-    def get_pdb_entries(self):
+    def get_pdb_entries(self) -> List[str]:
         return self.pdb_entries
 
-    def get_emdb_entries(self):
+    def get_emdb_entries(self) -> List[str]:
         return self.emdb_entries
 
 
-def main():
+def main() -> None:
     # Create logger -
     logger = logging.getLogger()  # pylint: disable=redefined-outer-name
     FORMAT = "[%(asctime)s %(levelname)s]-%(module)s.%(funcName)s: %(message)s"
@@ -195,7 +199,7 @@ def main():
     )
 
     fape.run_process()
-    return fape.messages
+    # return fape.messages ---- Is this correct? Should it be printed to stdout or written to a file? For now, just print it.
 
 
 if "__main__" in __name__:

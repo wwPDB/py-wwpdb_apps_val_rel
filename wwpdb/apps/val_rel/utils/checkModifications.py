@@ -1,10 +1,11 @@
 import logging
 import os
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
 
-def already_run(test_file, output_folder):
+def already_run(test_file: Optional[str], output_folder: Optional[str]) -> bool:
     logger.info("checking for %s", test_file)
     if test_file and output_folder:
         if os.path.exists(test_file):

@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import sys
+from typing import Dict, List, Optional, Set, Union
 
 from wwpdb.utils.config.ConfigInfo import getSiteId
 from wwpdb.utils.message_queue.MessagePublisher import MessagePublisher
@@ -17,22 +18,22 @@ logger = logging.getLogger(__name__)
 class PopulateValidateRelease:
     def __init__(
         self,
-        entry_string="",
-        entry_list=None,
-        entry_file="",
-        keep_logs=False,
-        output_root=None,
-        always_recalculate=False,
-        skip_gzip=False,
-        skip_emdb=False,
-        validation_sub_dir="current",
-        pdb_release=False,
-        emdb_release=False,
-        site_id=None,
-        nocache=False,
-        priority=False,
-        subscribe=None,
-    ):
+        entry_string: str = "",
+        entry_list: Optional[List[str]] = None,
+        entry_file: str = "",
+        keep_logs: bool = False,
+        output_root: Optional[str] = None,
+        always_recalculate: bool = False,
+        skip_gzip: bool = False,
+        skip_emdb: bool = False,
+        validation_sub_dir: str = "current",
+        pdb_release: bool = False,
+        emdb_release: bool = False,
+        site_id: Optional[str] = None,
+        nocache: bool = False,
+        priority: bool = False,
+        subscribe: Optional[str] = None,
+    ) -> None:
         if site_id is None:
             site_id = getSiteId()
         if entry_list is None:
@@ -41,12 +42,12 @@ class PopulateValidateRelease:
         self.entry_string = entry_string
         self.entry_file = entry_file
         self.site_id = site_id
-        self.entries = []
-        self.pdb_entries = []
-        self.emdb_entries = []
-        self.all_pdb_entries = set()
-        self.added_entries = []
-        self.messages = []
+        self.entries: List[str] = []
+        self.pdb_entries: List[str] = []
+        self.emdb_entries: List[str] = []
+        self.all_pdb_entries: Set[str] = set()
+        self.added_entries: List[str] = []
+        self.messages: List[Dict[str, Union[Optional[str], bool]]] = []
         self.pdb_release = pdb_release
         self.emdb_release = emdb_release
         self.keep_logs = keep_logs
@@ -65,7 +66,7 @@ class PopulateValidateRelease:
         if self.priority_queue:
             self.make_priorities()
 
-    def find_and_process_entries(self):
+    def find_and_process_entries(self) -> None:
         fape = FindAndProcessEntries(
             entry_string=self.entry_string,
             entry_file=self.entry_file,
@@ -79,11 +80,11 @@ class PopulateValidateRelease:
         fape.run_process()
         self.messages = fape.get_found_entries()
 
-    def run_process(self):
+    def run_process(self) -> None:
         self.find_and_process_entries()
         self.process_messages()
 
-    def make_priorities(self):
+    def make_priorities(self) -> None:
         fe = FindEntries(siteID=self.site_id)
         # build lists of absolute input file paths and associated entries
         self.modified_priority_paths = fe.get_modified_pdb_paths()
@@ -93,7 +94,7 @@ class PopulateValidateRelease:
         self.emdb_priority_paths = fe.get_emdb_paths()
         self.emdb_priorities = [os.path.basename(path) for path in self.emdb_priority_paths]
 
-    def get_priority(self, message):
+    def get_priority(self, message: Dict[str, Union[Optional[str], bool]]) -> int:
         # missing - 10
         # new pdb - 8
         # new emdb - 6
@@ -144,7 +145,7 @@ class PopulateValidateRelease:
                 priority = 2
         return priority
 
-    def process_messages(self):
+    def process_messages(self) -> None:
         if self.messages:
             # Set logging for pika to be lower
             plogging = logging.getLogger("pika")
@@ -196,10 +197,12 @@ class PopulateValidateRelease:
                     logger.critical("error - could not publish")
                     break
 
-    def test(self):
+    def test(self) -> None:
+        message: Dict[str, Union[Optional[str], bool]]
+
         if not self.priority_queue:
             logger.info("error - not a priority queue")
-            return None
+            return
         fape = FindAndProcessEntries(
             entry_string=self.entry_string,
             entry_file=self.entry_file,
@@ -241,7 +244,7 @@ class PopulateValidateRelease:
                 logger.info("exchangeName %s queueName %s routingKey %s", vc.exchange, vc.queue_name, vc.routing_key)
 
 
-def main():
+def main() -> None:
     # Create logger -
     logger = logging.getLogger()  # pylint: disable=redefined-outer-name
     FORMAT = "[%(asctime)s %(levelname)s]-%(module)s.%(funcName)s: %(message)s"

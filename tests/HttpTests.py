@@ -4,6 +4,7 @@ import os
 import shutil
 import tempfile
 import unittest
+from typing import List, Optional, cast
 from unittest.mock import patch
 
 if __package__ is None or __package__ == "":
@@ -49,7 +50,7 @@ class TestHTTP(unittest.TestCase):
         self.emdb_half_map_id = "EMD-0036"
         self.emdb_mask_id = "EMD-0034"
         self.emdb_non_existent = "EMD-0000"
-        self.temp_paths = []
+        self.temp_paths: List[Optional[str]] = []
         logger.info("created temp dir %s", self.temp_dir)
 
     def tearDown(self) -> None:
@@ -65,7 +66,7 @@ class TestHTTP(unittest.TestCase):
             vc = ValConfig()
             session_path = vc.session_path
             for pth in self.temp_paths:
-                entry = pth.replace(session_path, "")
+                entry = cast("str", pth).replace(session_path, "")
                 if entry.startswith("/"):
                     entry = entry[1:]
                 basename = entry.split("/")[0]
@@ -126,22 +127,22 @@ class TestHTTP(unittest.TestCase):
         pdbid = self.xray_id
         gfr = getFilesReleaseHttpPDB(pdbid)
         model_path = gfr.get_model()
-        self.assertTrue(os.path.exists(model_path), "error - could not download %s" % model_path)
+        self.assertTrue(model_path and os.path.exists(model_path), "error - could not download %s" % model_path)
         logger.info("downloaded %s", model_path)
         self.temp_paths.append(model_path)
         sf_path = gfr.get_sf()
-        self.assertTrue(os.path.exists(sf_path), "error - could not download %s" % sf_path)
+        self.assertTrue(sf_path and os.path.exists(sf_path), "error - could not download %s" % sf_path)
         logger.info("downloaded %s", sf_path)
         self.temp_paths.append(sf_path)
         # test nmr
         pdbid = self.nmr_id
         gfr = getFilesReleaseHttpPDB(pdbid)
         cs_path = gfr.get_cs()
-        self.assertTrue(os.path.exists(cs_path), "error - could not download %s" % model_path)
+        self.assertTrue(cs_path and os.path.exists(cs_path), "error - could not download %s" % model_path)
         logger.info("downloaded %s", cs_path)
         self.temp_paths.append(cs_path)
         nmr_data_path = gfr.get_nmr_data()
-        self.assertTrue(os.path.exists(nmr_data_path), "error - could not download %s" % sf_path)
+        self.assertTrue(nmr_data_path and os.path.exists(nmr_data_path), "error - could not download %s" % sf_path)
         logger.info("downloaded %s", nmr_data_path)
         self.temp_paths.append(nmr_data_path)
         # test non-existent
@@ -158,29 +159,29 @@ class TestHTTP(unittest.TestCase):
         gfr = getFilesReleaseHttpEMDB(emdbid)
         # test volume file
         vol_path = gfr.get_emdb_volume()
-        self.assertTrue(os.path.exists(vol_path), "error - could not download %s" % vol_path)
+        self.assertTrue(vol_path and os.path.exists(vol_path), "error - could not download %s" % vol_path)
         logger.info("downloaded %s", vol_path)
         self.temp_paths.append(vol_path)
         # test xml file
         xml_path = gfr.get_emdb_xml()
-        self.assertTrue(os.path.exists(xml_path), "error - could not download %s" % xml_path)
+        self.assertTrue(xml_path and os.path.exists(xml_path), "error - could not download %s" % xml_path)
         logger.info("downloaded %s", xml_path)
         self.temp_paths.append(xml_path)
         # test fsc file
         emdbid = self.emdb_fsc_id
         gfr = getFilesReleaseHttpEMDB(emdbid)
         fsc_path = gfr.get_emdb_fsc()
-        self.assertTrue(os.path.exists(fsc_path), "error - could not download %s" % fsc_path)
+        self.assertTrue(fsc_path and os.path.exists(fsc_path), "error - could not download %s" % fsc_path)
         logger.info("downloaded %s", fsc_path)
         self.temp_paths.append(fsc_path)
         # test half maps
         emdbid = self.emdb_half_map_id
         gfr = getFilesReleaseHttpEMDB(emdbid)
         half_map_1, half_map_2 = gfr.get_emdb_half_maps()
-        self.assertTrue(os.path.exists(half_map_1), "error - could not download %s" % half_map_1)
+        self.assertTrue(half_map_1 and os.path.exists(half_map_1), "error - could not download %s" % half_map_1)
         logger.info("downloaded %s", half_map_1)
         self.temp_paths.append(half_map_1)
-        self.assertTrue(os.path.exists(half_map_2), "error - could not download %s" % half_map_2)
+        self.assertTrue(half_map_2 and os.path.exists(half_map_2), "error - could not download %s" % half_map_2)
         logger.info("downloaded %s", half_map_2)
         self.temp_paths.append(half_map_2)
         # test masks
@@ -192,10 +193,10 @@ class TestHTTP(unittest.TestCase):
         if masks:
             mask1 = masks[0]
             mask2 = masks[1]
-        self.assertTrue(os.path.exists(mask1), "error - could not download %s" % mask1)
+        self.assertTrue(mask1 and os.path.exists(mask1), "error - could not download %s" % mask1)
         logger.info("downloaded %s", mask1)
         self.temp_paths.append(mask1)
-        self.assertTrue(os.path.exists(mask2), "error - could not download %s" % mask2)
+        self.assertTrue(mask2 and os.path.exists(mask2), "error - could not download %s" % mask2)
         logger.info("downloaded %s", mask2)
         self.temp_paths.append(mask2)
         # test non-existent
