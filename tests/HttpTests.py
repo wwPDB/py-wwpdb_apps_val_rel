@@ -27,6 +27,19 @@ from wwpdb.apps.val_rel.utils.XmlInfo import XmlInfo
 logger = logging.getLogger(__name__)
 
 
+class MygetFilesReleaseHttpEMDB(getFilesReleaseHttpEMDB):
+    """Subclass of getFilesReleaseHttpEMDB for testing purposes"""
+    def __init__(self, emdb_id: str, site_id: Optional[str] = None) -> None:
+        super().__init__(emdb_id, site_id)
+
+    def get_emdb_masks(self) -> List[str]:
+        return self._get_emdb_masks()
+
+    def get_emdb_half_maps(self) -> List[Optional[str]]:
+        half_map_1, half_map_2 = self._get_emdb_half_maps()
+        return [half_map_1, half_map_2]
+
+
 class TestHTTP(unittest.TestCase):
     def setUp(self) -> None:
         self.patcher = patch("wwpdb.utils.config.ConfigInfoApp.ConfigInfo", side_effect=FtpStandardConfig)
@@ -156,7 +169,7 @@ class TestHTTP(unittest.TestCase):
     def test_gfr_emdb(self) -> None:
         logger.info("testing get files release emdb")
         emdbid = self.emdb_id
-        gfr = getFilesReleaseHttpEMDB(emdbid)
+        gfr = MygetFilesReleaseHttpEMDB(emdbid)
         # test volume file
         vol_path = gfr.get_emdb_volume()
         self.assertTrue(vol_path and os.path.exists(vol_path), "error - could not download %s" % vol_path)
@@ -169,14 +182,14 @@ class TestHTTP(unittest.TestCase):
         self.temp_paths.append(xml_path)
         # test fsc file
         emdbid = self.emdb_fsc_id
-        gfr = getFilesReleaseHttpEMDB(emdbid)
+        gfr = MygetFilesReleaseHttpEMDB(emdbid)
         fsc_path = gfr.get_emdb_fsc()
         self.assertTrue(fsc_path and os.path.exists(fsc_path), "error - could not download %s" % fsc_path)
         logger.info("downloaded %s", fsc_path)
         self.temp_paths.append(fsc_path)
         # test half maps
         emdbid = self.emdb_half_map_id
-        gfr = getFilesReleaseHttpEMDB(emdbid)
+        gfr = MygetFilesReleaseHttpEMDB(emdbid)
         half_map_1, half_map_2 = gfr.get_emdb_half_maps()
         self.assertTrue(half_map_1 and os.path.exists(half_map_1), "error - could not download %s" % half_map_1)
         logger.info("downloaded %s", half_map_1)
@@ -186,7 +199,7 @@ class TestHTTP(unittest.TestCase):
         self.temp_paths.append(half_map_2)
         # test masks
         emdbid = self.emdb_mask_id
-        gfr = getFilesReleaseHttpEMDB(emdbid)
+        gfr = MygetFilesReleaseHttpEMDB(emdbid)
         masks = gfr.get_emdb_masks()
         mask1 = None
         mask2 = None
@@ -201,7 +214,7 @@ class TestHTTP(unittest.TestCase):
         self.temp_paths.append(mask2)
         # test non-existent
         emdbid = self.emdb_non_existent
-        gfr = getFilesReleaseHttpEMDB(emdbid)
+        gfr = MygetFilesReleaseHttpEMDB(emdbid)
         vol_path = gfr.get_emdb_volume()
         self.assertFalse(vol_path, "error - downloaded %s" % vol_path)
         xml_path = gfr.get_emdb_xml()

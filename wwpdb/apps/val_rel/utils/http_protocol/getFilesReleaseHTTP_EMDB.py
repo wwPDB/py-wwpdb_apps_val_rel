@@ -113,8 +113,8 @@ class getFilesReleaseHttpEMDB(GetFilesReleaseBaseEMDB):
             temp_file_path = self.__get_file_from_remote_http(url=url, subfolder=self.__emdb_map_folder())
 
             # Retreve other files that are required for validation
-            self.get_emdb_half_maps()
-            self.get_emdb_masks()
+            self._get_emdb_half_maps()
+            self._get_emdb_masks()
             if not temp_file_path:
                 remove_local_temp_http(self.__setup_local_temp_http(), require_empty=True)
         else:
@@ -125,8 +125,8 @@ class getFilesReleaseHttpEMDB(GetFilesReleaseBaseEMDB):
         logger.debug("returning: %s", temp_file_path)
         return temp_file_path
 
-    # Public for testing
-    def get_emdb_half_maps(self) -> Tuple[Optional[str], Optional[str]]:
+    # Protected for testing
+    def _get_emdb_half_maps(self) -> Tuple[Optional[str], Optional[str]]:
         logger.debug("retrieving half maps")
         vol_file_name = self.__rf.get_emdb_map(self.__emdb_id)
         vol_file_name = vol_file_name.replace(".gz", "")
@@ -149,7 +149,7 @@ class getFilesReleaseHttpEMDB(GetFilesReleaseBaseEMDB):
             temp_file_paths.append(temp_file_path)
         return temp_file_paths[0], temp_file_paths[1]
 
-    def get_emdb_masks(self) -> List[str]:
+    def _get_emdb_masks(self) -> List[str]:
         logger.debug("retrieving masks")
         vol_file_name = self.__rf.get_emdb_map(self.__emdb_id)
         vol_file_name = vol_file_name.replace(".gz", "")

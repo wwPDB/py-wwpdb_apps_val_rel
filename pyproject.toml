@@ -124,7 +124,7 @@ ignore = [
 # -------------------- default environment scripts ------------------
 [tool.hatch.envs.default]
 skip-install = true
-dependencies = ["mypy", "ruff >=0.6.9", "wwpdb.utils.config", "wwpdb.utils.message_queue"]
+dependencies = ["mypy", "ruff >=0.6.9", "wwpdb.utils.config", "wwpdb.utils.message_queue", "wwpdb.io", "wwpdb.utils.dp", "wwpdb.utils.session", "wwpdb.utils.detach"]
 
 
 [tool.hatch.envs.default.scripts]
