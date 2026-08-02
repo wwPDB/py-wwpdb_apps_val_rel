@@ -88,7 +88,8 @@ def is_simple_modification(model_path: str) -> bool:
         "pdbx_nonpoly_feature",
         "pdbx_nonpoly_atom_feature",
         "pdbx_nonpoly_atom_feature_evidence",
-        "pdbx_nonpoly_feature_evidencepdbx_nonpoly_atom_coordination",
+        "pdbx_nonpoly_feature_evidence",
+        "pdbx_nonpoly_atom_coordination",
         "pdbx_nonpoly_atom_coordination_sphere",
         "pdbx_nonpoly_atom_coordination_sphere_order",
     ]
