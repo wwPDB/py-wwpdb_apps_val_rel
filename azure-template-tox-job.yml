@@ -131,14 +131,14 @@ jobs:
       #
     - task: Cache@2
       inputs:
-        key: 'python | "$(Agent.OS)" | requirements.txt | requirements-test.txt'
+        key: 'python | "$(Agent.OS)" | requirements-test.txt'
         restoreKeys: | 
           python | "$(Agent.OS)"
           python
         path: $(PIP_CACHE_DIR)
       displayName: Cache pip packages
 
-    - script: pip install -r requirements.txt -r requirements-test.txt
+    - script: pip install -r requirements-test.txt
       displayName: 'Install dependencies'
     #
     - ${{ if startsWith(parameters.tox, 'py') }}:
