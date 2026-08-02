@@ -34,10 +34,10 @@ class CheckResult:
         self.__validation_sub_folder = validation_sub_folder
         self.__message: Dict[str, Union[Optional[str], bool]] = {}
         self.__prepare_message()
-        self.expected_files: Dict[str, str] = {}
-        self.missing_files: Dict[str, List[Dict[str, str]]] = {}
-        self.validation_xml: Optional[str] = None
-        self.failed_programs: List[str] = []
+        self.__expected_files: Dict[str, str] = {}
+        self.__missing_files: Dict[str, List[Dict[str, str]]] = {}
+        self.__validation_xml: Optional[str] = None
+        self.__failed_programs: List[str] = []
 
     def __prepare_message(self) -> None:
         self.__message["pdbID"] = self.__pdbid
@@ -70,20 +70,20 @@ class CheckResult:
         simple_modification = False
         if model_file and not em_xml_file:
             simple_modification = is_simple_modification(model_path=model_file)
-        self.validation_xml = get_gzip_name(self.rv.getValidationXml())
-        logger.debug("validation xml: %s", self.validation_xml)
+        self.__validation_xml = get_gzip_name(self.rv.getValidationXml())
+        logger.debug("validation xml: %s", self.__validation_xml)
         output_files = self.rv.getCoreOutputFileDict()
         logger.debug("output_file_dict")
-        logger.debug(self.expected_files)
+        logger.debug(self.__expected_files)
 
         if not simple_modification:
             for output_file_type in output_files:
                 output_file = output_files[output_file_type]
                 gzipped_output_file = get_gzip_name(output_file)
                 if self.is_expected_file_type(output_file_type):
-                    self.expected_files[output_file_type] = gzipped_output_file
+                    self.__expected_files[output_file_type] = gzipped_output_file
                     if not os.path.exists(gzipped_output_file):
-                        self.missing_files.setdefault(output_file_type, []).append(
+                        self.__missing_files.setdefault(output_file_type, []).append(
                             {cast("str", self.rv.getEntryId()): gzipped_output_file}
                         )
 
@@ -91,27 +91,27 @@ class CheckResult:
 
     def get_missing_files(self) -> Dict[str, List[Dict[str, str]]]:
         #  {'pdf': [{'9bgf': '/wwpdb_da/da_top/data_devel/for_release/val_reports/current/9bgf/9bgf_validation.pdf.gz'}], ...
-        return self.missing_files
+        return self.__missing_files
 
     def get_expected_files(self) -> Dict[str, str]:
-        return self.expected_files
+        return self.__expected_files
 
     def did_all_files_fail(self) -> bool:
         """Returns true if none of the expected files are found"""
-        if self.missing_files:
-            if len(self.expected_files) - len(self.missing_files) == 0:
+        if self.__missing_files:
+            if len(self.__expected_files) - len(self.__missing_files) == 0:
                 return True
         return False
 
     def check_failed_programs(self) -> None:
-        """If a validation_xml file exists, parse file and set self.failed_programs"""
-        if self.validation_xml:
-            if os.path.exists(self.validation_xml):
-                vfx = ValidationXMLReader(self.validation_xml)
-                self.failed_programs = vfx.get_failed_programs()
+        """If a validation_xml file exists, parse file and set self.__failed_programs"""
+        if self.__validation_xml:
+            if os.path.exists(self.__validation_xml):
+                vfx = ValidationXMLReader(self.__validation_xml)
+                self.__failed_programs = vfx.get_failed_programs()
 
     def get_failed_programs(self) -> List[str]:
-        return self.failed_programs
+        return self.__failed_programs
 
 
 class CheckEntries:

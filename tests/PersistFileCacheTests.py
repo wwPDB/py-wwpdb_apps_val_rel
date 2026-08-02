@@ -100,6 +100,53 @@ class PersisFileCacheTests(unittest.TestCase):
 
         self.assertTrue(abs(os.path.getmtime(outfile) - os.path.getmtime(lfile)) < 1)
 
+    def testUncachedFile(self) -> None:
+        """Test exists/get_file for a file never added to the cache"""
+
+        pfc = PersistFileCache(self.__cache)
+        cfname = os.path.join(self.__tmpdir, "neverseen/file.txt")
+        outfile = os.path.join(self.__tmpdir, "neverseen_out.txt")
+
+        self.assertFalse(pfc.exists(cfname))
+        self.assertFalse(pfc.get_file(cfname, outfile))
+        self.assertFalse(os.path.exists(outfile))
+        self.assertIsNone(pfc.cache_file_status(cfname))
+
+    def testIsNegativeCacheFalseWhenNotCached(self) -> None:
+        """Test is_negative_cache returns False for a file not in the negative cache"""
+
+        pfc = PersistFileCache(self.__cache)
+        cfname = os.path.join(self.__tmpdir, "notnegative/file.txt")
+
+        self.assertFalse(pfc.is_negative_cache(cfname))
+
+    def testAddNegativeCacheUnresolvablePath(self) -> None:
+        """Test add_negative_cache raises when the cache dir cannot be determined"""
+
+        pfc = PersistFileCache(self.__cache)
+
+        with self.assertRaises(ValueError):
+            pfc.add_negative_cache("/")
+
+    def testGetFileSymlinkOverwritesExisting(self) -> None:
+        """Test get_file with symlink=True overwrites an existing destination file"""
+
+        pfc = PersistFileCache(self.__cache)
+        lfile = __file__
+        cfname = os.path.join(self.__tmpdir, "somewhere/file.txt")
+
+        ret = pfc.add_file(lfile, cfname)
+        self.assertTrue(ret, "Adding file failed")
+
+        outfile = os.path.join(self.__tmpdir, "testout_existing.txt")
+        os.makedirs(self.__tmpdir, exist_ok=True)
+        with open(outfile, "w") as fout:
+            fout.write("placeholder")
+
+        self.assertTrue(pfc.get_file(cfname, outfile, symlink=True))
+        self.assertTrue(os.path.islink(outfile))
+        self.assertTrue(abs(os.path.getmtime(outfile) - os.path.getmtime(lfile)) < 1)
+
 
 if __name__ == "__main__":  # pragma: no cover
     unittest.main()

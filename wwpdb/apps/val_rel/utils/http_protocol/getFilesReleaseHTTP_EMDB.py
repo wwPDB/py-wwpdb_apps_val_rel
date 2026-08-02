@@ -47,12 +47,12 @@ class getFilesReleaseHttpEMDB(GetFilesReleaseBaseEMDB):
         http_prefix = vc.http_prefix
         self.__session_path = vc.session_path
         protocol = vc.val_rel_protocol
-        self.url_prefix = "%s://%s%s" % (protocol, self.__server, http_prefix)
+        self.__url_prefix = "%s://%s%s" % (protocol, self.__server, http_prefix)
 
         l_ftp = LocalFTPPathInfo()
         # This is probably wrong -- local file path
-        l_ftp.set_ftp_emdb_root(self.url_prefix)
-        self.url_prefix = l_ftp.get_ftp_emdb()
+        l_ftp.set_ftp_emdb_root(self.__url_prefix)
+        self.__url_prefix = l_ftp.get_ftp_emdb()
         self.__emdb_id = emdbid
         self.__grf = None
         if not self.__local_ftp.get_ftp_emdb():
@@ -66,7 +66,7 @@ class getFilesReleaseHttpEMDB(GetFilesReleaseBaseEMDB):
             logger.info("trying remote HTTP")
             self.__setup_local_temp_http()
             xml_file_name = self.__rf.get_emdb_xml(self.__emdb_id)
-            url = os.path.join(self.url_prefix, self.__emdb_xml_folder(), xml_file_name)
+            url = os.path.join(self.__url_prefix, self.__emdb_xml_folder(), xml_file_name)
             # subf = os.path.basename(self.__emdb_xml_folder())
             temp_file_path = self.__get_file_from_remote_http(url=url, subfolder=self.__emdb_xml_folder())
             if not temp_file_path:
@@ -88,7 +88,7 @@ class getFilesReleaseHttpEMDB(GetFilesReleaseBaseEMDB):
             self.__setup_local_temp_http()
             logger.debug("trying remote HTTP")
             fsc_file_name = self.__rf.get_emdb_fsc(self.__emdb_id)
-            url = os.path.join(self.url_prefix, self.__emdb_fsc_folder(), fsc_file_name)
+            url = os.path.join(self.__url_prefix, self.__emdb_fsc_folder(), fsc_file_name)
             temp_file_path = self.__get_file_from_remote_http(url=url, subfolder=self.__emdb_fsc_folder())
             if not temp_file_path:
                 remove_local_temp_http(self.__setup_local_temp_http(), require_empty=True)
@@ -109,7 +109,7 @@ class getFilesReleaseHttpEMDB(GetFilesReleaseBaseEMDB):
             self.__setup_local_temp_http()
             logger.debug("trying remote HTTP")
             vol_file_name = self.__rf.get_emdb_map(self.__emdb_id)
-            url = os.path.join(self.url_prefix, self.__emdb_map_folder(), vol_file_name)
+            url = os.path.join(self.__url_prefix, self.__emdb_map_folder(), vol_file_name)
             temp_file_path = self.__get_file_from_remote_http(url=url, subfolder=self.__emdb_map_folder())
 
             # Retreve other files that are required for validation
@@ -138,7 +138,7 @@ class getFilesReleaseHttpEMDB(GetFilesReleaseBaseEMDB):
         if self.__grf is None:
             self.__grf = GetRemoteFilesHttp(server=self.__server, cache=self.__cache, site_id=self.__site_id)
         for half_map in half_maps:
-            url = os.path.join(self.url_prefix, self.__emdb_half_map_folder(), half_map)
+            url = os.path.join(self.__url_prefix, self.__emdb_half_map_folder(), half_map)
             temp_file_path = None
             if self.__grf.is_file(url):
                 temp_file_path = self.__get_file_from_remote_http(url=url, subfolder=self.__emdb_half_map_folder())
@@ -161,7 +161,7 @@ class getFilesReleaseHttpEMDB(GetFilesReleaseBaseEMDB):
         temp_file_paths = []
         for x in range(1, max_masks + 1):
             mask_file_name = mask_name.replace("_msk", "_msk_%d" % x)
-            url = os.path.join(self.url_prefix, self.__emdb_mask_folder(), mask_file_name)
+            url = os.path.join(self.__url_prefix, self.__emdb_mask_folder(), mask_file_name)
             temp_file_path = None
             if self.__grf.is_file(url):
                 temp_file_path = self.__get_file_from_remote_http(url=url, subfolder=self.__emdb_mask_folder())

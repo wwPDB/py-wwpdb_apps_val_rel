@@ -107,6 +107,7 @@ ignore = [
   "PLW1514",  # `open` in text mode without explicit `encoding` argument
   "PT009",    # Use a regular `assert` instead of unittest-style `assertGreater`
   "RET504",   # Unnecessary assignment to `X` before `return` statement
+  "PT027",    # Use `pytest.raises` instead of unittest-style `assertRaises`
   "RUF100",   # RUF REMOVES FLAKE8 noqa!
   "S110",     # `try`-`except`-`pass` detected, consider logging the exception
   "SIM102",   # Use a single `if` statement instead of nested `if` statements

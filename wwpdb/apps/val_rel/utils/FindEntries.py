@@ -3,15 +3,14 @@ import os
 from typing import List, Literal, Optional
 
 from wwpdb.io.locator.ReleasePathInfo import ReleasePathInfo
-from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
+from wwpdb.utils.config.ConfigInfo import getSiteId
 
 
 class FindEntries:
     def __init__(self, siteID: Optional[str] = None) -> None:
         if siteID is None:
             siteID = getSiteId()
-        self.siteID = siteID
-        self.cI = ConfigInfo(self.siteID)
+        self.__siteID = siteID
         # self.entries_missing_files = []
         # self.missing_files = []
 
@@ -20,7 +19,7 @@ class FindEntries:
         Ignores directories that end in ".new" being created by release module.
         """
         entries: List[str] = []
-        rpi = ReleasePathInfo(self.siteID)
+        rpi = ReleasePathInfo(self.__siteID)
         dirpath = rpi.getForReleasePath(subdir=subfolder)
         full_entries = glob.glob(os.path.join(dirpath, "*"))
         for full_entry in full_entries:
@@ -48,7 +47,7 @@ class FindEntries:
         Ignores directories that end in ".new" being created by release module.
         """
         entries: List[str] = []
-        rpi = ReleasePathInfo(self.siteID)
+        rpi = ReleasePathInfo(self.__siteID)
         dirpath = rpi.getForReleasePath(subdir=subfolder)
         full_entries = glob.glob(os.path.join(dirpath, "*"))
         for full_entry in full_entries:

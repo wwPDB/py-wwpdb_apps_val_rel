@@ -29,15 +29,14 @@ class outputFiles:
         self._validation_sub_directory = validation_sub_directory
         self._temp_output_folder = temp_output_folder
         self._entryID: Optional[str] = None
-        self.skip_pdb_hash = skip_pdb_hash
-        self.pdb_output_folder: Optional[str] = None
-        self.emdb_output_folder: Optional[str] = None
-        self.entry_output_folder: Optional[str] = None
-        self.with_emdb = False
-        self.copy_to_root_emdb = False
-        self.accession = ""
-        self.rf = ReleaseFileNames()
-        self.rp = ReleasePathInfo(self._siteID)
+        self.__skip_pdb_hash = skip_pdb_hash
+        self.__pdb_output_folder: Optional[str] = None
+        self.__emdb_output_folder: Optional[str] = None
+        self.__entry_output_folder: Optional[str] = None
+        self.__with_emdb = False
+        self.__copy_to_root_emdb = False
+        self.__accession = ""
+        self.__rf = ReleaseFileNames()
         self.get_pdb_output_folder()
         self.get_emdb_output_folder()
         self.get_entry_output_folder()
@@ -91,12 +90,12 @@ class outputFiles:
 
     def get_emdb_lower_hyphen(self) -> str:
         if self.get_emdb_id():
-            return cast("str", self.rf.get_lower_emdb_hyphen_format(self.get_emdb_id()))
+            return cast("str", self.__rf.get_lower_emdb_hyphen_format(self.get_emdb_id()))
         return ""
 
     def get_emdb_lower_underscore(self) -> str:
         if self.get_emdb_id():
-            return cast("str", self.rf.get_lower_emdb_underscore_format(self.get_emdb_id()))
+            return cast("str", self.__rf.get_lower_emdb_underscore_format(self.get_emdb_id()))
         return ""
 
     def get_entry_id(self) -> str:
@@ -105,61 +104,61 @@ class outputFiles:
         return ""
 
     def set_accession_variables(self, with_emdb: bool = False, copy_to_root_emdb: bool = False) -> None:
-        self.with_emdb = with_emdb
-        self.copy_to_root_emdb = copy_to_root_emdb
+        self.__with_emdb = with_emdb
+        self.__copy_to_root_emdb = copy_to_root_emdb
 
     def set_accession(self) -> str:
-        self.accession = f"{self._entryID}"
+        self.__accession = f"{self._entryID}"
         if self._emdbID and not self._pdbID:
-            self.accession = self.get_emdb_lower_underscore()
-        if self._pdbID and self._emdbID and self.with_emdb:
-            self.accession = f"{self.get_emdb_lower_underscore()}_{self._pdbID}"
-        if self._emdbID and self.copy_to_root_emdb:
-            self.accession = f"{self.get_emdb_lower_underscore()}"
+            self.__accession = self.get_emdb_lower_underscore()
+        if self._pdbID and self._emdbID and self.__with_emdb:
+            self.__accession = f"{self.get_emdb_lower_underscore()}_{self._pdbID}"
+        if self._emdbID and self.__copy_to_root_emdb:
+            self.__accession = f"{self.get_emdb_lower_underscore()}"
 
-        return self.accession
+        return self.__accession
 
     def add_output_folder_accession(self, filename: str) -> str:
         if self._temp_output_folder:
             return os.path.join(self._temp_output_folder, filename)
-        if not self.entry_output_folder:
+        if not self.__entry_output_folder:
             emsg = "entry_output_folder not set"
             raise ValueError(emsg)
-        return os.path.join(self.entry_output_folder, filename)
+        return os.path.join(self.__entry_output_folder, filename)
 
     def get_validation_xml(self) -> str:
-        return self.add_output_folder_accession(self.rf.get_validation_xml(self.accession))
+        return self.add_output_folder_accession(self.__rf.get_validation_xml(self.__accession))
 
     def get_validation_png(self) -> str:
-        return self.add_output_folder_accession(self.rf.get_validation_png(self.accession))
+        return self.add_output_folder_accession(self.__rf.get_validation_png(self.__accession))
 
     def get_validation_svg(self) -> str:
-        return self.add_output_folder_accession(self.rf.get_validation_svg(self.accession))
+        return self.add_output_folder_accession(self.__rf.get_validation_svg(self.__accession))
 
     def get_validation_pdf(self) -> str:
-        return self.add_output_folder_accession(self.rf.get_validation_pdf(self.accession))
+        return self.add_output_folder_accession(self.__rf.get_validation_pdf(self.__accession))
 
     def get_validation_full_pdf(self) -> str:
-        return self.add_output_folder_accession(self.rf.get_validation_full_pdf(self.accession))
+        return self.add_output_folder_accession(self.__rf.get_validation_full_pdf(self.__accession))
 
     def get_validation_2fofc(self) -> str:
-        return self.add_output_folder_accession(self.rf.get_validation_2fofc(self.accession))
+        return self.add_output_folder_accession(self.__rf.get_validation_2fofc(self.__accession))
 
     def get_validation_fofc(self) -> str:
-        return self.add_output_folder_accession(self.rf.get_validation_fofc(self.accession))
+        return self.add_output_folder_accession(self.__rf.get_validation_fofc(self.__accession))
 
     def get_validation_image_tar(self) -> str:
-        return self.add_output_folder_accession(self.rf.get_validation_image_tar(self.accession))
+        return self.add_output_folder_accession(self.__rf.get_validation_image_tar(self.__accession))
 
     def get_validation_cif(self) -> str:
-        return self.add_output_folder_accession(self.rf.get_validation_cif(self.accession))
+        return self.add_output_folder_accession(self.__rf.get_validation_cif(self.__accession))
 
     def get_core_validation_files(self) -> Dict[str, str]:
         logger.debug("getting core files for: %s", self._entryID)
-        logger.debug("path: %s", self.entry_output_folder)
+        logger.debug("path: %s", self.__entry_output_folder)
 
         self.set_accession()
-        logger.debug("accession set to %s", self.accession)
+        logger.debug("accession set to %s", self.__accession)
 
         ret = {
             "pdf": self.get_validation_pdf(),
@@ -195,7 +194,7 @@ class outputFiles:
         return all_file_dict
 
     def ret_pdb_hash(self) -> str:
-        if self.skip_pdb_hash:
+        if self.__skip_pdb_hash:
             pdb_hash = ""
         else:
             pdb_hash = self.get_pdb_id_hash()
@@ -214,10 +213,12 @@ class outputFiles:
         if self.get_pdb_id():
             self.set_entry_id(self.get_pdb_id())
             if self._output_root:
-                self.pdb_output_folder = os.path.join(self._output_root, "pdb", self.ret_pdb_hash(), self.get_pdb_id())
+                self.__pdb_output_folder = os.path.join(
+                    self._output_root, "pdb", self.ret_pdb_hash(), self.get_pdb_id()
+                )
             else:
-                self.pdb_output_folder = os.path.join(self.get_pdb_root_folder(), self.get_pdb_id())
-        return cast("str", self.pdb_output_folder)
+                self.__pdb_output_folder = os.path.join(self.get_pdb_root_folder(), self.get_pdb_id())
+        return cast("str", self.__pdb_output_folder)
 
     def get_emdb_output_folder(self) -> str:
         """
@@ -227,17 +228,17 @@ class outputFiles:
         if self.get_emdb_id():
             self.set_entry_id(self.get_emdb_id())
             if self._output_root:
-                self.emdb_output_folder = os.path.join(self._output_root, "emd", self.get_emdb_id(), "validation")
+                self.__emdb_output_folder = os.path.join(self._output_root, "emd", self.get_emdb_id(), "validation")
             else:
-                self.emdb_output_folder = os.path.join(self.get_emdb_root_folder(), self.get_emdb_id(), "validation")
-        return cast("str", self.emdb_output_folder)
+                self.__emdb_output_folder = os.path.join(self.get_emdb_root_folder(), self.get_emdb_id(), "validation")
+        return cast("str", self.__emdb_output_folder)
 
     def get_entry_output_folder(self) -> Optional[str]:
         if self.get_pdb_id():
-            self.entry_output_folder = self.get_pdb_output_folder()
+            self.__entry_output_folder = self.get_pdb_output_folder()
         elif self.get_emdb_id():
-            self.entry_output_folder = self.get_emdb_output_folder()
-        return self.entry_output_folder
+            self.__entry_output_folder = self.get_emdb_output_folder()
+        return self.__entry_output_folder
 
     def get_ftp_cache_folder(self) -> str:
         # Same for both x-ray/em

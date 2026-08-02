@@ -3,7 +3,7 @@ import shutil
 import tempfile
 import unittest
 
-from wwpdb.apps.val_rel.utils.mmCIFInfo import mmCIFInfo
+from wwpdb.apps.val_rel.utils.mmCIFInfo import is_simple_modification, mmCIFInfo
 
 
 class mmCIFInfoTests(unittest.TestCase):
@@ -107,6 +107,142 @@ loop_
         cats, ordinal = mf.get_latest_modified_categories()
         self.assertTrue(cats == ["citation_author", "citation"])
         self.assertEqual(ordinal, "2")
+
+    def test_get_exptl_missing_category_returns_empty(self) -> None:
+        self.write_mmcif()
+        mf = mmCIFInfo(mmCIF_file=self.mmCIF_file)
+        emdb_id = mf.get_associated_emdb()
+        self.assertTrue(emdb_id is None)
+
+    def test_get_latest_modified_categories_missing_returns_empty(self) -> None:
+        self.write_mmcif()
+        mf = mmCIFInfo(mmCIF_file=self.mmCIF_file)
+        cats, ordinal = mf.get_latest_modified_categories()
+        self.assertTrue(cats == [])
+        self.assertTrue(ordinal is None)
+
+    def test_parse_mmcif_missing_file_returns_none(self) -> None:
+        mf = mmCIFInfo(mmCIF_file=os.path.join(self.test_dir, "does_not_exist.cif"))
+        ret = mf.parse_mmcif()
+        self.assertTrue(ret is None)
+
+    def test_get_modified_items(self) -> None:
+        self.additional_content = """
+loop_
+    _pdbx_audit_revision_item.ordinal
+    _pdbx_audit_revision_item.revision_ordinal
+    _pdbx_audit_revision_item.data_content_type
+    _pdbx_audit_revision_item.item
+    1 2 'Structure model' '_database_2.pdbx_DOI'
+    2 2 'Structure model' '_database_2.database_id'
+#
+"""
+        self.write_mmcif()
+        mf = mmCIFInfo(mmCIF_file=self.mmCIF_file)
+        items = mf.get_modified_items("2")
+        self.assertEqual(items, {"database_2": ["pdbx_DOI", "database_id"]})
+
+    def test_is_simple_modification_true_for_skip_list_category(self) -> None:
+        self.additional_content = """
+loop_
+    _pdbx_audit_revision_history.ordinal
+    _pdbx_audit_revision_history.data_content_type
+    _pdbx_audit_revision_history.major_revision
+    _pdbx_audit_revision_history.minor_revision
+    _pdbx_audit_revision_history.revision_date
+    1 'Structure model' 1 0 2017-03-01
+#
+loop_
+    _pdbx_audit_revision_category.ordinal
+    _pdbx_audit_revision_category.revision_ordinal
+    _pdbx_audit_revision_category.data_content_type
+    _pdbx_audit_revision_category.category
+    1 1 'Structure Model' 'citation'
+#
+"""
+        self.write_mmcif()
+        self.assertTrue(is_simple_modification(self.mmCIF_file))
+
+    def test_is_simple_modification_false_for_non_skip_list_category(self) -> None:
+        self.additional_content = """
+loop_
+    _pdbx_audit_revision_history.ordinal
+    _pdbx_audit_revision_history.data_content_type
+    _pdbx_audit_revision_history.major_revision
+    _pdbx_audit_revision_history.minor_revision
+    _pdbx_audit_revision_history.revision_date
+    1 'Structure model' 1 0 2017-03-01
+#
+loop_
+    _pdbx_audit_revision_category.ordinal
+    _pdbx_audit_revision_category.revision_ordinal
+    _pdbx_audit_revision_category.data_content_type
+    _pdbx_audit_revision_category.category
+    1 1 'Structure Model' 'entity'
+#
+"""
+        self.write_mmcif()
+        self.assertFalse(is_simple_modification(self.mmCIF_file))
+
+    def test_is_simple_modification_false_with_no_audit_history(self) -> None:
+        self.write_mmcif()
+        self.assertFalse(is_simple_modification(self.mmCIF_file))
+
+    def test_is_simple_modification_true_for_allowed_database_2_attrs(self) -> None:
+        self.additional_content = """
+loop_
+    _pdbx_audit_revision_history.ordinal
+    _pdbx_audit_revision_history.data_content_type
+    _pdbx_audit_revision_history.major_revision
+    _pdbx_audit_revision_history.minor_revision
+    _pdbx_audit_revision_history.revision_date
+    1 'Structure model' 1 0 2017-03-01
+#
+loop_
+    _pdbx_audit_revision_category.ordinal
+    _pdbx_audit_revision_category.revision_ordinal
+    _pdbx_audit_revision_category.data_content_type
+    _pdbx_audit_revision_category.category
+    1 1 'Structure Model' 'database_2'
+#
+loop_
+    _pdbx_audit_revision_item.ordinal
+    _pdbx_audit_revision_item.revision_ordinal
+    _pdbx_audit_revision_item.data_content_type
+    _pdbx_audit_revision_item.item
+    1 1 'Structure model' '_database_2.pdbx_DOI'
+#
+"""
+        self.write_mmcif()
+        self.assertTrue(is_simple_modification(self.mmCIF_file))
+
+    def test_is_simple_modification_false_for_disallowed_database_2_attrs(self) -> None:
+        self.additional_content = """
+loop_
+    _pdbx_audit_revision_history.ordinal
+    _pdbx_audit_revision_history.data_content_type
+    _pdbx_audit_revision_history.major_revision
+    _pdbx_audit_revision_history.minor_revision
+    _pdbx_audit_revision_history.revision_date
+    1 'Structure model' 1 0 2017-03-01
+#
+loop_
+    _pdbx_audit_revision_category.ordinal
+    _pdbx_audit_revision_category.revision_ordinal
+    _pdbx_audit_revision_category.data_content_type
+    _pdbx_audit_revision_category.category
+    1 1 'Structure Model' 'database_2'
+#
+loop_
+    _pdbx_audit_revision_item.ordinal
+    _pdbx_audit_revision_item.revision_ordinal
+    _pdbx_audit_revision_item.data_content_type
+    _pdbx_audit_revision_item.item
+    1 1 'Structure model' '_database_2.database_id'
+#
+"""
+        self.write_mmcif()
+        self.assertFalse(is_simple_modification(self.mmCIF_file))
 
 
 if __name__ == "__main__":  # pragma: no cover

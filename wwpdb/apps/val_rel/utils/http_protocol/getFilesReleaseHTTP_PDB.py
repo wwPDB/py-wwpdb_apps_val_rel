@@ -45,10 +45,10 @@ class getFilesReleaseHttpPDB(GetFilesReleaseBasePDB):
         # The local sessiondir download path
         self.__local_http_path: Optional[str] = None
 
-        self.grf = None
+        self.__grf = None
 
         if not self.__local_ftp.get_ftp_pdb():
-            self.grf = GetRemoteFilesHttp(server=self.__server, cache=self.__cache, site_id=self.__site_id)
+            self.__grf = GetRemoteFilesHttp(server=self.__server, cache=self.__cache, site_id=self.__site_id)
 
     def get_model(self) -> Optional[str]:
         """
@@ -138,9 +138,9 @@ class getFilesReleaseHttpPDB(GetFilesReleaseBasePDB):
         """
         try:
             logger.debug("About to get %s %s to %s", url, filename, self.__get_temp_local_http_path())
-            if self.grf is None:
-                self.grf = GetRemoteFilesHttp(server=self.__server, cache=self.__cache)
-            ret = self.grf.get_url(url=url, output_path=self.__get_temp_local_http_path())
+            if self.__grf is None:
+                self.__grf = GetRemoteFilesHttp(server=self.__server, cache=self.__cache)
+            ret = self.__grf.get_url(url=url, output_path=self.__get_temp_local_http_path())
             logger.debug("ret is %s", ret)
             if ret:
                 return True
@@ -187,6 +187,6 @@ class getFilesReleaseHttpPDB(GetFilesReleaseBasePDB):
 
     def close_connection(self) -> None:
         # maintained for backward compatibility with ftp version
-        if self.grf is not None:
-            self.grf.disconnect()
-            self.grf = None
+        if self.__grf is not None:
+            self.__grf.disconnect()
+            self.__grf = None

@@ -29,18 +29,18 @@ class getFilesReleaseFtpPDB(GetFilesReleaseBasePDB):
         self.__local_ftp = LocalFTPPathInfo()
         self.__temp_local_ftp = None  # Used once as a constant!!!
         vc = ValConfig(self.__site_id)
-        self.server = vc.ftp_server
-        self.session_path = vc.session_path
+        self.__server = vc.ftp_server
+        self.__session_path = vc.session_path
         site_url_prefix = vc.ftp_prefix
         self.__remote_ftp = LocalFTPPathInfo()
         self.__remote_ftp.set_ftp_pdb_root(site_url_prefix)
-        self.url_prefix = self.__remote_ftp.get_ftp_pdb()
-        self.pdb_id = pdbid
+        self.__url_prefix = self.__remote_ftp.get_ftp_pdb()
+        self.__pdb_id = pdbid
         self.__local_ftp_path: Optional[str] = None
-        self.grf = None
+        self.__grf = None
 
         if not self.__local_ftp.get_ftp_pdb():
-            self.grf = GetRemoteFiles(server=self.server, cache=self.__cache)
+            self.__grf = GetRemoteFiles(server=self.__server, cache=self.__cache)
 
     @staticmethod
     def check_filename(file_name: str) -> Optional[str]:
@@ -57,20 +57,20 @@ class getFilesReleaseFtpPDB(GetFilesReleaseBasePDB):
     def setup_local_temp_ftp(self, session_path: Optional[str] = None) -> str:
         if not self.__local_ftp_path:
             if not session_path:
-                session_path = self.session_path
-            if not self.pdb_id:
+                session_path = self.__session_path
+            if not self.__pdb_id:
                 emsg = "PDB ID is not set. Cannot setup local temp FTP path."
                 raise ValueError(emsg)
             self.__local_ftp_path = setup_local_temp_ftp(
-                temp_dir=self.__temp_local_ftp, session_path=session_path, suffix=self.pdb_id
+                temp_dir=self.__temp_local_ftp, session_path=session_path, suffix=self.__pdb_id
             )  # self.__local_ftp_path will be set here - so have a string
         return self.__local_ftp_path
 
     def get_temp_local_ftp_path(self) -> str:
-        if not self.pdb_id:
+        if not self.__pdb_id:
             emsg = "PDB ID is not set. Cannot get local temp FTP path."
             raise ValueError(emsg)
-        return os.path.join(self.setup_local_temp_ftp(), self.pdb_id)
+        return os.path.join(self.setup_local_temp_ftp(), self.__pdb_id)
 
     def remove_local_temp_files(self) -> None:
         """Cleanup of local ftp directory if present"""
@@ -101,11 +101,11 @@ class getFilesReleaseFtpPDB(GetFilesReleaseBasePDB):
         """
         logger.debug("About to get %s %s to %s", file_path, filename, self.get_temp_local_ftp_path())
 
-        if self.grf is None:
+        if self.__grf is None:
             logger.warning("There was no existing ftp connection. Opening new connection now...")
-            self.grf = GetRemoteFiles(server=self.server, cache=self.__cache)
+            self.__grf = GetRemoteFiles(server=self.__server, cache=self.__cache)
 
-        ret = self.grf.get_url(output_path=self.get_temp_local_ftp_path(), directory=file_path, filename=filename)
+        ret = self.__grf.get_url(output_path=self.get_temp_local_ftp_path(), directory=file_path, filename=filename)
         # logger.debug("ret is %s", ret)
         if ret:
             return True
@@ -118,11 +118,11 @@ class getFilesReleaseFtpPDB(GetFilesReleaseBasePDB):
         :return: file name if present or None
         """
         if self.__local_ftp.get_ftp_pdb():
-            file_path = self.__local_ftp.get_model_fname(accession=self.pdb_id)
+            file_path = self.__local_ftp.get_model_fname(accession=self.__pdb_id)
             logger.debug("checking local model filepath: %s", file_path)
             file_name = self.check_filename(file_path)
         else:
-            fpart = self.__rf.get_model(accession=self.pdb_id, for_release=False)
+            fpart = self.__rf.get_model(accession=self.__pdb_id, for_release=False)
             file_name = self.get_remote_ftp_file(file_path=self.__remote_ftp.get_model_path(), filename=fpart)
         logger.debug("final model filepath: %s", file_name)
         return file_name
@@ -134,12 +134,12 @@ class getFilesReleaseFtpPDB(GetFilesReleaseBasePDB):
         :return: file name if present or None
         """
         if self.__local_ftp.get_ftp_pdb():
-            file_path = self.__local_ftp.get_structure_factors_fname(accession=self.pdb_id)
+            file_path = self.__local_ftp.get_structure_factors_fname(accession=self.__pdb_id)
             # file_path = os.path.join(self.get_temp_local_ftp_path(), fpart)
             logger.debug("checking local structure factor filepath: %s", file_path)
             file_name = self.check_filename(file_path)
         else:
-            fpart = self.__rf.get_structure_factor(accession=self.pdb_id, for_release=False)
+            fpart = self.__rf.get_structure_factor(accession=self.__pdb_id, for_release=False)
             file_name = self.get_remote_ftp_file(file_path=self.__remote_ftp.get_sf_path(), filename=fpart)
         logger.debug("final structure factor filepath: %s", file_name)
         return file_name
@@ -152,11 +152,11 @@ class getFilesReleaseFtpPDB(GetFilesReleaseBasePDB):
         """
         # file_path = os.path.join(self.get_temp_local_ftp_path(), fpart)
         if self.__local_ftp.get_ftp_pdb():
-            file_path = self.__local_ftp.get_chemical_shifts_fname(accession=self.pdb_id)
+            file_path = self.__local_ftp.get_chemical_shifts_fname(accession=self.__pdb_id)
             logger.debug("checking local chemical shift filepath: %s", file_path)
             file_name = self.check_filename(file_path)
         else:
-            fpart = self.__rf.get_chemical_shifts(accession=self.pdb_id, for_release=False)
+            fpart = self.__rf.get_chemical_shifts(accession=self.__pdb_id, for_release=False)
             file_name = self.get_remote_ftp_file(file_path=self.__remote_ftp.get_cs_path(), filename=fpart)
         logger.debug("final chemical shift filepath: %s", file_name)
         return file_name
@@ -169,18 +169,25 @@ class getFilesReleaseFtpPDB(GetFilesReleaseBasePDB):
         """
         file_path: Optional[str] = None
         if self.__local_ftp.get_ftp_pdb():
-            file_path = cast("str", self.__local_ftp.get_nmr_data_fname(accession=self.pdb_id))
+            file_path = cast("str", self.__local_ftp.get_nmr_data_fname(accession=self.__pdb_id))
             # file_path = os.path.join(self.get_temp_local_ftp_path(), fpart)
             logger.debug("checking local NMR data filepath: %s", file_path)
             file_name = self.check_filename(file_path)
         else:
-            fpart = self.__rf.get_nmr_data(accession=self.pdb_id, for_release=False)
+            fpart = self.__rf.get_nmr_data(accession=self.__pdb_id, for_release=False)
             file_name = self.get_remote_ftp_file(file_path=self.__remote_ftp.get_nmr_data_path(), filename=fpart)
 
         logger.debug("final NMR data filepath: %s", file_name)
         return file_name
 
     def close_connection(self) -> None:
-        if self.grf is not None:
-            self.grf.disconnect()
-            self.grf = None
+        if self.__grf is not None:
+            self.__grf.disconnect()
+            self.__grf = None
+
+    # For debugging
+    def _set_server(self, server: str) -> None:
+        self.__server = server
+
+    def _set_url_prefix(self, url_prefix: str) -> None:
+        self.__url_prefix = url_prefix

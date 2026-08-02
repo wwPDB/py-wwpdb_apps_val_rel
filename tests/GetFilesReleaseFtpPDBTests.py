@@ -17,7 +17,16 @@ else:
 from wwpdb.apps.val_rel.utils.ftp_protocol.getFilesReleaseFTP_PDB import getFilesReleaseFtpPDB
 
 
-class TestsGettingEMDBData(unittest.TestCase):
+class MyGetFilesReleaseFtpPDB(getFilesReleaseFtpPDB):
+    # __init__ not needed
+    def set_server(self, server: str) -> None:
+        self._set_server(server)
+
+    def set_url_prefix(self, url_prefix: str) -> None:
+        self._set_url_prefix(url_prefix)
+
+
+class TestsGettingFTP_PDBData(unittest.TestCase):
     def setUp(self) -> None:
         self.patcher = patch("wwpdb.utils.config.ConfigInfoApp.ConfigInfo", side_effect=FtpStandardConfig)
         self.patcher2 = patch("wwpdb.apps.val_rel.config.ValConfig.ConfigInfo", side_effect=FtpStandardConfig)
@@ -33,18 +42,18 @@ class TestsGettingEMDBData(unittest.TestCase):
         self.patcher2.stop()
 
     def test_checking_model_existing_pdb(self) -> None:
-        gfrf = getFilesReleaseFtpPDB(pdbid="1cbs")
+        gfrf = MyGetFilesReleaseFtpPDB(pdbid="1cbs")
         gfrf.setup_local_temp_ftp(session_path=self.temp_folder)
-        gfrf.server = self.server
-        gfrf.url_prefix = self.url_prefix
+        gfrf.set_server(self.server)
+        gfrf.set_url_prefix(self.url_prefix)
         ret = gfrf.get_model()
         self.assertTrue(ret)
 
     def test_checking_header_invalid_pdb(self) -> None:
-        gfrf = getFilesReleaseFtpPDB(pdbid="1cbssFDSDFSF")
+        gfrf = MyGetFilesReleaseFtpPDB(pdbid="1cbssFDSDFSF")
         gfrf.setup_local_temp_ftp(session_path=self.temp_folder)
-        gfrf.server = self.server
-        gfrf.url_prefix = self.url_prefix
+        gfrf.set_server(self.server)
+        gfrf.set_url_prefix(self.url_prefix)
         ret = gfrf.get_model()
         self.assertFalse(ret)
 

@@ -16,14 +16,10 @@ class getFilesReleaseOneDep:
         if siteID is None:
             siteID = getSiteId()
         self.__siteID = siteID
-        self.pdb_id = pdb_id
-        self.emdb_id = emdb_id
+        self.__pdb_id = pdb_id
+        self.__emdb_id = emdb_id
         self.__rp = ReleasePathInfo(self.__siteID)
         self.__rf = ReleaseFileNames()
-        self.sf_current = False
-        self.cs_current = False
-        self.mr_current = False
-        self.em_xml_current = False
 
     def _get_onedep_pdb_folder_paths(self) -> List[str]:
         ret_list = [
@@ -37,30 +33,30 @@ class getFilesReleaseOneDep:
         return ret_list
 
     def _get_onedep_pdb_file_paths(self, filename: str) -> List[str]:
-        """Returns list of directories for self.pdb_id and filename.
+        """Returns list of directories for self.__pdb_id and filename.
         Returns for_release/{added, modified}/pdb_id/filename
         """
         ret_list = []
         folder_list = self._get_onedep_pdb_folder_paths()
-        if not self.pdb_id:
+        if not self.__pdb_id:
             emsg = "PDB ID is not set. Cannot get OneDep PDB file paths."
             raise ValueError(emsg)
         for folder in folder_list:
-            full_file_name = os.path.join(folder, self.pdb_id, filename)
+            full_file_name = os.path.join(folder, self.__pdb_id, filename)
             ret_list.append(full_file_name)
         return ret_list
 
     def _get_onedep_previous_pdb_file_paths(self, filename: str) -> List[str]:
-        """Returns list of directories for self.pdb_id and filename.
+        """Returns list of directories for self.__pdb_id and filename.
         Returns for_release/previous/{added, modified}/pdb_id/filename
         """
         ret_list = []
         folder_list = self._get_previous_onedep_pdb_folder_paths()
-        if not self.pdb_id:
+        if not self.__pdb_id:
             emsg = "PDB ID is not set. Cannot get OneDep previous PDB file paths."
             raise ValueError(emsg)
         for folder in folder_list:
-            full_file_name = os.path.join(folder, self.pdb_id, filename)
+            full_file_name = os.path.join(folder, self.__pdb_id, filename)
             ret_list.append(full_file_name)
         return ret_list
 
@@ -106,12 +102,12 @@ class getFilesReleaseOneDep:
         Returns (file_path, cur_week) where file_path is the path or None
         and cur_week is a boolean indicating if it is current_week release.
         """
-        for_release_current_path = self.__rp.get_emd_subfolder_path(accession=self.emdb_id, subfolder=subfolder)
+        for_release_current_path = self.__rp.get_emd_subfolder_path(accession=self.__emdb_id, subfolder=subfolder)
         file_path = os.path.join(for_release_current_path, filename)
         if os.path.exists(file_path):
             return file_path, True
         for_release_previous_path = self.__rp.get_previous_emd_subfolder_path(
-            accession=self.emdb_id, subfolder=subfolder
+            accession=self.__emdb_id, subfolder=subfolder
         )
         file_path = os.path.join(for_release_previous_path, filename)
         if os.path.exists(file_path):
@@ -119,29 +115,29 @@ class getFilesReleaseOneDep:
         return None, False
 
     def get_model(self) -> Tuple[Optional[str], bool]:
-        filename = self.__rf.get_model(self.pdb_id, for_release=True)
+        filename = self.__rf.get_model(self.__pdb_id, for_release=True)
         return self.check_pdb_current_then_previous(filename=filename)
 
     def get_sf(self) -> Tuple[Optional[str], bool]:
-        filename = self.__rf.get_structure_factor(self.pdb_id, for_release=True)
+        filename = self.__rf.get_structure_factor(self.__pdb_id, for_release=True)
         return self.check_pdb_current_then_previous(filename=filename)
 
     def get_cs(self) -> Tuple[Optional[str], bool]:
-        filename = self.__rf.get_chemical_shifts(self.pdb_id, for_release=True)
+        filename = self.__rf.get_chemical_shifts(self.__pdb_id, for_release=True)
         return self.check_pdb_current_then_previous(filename=filename)
 
     def get_nmr_data(self) -> Tuple[Optional[str], bool]:
-        filename = self.__rf.get_nmr_data(self.pdb_id, for_release=True)
+        filename = self.__rf.get_nmr_data(self.__pdb_id, for_release=True)
         return self.check_pdb_current_then_previous(filename=filename)
 
     def get_emdb_xml(self) -> Tuple[Optional[str], bool]:
         return self.check_emdb_current_then_previous(
-            filename=self.__rf.get_emdb_xml(self.emdb_id, for_release=True),
+            filename=self.__rf.get_emdb_xml(self.__emdb_id, for_release=True),
             subfolder="header",
         )
 
     def get_emdb_volume(self) -> Tuple[Optional[str], bool]:
-        return self.check_emdb_current_then_previous(filename=self.__rf.get_emdb_map(self.emdb_id), subfolder="map")
+        return self.check_emdb_current_then_previous(filename=self.__rf.get_emdb_map(self.__emdb_id), subfolder="map")
 
     def get_emdb_fsc(self) -> Tuple[Optional[str], bool]:
-        return self.check_emdb_current_then_previous(filename=self.__rf.get_emdb_fsc(self.emdb_id), subfolder="fsc")
+        return self.check_emdb_current_then_previous(filename=self.__rf.get_emdb_fsc(self.__emdb_id), subfolder="fsc")

@@ -2,8 +2,6 @@ import argparse
 import logging
 from typing import List, Optional
 
-from wwpdb.io.locator.ReleasePathInfo import ReleasePathInfo
-
 from wwpdb.apps.val_rel.PopulateValidateRelease import PopulateValidateRelease
 from wwpdb.apps.val_rel.utils.check_results import CheckEntries
 
@@ -21,12 +19,10 @@ class FindAndRunMissing:
     ) -> None:
         self.__siteid = siteID
         self.ce = CheckEntries(siteID=self.__siteid)
-        self.missing_ids: List[str] = []
-        self.missing_file = "missing.ids"
-        self.rpi = ReleasePathInfo(siteId=self.__siteid)
-        self.write_missing = write_missing
-        self.read_missing = read_missing
-        self.priority = priority
+        self.__missing_ids: List[str] = []
+        self.__write_missing = write_missing
+        self.__read_missing = read_missing
+        self.__priority = priority
 
     def find_missing(self) -> None:
         self.ce.get_entries()
@@ -35,35 +31,35 @@ class FindAndRunMissing:
         logger.debug("failed_entries")
         logger.debug(failed_entries)
 
-    def write_out_missing(self) -> None:
+    def __write_out_missing(self) -> None:
         """Writes out the list of missing ids.
         If the list is empty - create empty file to prevent reruns the following week
         """
         self.ce.write_missing_file()
 
-    def read_missing_file(self) -> None:
-        self.missing_ids = self.ce.read_missing_file()
-        logger.debug("missing IDs: %s", ",".join(self.missing_ids))
+    def __read_missing_file(self) -> None:
+        self.__missing_ids = self.ce.read_missing_file()
+        logger.debug("missing IDs: %s", ",".join(self.__missing_ids))
 
-    def populate_queue(self) -> None:
-        if self.missing_ids:
+    def __populate_queue(self) -> None:
+        if self.__missing_ids:
             pvr = PopulateValidateRelease(
-                entry_list=self.missing_ids,
+                entry_list=self.__missing_ids,
                 validation_sub_dir="missing",
                 site_id=self.__siteid,
                 always_recalculate=True,
                 nocache=True,
-                priority=self.priority,
+                priority=self.__priority,
             )
             pvr.run_process()
 
     def run_process(self) -> None:
-        if self.read_missing:
-            self.read_missing_file()
-            self.populate_queue()
-        if self.write_missing:
+        if self.__read_missing:
+            self.__read_missing_file()
+            self.__populate_queue()
+        if self.__write_missing:
             self.find_missing()
-            self.write_out_missing()
+            self.__write_out_missing()
 
 
 def main() -> None:

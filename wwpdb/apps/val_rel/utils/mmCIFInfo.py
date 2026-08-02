@@ -133,13 +133,13 @@ class mmCIFInfo:
         self.__io: Any = IoAdapter if IoAdapter else IoAdapterCore()
         self.__mmcif_data: Optional[DataContainer] = None
 
-        self.exclude_category_list = ["atom_site", "atom_site_anisotrop"]
+        self.__exclude_category_list = ["atom_site", "atom_site_anisotrop"]
 
     def parse_mmcif(self) -> Optional[DataContainer]:
         if self.__mmcif:
             try:
                 logger.debug("parsing %s", self.__mmcif)
-                cList = self.__io.readFile(self.__mmcif, selectList=self.exclude_category_list, excludeFlag=True)
+                cList = self.__io.readFile(self.__mmcif, selectList=self.__exclude_category_list, excludeFlag=True)
                 self.__mmcif_data = cList[0]
                 return self.__mmcif_data
             except Exception as e:  # noqa: BLE001
@@ -147,7 +147,7 @@ class mmCIFInfo:
 
         return None
 
-    def get_category(self, category: str) -> Optional[DataCategory]:
+    def __get_category(self, category: str) -> Optional[DataCategory]:
         if not self.__mmcif_data:
             self.parse_mmcif()
         if self.__mmcif_data:
@@ -155,20 +155,20 @@ class mmCIFInfo:
             return dcObj
         return None
 
-    def get_category_keys(self, category: str) -> Dict[str, int]:
+    def __get_category_keys(self, category: str) -> Dict[str, int]:
         """Returns a dictionary of attribute name and ordinal if category exists"""
         cat_dict = {}
-        dcObj = self.get_category(category)
+        dcObj = self.__get_category(category)
         if dcObj is not None:
             keys_in_list_of_sets = dcObj.getAttributeListWithOrder()
             for key in keys_in_list_of_sets:
                 cat_dict[key[0]] = key[1]
         return cat_dict
 
-    def get_category_list_of_dictionaries(self, category: str) -> List[Dict[str, str]]:
+    def __get_category_list_of_dictionaries(self, category: str) -> List[Dict[str, str]]:
         return_list = []
-        cat_items = self.get_category_keys(category=category)
-        cat_data = self.get_category(category=category)
+        cat_items = self.__get_category_keys(category=category)
+        cat_data = self.__get_category(category=category)
         if cat_data is not None:
             for row in range(len(cat_data.data)):
                 row_dict = {}
@@ -179,9 +179,9 @@ class mmCIFInfo:
 
         return return_list
 
-    def get_cat_item_values(self, category: str, item: str) -> List[str]:
+    def __get_cat_item_values(self, category: str, item: str) -> List[str]:
         value_list = []
-        cat = self.get_category(category=category)
+        cat = self.__get_category(category=category)
         if cat is not None:
             for row in range(len(cat.data)):
                 value = cat.getValueOrDefault(attributeName=item, defaultValue="", rowIndex=row)
@@ -190,12 +190,12 @@ class mmCIFInfo:
         return value_list
 
     def get_exp_methods(self) -> List[str]:
-        return self.get_cat_item_values(category="exptl", item="method")
+        return self.__get_cat_item_values(category="exptl", item="method")
 
     def get_associated_emdb(self) -> Optional[str]:
         """Returns the first 'associated EM volume' in pdbx_database_related"""
         emdb_ids = []
-        ret = self.get_category_list_of_dictionaries(category="pdbx_database_related")
+        ret = self.__get_category_list_of_dictionaries(category="pdbx_database_related")
         if ret:
             for row in ret:
                 # db_name = row.get("db_name")
@@ -211,7 +211,7 @@ class mmCIFInfo:
 
     # def get_em_map_contour_level(self) -> Optional[str]:
     #     """Returns the contour level of primary map - if present or None"""
-    #     ret = self.get_category_list_of_dictionaries(category="em_map")
+    #     ret = self.__get_category_list_of_dictionaries(category="em_map")
     #     if ret:
     #         for row in ret:
     #             contour_level = row.get("contour_level")
@@ -224,7 +224,7 @@ class mmCIFInfo:
         """Returns the latet modified categories and ordinal associated with it"""
         latest_audit_ordinal: Optional[str] = None
         latest_audit_categories: List[str] = []
-        ret = self.get_category_list_of_dictionaries(category="pdbx_audit_revision_history")
+        ret = self.__get_category_list_of_dictionaries(category="pdbx_audit_revision_history")
         if ret:
             for row in ret:
                 ordinal = row.get("ordinal")  # Better be there
@@ -234,7 +234,7 @@ class mmCIFInfo:
                     latest_audit_ordinal = ordinal
         if latest_audit_ordinal:
             logger.debug("latest audit ordinal: %s", latest_audit_ordinal)
-            ret = self.get_category_list_of_dictionaries(category="pdbx_audit_revision_category")
+            ret = self.__get_category_list_of_dictionaries(category="pdbx_audit_revision_category")
             if ret:
                 for row in ret:
                     revision_ordinal = row.get("revision_ordinal")
@@ -247,7 +247,7 @@ class mmCIFInfo:
     def get_modified_items(self, ordinal: str) -> Dict[str, List[str]]:
         """Returns the dictionary of latet modified attributes for ordinal keyed on category name"""
         ret: Dict[str, List[str]] = {}
-        cdata = self.get_category_list_of_dictionaries(category="pdbx_audit_revision_item")
+        cdata = self.__get_category_list_of_dictionaries(category="pdbx_audit_revision_item")
 
         cn = CifName()
         for c in cdata:

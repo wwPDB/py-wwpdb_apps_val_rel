@@ -40,13 +40,13 @@ class GetRemoteFilesHttp:
     def __init__(self, server: Optional[str] = None, cache: Optional[str] = None, site_id: Optional[str] = None):  # noqa: ARG002  pylint: disable=unused-argument
         self.__cache = cache
         vc = ValConfig(site_id=site_id)
-        self.connection_timeout = vc.connection_timeout
-        self.read_timeout = vc.read_timeout
-        self.__timeout = self.connection_timeout
+        self.__connection_timeout = vc.connection_timeout
+        self.__read_timeout = vc.read_timeout
+        self.__timeout = self.__connection_timeout
         self.__retries = vc.retries
         self.__backoff_factor = vc.backoff_factor
         self.__status_force_list = vc.status_force_list
-        self.emailHandler = EmailHandler(site_id)
+        self.__emailHandler = EmailHandler(site_id)
 
     def get_url(self, url: Optional[str] = None, output_path: Optional[str] = None) -> str:
         """Retrieve file from url.  Note:  This is a little backwards - should check cache instead of waiting for get_file"""
@@ -135,7 +135,9 @@ class GetRemoteFilesHttp:
         with requests.Session() as s:
             self.__mount_session_retry(s)
             try:
-                r = s.get(url, timeout=(self.connection_timeout, self.read_timeout), stream=True, allow_redirects=True)
+                r = s.get(
+                    url, timeout=(self.__connection_timeout, self.__read_timeout), stream=True, allow_redirects=True
+                )
             except MaxRetryError as _e:  # noqa: F841
                 msg = "Max retries exceeded for %s" % os.path.basename(url)
                 self.handle_exception(msg)
@@ -190,7 +192,7 @@ class GetRemoteFilesHttp:
         return False
 
     def handle_exception(self, msg: str) -> None:
-        self.emailHandler.send_email_admins(msg)
+        self.__emailHandler.send_email_admins(msg)
         logger.exception(msg)
 
     def disconnect(self) -> None:

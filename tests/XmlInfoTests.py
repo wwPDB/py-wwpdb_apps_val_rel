@@ -2,6 +2,7 @@ import os
 import shutil
 import tempfile
 import unittest
+import xml.etree.ElementTree as ET
 
 from wwpdb.apps.val_rel.utils.XmlInfo import XmlInfo
 
@@ -100,6 +101,65 @@ d" emdb_id="EMD-3863" version="3.0.1.5">
 
         ret = XmlInfo(xml_file=self.test_file).get_pdbids_from_xml()
         self.assertTrue(ret == ["5oyp", "5oyt"])
+
+    def test_no_pdb_reference_returns_empty_list(self) -> None:
+        test_xml_data = """<?xml version="1.0" encoding="UTF-8"?>
+<emd xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" emdb_id="EMD-3863" version="3.0.1.5">
+     <crossreferences>
+     <pdb_list>
+        </pdb_list>
+    </crossreferences>
+    </emd>
+       """
+        with open(self.test_file, "w") as outFile:
+            outFile.write(test_xml_data)
+
+        ret = XmlInfo(xml_file=self.test_file).get_pdbids_from_xml()
+        self.assertTrue(ret == [])
+
+    def test_empty_pdb_id_text_is_skipped(self) -> None:
+        test_xml_data = """<?xml version="1.0" encoding="UTF-8"?>
+<emd xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" emdb_id="EMD-3863" version="3.0.1.5">
+     <crossreferences>
+     <pdb_list>
+            <pdb_reference>
+                <pdb_id></pdb_id>
+            </pdb_reference>
+            <pdb_reference>
+                <pdb_id>5oyt</pdb_id>
+            </pdb_reference>
+        </pdb_list>
+    </crossreferences>
+    </emd>
+       """
+        with open(self.test_file, "w") as outFile:
+            outFile.write(test_xml_data)
+
+        ret = XmlInfo(xml_file=self.test_file).get_pdbids_from_xml()
+        self.assertTrue(ret == ["5oyt"])
+
+    def test_no_crossreferences_element_returns_empty_list(self) -> None:
+        test_xml_data = """<?xml version="1.0" encoding="UTF-8"?>
+<emd xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" emdb_id="EMD-3863" version="3.0.1.5">
+    </emd>
+       """
+        with open(self.test_file, "w") as outFile:
+            outFile.write(test_xml_data)
+
+        ret = XmlInfo(xml_file=self.test_file).get_pdbids_from_xml()
+        self.assertTrue(ret == [])
+
+    def test_missing_file_raises(self) -> None:
+        missing_file = os.path.join(self.test_dir, "does_not_exist.xml")
+        with self.assertRaises(FileNotFoundError):
+            XmlInfo(xml_file=missing_file)
+
+    def test_malformed_xml_raises(self) -> None:
+        with open(self.test_file, "w") as outFile:
+            outFile.write("<emd><unclosed></emd>")
+
+        with self.assertRaises(ET.ParseError):
+            XmlInfo(xml_file=self.test_file)
 
 
 if __name__ == "__main__":  # pragma: no cover

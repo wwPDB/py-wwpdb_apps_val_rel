@@ -32,14 +32,12 @@ class getFilesRelease:
         if siteID is None:
             siteID = getSiteId()
         self.__siteID = siteID
-        self.pdb_id = pdb_id
-        self.emdb_id = emdb_id
+        self.__pdb_id = pdb_id
+        self.__emdb_id = emdb_id
         self.__cache = cache
-        self.model_current = False
-        self.sf_current = False
-        self.cs_current = False
-        self.mr_current = False
-        self.em_xml_current = False
+        self.__sf_current = False
+        self.__cs_current = False
+        self.__em_xml_current = False
 
         # Determine which routing
         config = ValConfig(site_id=siteID)
@@ -69,10 +67,10 @@ class getFilesRelease:
         """Sets up pdb_id for processing release files"""
 
         # Do not create a new path if same pdb_id. Prevents excessive downloads
-        if self.pdb_id != pdb_id:
-            self.pdb_id = pdb_id
+        if self.__pdb_id != pdb_id:
+            self.__pdb_id = pdb_id
             self.__release_file_from_onedep = getFilesReleaseOneDep(
-                siteID=self.__siteID, pdb_id=self.pdb_id, emdb_id=self.emdb_id
+                siteID=self.__siteID, pdb_id=self.__pdb_id, emdb_id=self.__emdb_id
             )
             if self.__release_file_from_remote_pdb is not None:
                 self.__release_file_from_remote_pdb.close_connection()
@@ -85,10 +83,10 @@ class getFilesRelease:
         """Sets up emdb_id for processing release files"""
 
         # Do not create a new path if same pdb_id
-        if self.emdb_id != emdb_id:
-            self.emdb_id = emdb_id
+        if self.__emdb_id != emdb_id:
+            self.__emdb_id = emdb_id
             self.__release_file_from_onedep = getFilesReleaseOneDep(
-                siteID=self.__siteID, pdb_id=self.pdb_id, emdb_id=emdb_id
+                siteID=self.__siteID, pdb_id=self.__pdb_id, emdb_id=emdb_id
             )
 
             if self.__release_file_from_remote_emdb is not None:
@@ -109,7 +107,7 @@ class getFilesRelease:
         :param pdbid: PDB ID
         :return: file name if present or None
         """
-        file_name, self.model_current = self.__release_file_from_onedep.get_model()
+        file_name, _ = self.__release_file_from_onedep.get_model()
         if not file_name:
             file_name = self.__release_file_from_remote_pdb.get_model()
         return file_name
@@ -120,7 +118,7 @@ class getFilesRelease:
         :param pdbid: PDB ID
         :return: file name if present or None
         """
-        file_name, self.sf_current = self.__release_file_from_onedep.get_sf()
+        file_name, self.__sf_current = self.__release_file_from_onedep.get_sf()
         if not file_name:
             file_name = self.__release_file_from_remote_pdb.get_sf()
         return file_name
@@ -131,7 +129,7 @@ class getFilesRelease:
         :param pdbid: PDB ID
         :return: file name if present or None
         """
-        file_name, self.cs_current = self.__release_file_from_onedep.get_cs()
+        file_name, self.__cs_current = self.__release_file_from_onedep.get_cs()
         if not file_name:
             file_name = self.__release_file_from_remote_pdb.get_cs()
         return file_name
@@ -142,13 +140,13 @@ class getFilesRelease:
         :param pdbid: PDB ID
         :return: file name if present or None
         """
-        file_name, self.cs_current = self.__release_file_from_onedep.get_nmr_data()
+        file_name, self.__cs_current = self.__release_file_from_onedep.get_nmr_data()
         if not file_name:
             file_name = self.__release_file_from_remote_pdb.get_nmr_data()
         return file_name
 
     def get_emdb_xml(self) -> Optional[str]:
-        file_name, self.em_xml_current = self.__release_file_from_onedep.get_emdb_xml()
+        file_name, self.__em_xml_current = self.__release_file_from_onedep.get_emdb_xml()
         if not file_name:
             file_name = self.__release_file_from_remote_emdb.get_emdb_xml()
         return file_name
@@ -168,13 +166,13 @@ class getFilesRelease:
         return file_name
 
     def is_sf_current(self) -> bool:
-        return self.sf_current
+        return self.__sf_current
 
     def is_cs_current(self) -> bool:
-        return self.cs_current
+        return self.__cs_current
 
     def is_em_xml_current(self) -> bool:
-        return self.em_xml_current
+        return self.__em_xml_current
 
     def set_cache(self, fpath: Optional[str]) -> None:
         self.__cache = fpath
