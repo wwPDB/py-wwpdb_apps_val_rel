@@ -29,6 +29,7 @@ def is_simple_modification(model_path: str) -> bool:
 
     # database_2 is handled specially
     SKIP_LIST = [
+        "audit_conform",
         "citation",
         "citation_author",
         "pdbx_audit_support",
@@ -46,6 +47,7 @@ def is_simple_modification(model_path: str) -> bool:
         "exptl_crystal_grow",
         "pdbx_audit_support",
         "pdbx_contact_author",
+        "pdbx_database_PDB_obs_spr",
         "pdbx_entity_src_syn",
         "pdbx_entry_details",
         "pdbx_nmr_chem_shift_experiment",
@@ -108,8 +110,75 @@ def is_simple_modification(model_path: str) -> bool:
 
     SKIP_ATTR = {"database_2": ["pdbx_DOI", "pdbx_database_accession"]}
 
+    return __simple_modification(model_path, "Structure model", SKIP_LIST, SKIP_ATTR)
+
+
+def is_simple_emdb_modification(model_path: str) -> bool:
+    """if there are only simple changes based the audit - skip calculation of validation report
+    (currently, citation, citation_author, pdbx_audit_support, pdbx_initial_refinement_model)
+
+    returns True is only simple changes present
+    """
+
+    # database_2 is handled specially
+    SKIP_LIST = [
+        "audit_conform",
+        "citation",
+        "citation_author",
+        "database_2",
+        "em_admin",  # Skip all but title - see SKIP_ATTR
+        "em_3d_fitting",
+        "em_buffer",
+        "em_crystal_formation",
+        "em_db_reference",
+        "em_entity_assembly",
+        "em_entity_assembly_molwt",
+        "em_entity_assembly_naturalsource",
+        "em_entity_assembly_recombinant",
+        "em_euler_angle_assignment",
+        "em_final_classification",
+        "em_grid_pretreatment",
+        "em_image_processing",
+        "em_image_scans",
+        "em_imaging_optics",
+        "em_obsolete",
+        "em_particle_selection",
+        "em_sample_support",
+        "em_software",
+        "em_specimen",
+        "em_staining",
+        "em_start_model",
+        "em_supersede",
+        "em_support_film",
+        "em_tomography_specimen",
+        "em_virus_entity",
+        "em_virus_natural_host",
+        "em_vitrification",
+        "pdbx_initial_refinement_model",
+        "pdbx_database_PDB_obs_spr",
+        "pdbx_entity_src_syn",
+        "struct_keywords",
+    ]
+
+    SKIP_ATTR = {
+        "database_2": ["pdbx_DOI", "pdbx_database_accession"],
+        "em_admin": ["emd_id", "current_status", "last_update", "deposition_date", "map_release_date", "details"],
+    }
+
+    return __simple_modification(model_path, "EM metadata", SKIP_LIST, SKIP_ATTR)
+
+
+def __simple_modification(
+    model_path: str,
+    content_type: Literal["Structure model", "EM metadata"],
+    skip_cat: List[str],
+    skip_attr: Optional[Dict[str, List[str]]],
+) -> bool:
+    """Determines if a modification with the given content time is a simple modification using a list of categories
+    (skip_cat) and optional dictionary of categories and attributes"""
+
     cf = mmCIFInfo(model_path)
-    modified_cats, latest_ordinal, no_audit = cf.get_latest_modified_categories(content_type="Structure model")
+    modified_cats, latest_ordinal, no_audit = cf.get_latest_modified_categories(content_type=content_type)
     if latest_ordinal:
         attrs = cf.get_modified_items(latest_ordinal)
     else:
@@ -117,11 +186,11 @@ def is_simple_modification(model_path: str) -> bool:
 
     if modified_cats:
         for item in modified_cats:
-            if item not in SKIP_LIST:
+            if item not in skip_cat:
                 return False
 
             # For certain categories - check specific changes
-            if item in SKIP_ATTR:
+            if skip_attr and item in skip_attr:
                 # Get list of modifications for category item:
                 if item not in attrs:
                     logger.error("%s audit history messed up", model_path)
@@ -129,7 +198,7 @@ def is_simple_modification(model_path: str) -> bool:
 
                 # All modified items in this category must be in allowed list
                 for attr in attrs[item]:
-                    if attr not in SKIP_ATTR[item]:
+                    if attr not in skip_attr[item]:
                         return False
 
         logger.debug("%s only a simple modification: %s", model_path, ",".join(modified_cats))
@@ -226,24 +295,17 @@ class mmCIFInfo:
             return emdb_id
         return None
 
-    # def get_em_map_contour_level(self) -> Optional[str]:
-    #     """Returns the contour level of primary map - if present or None"""
-    #     ret = self.__get_category_list_of_dictionaries(category="em_map")
-    #     if ret:
-    #         for row in ret:
-    #             contour_level = row.get("contour_level")
-    #             map_type = row.get("type")
-    #             if map_type == "primary":
-    #                 return contour_level
-    #     return None
-
     @overload
-    def get_latest_modified_categories(self, content_type: None = None) -> Tuple[List[str], Optional[str]]: ...
+    def get_latest_modified_categories(
+        self, content_type: None = None
+    ) -> Tuple[List[str], Optional[str]]:  # fmt: skip
+        ...
 
     @overload
     def get_latest_modified_categories(
         self, content_type: Literal["Structure model", "EM metadata"]
-    ) -> Tuple[List[str], Optional[str], bool]: ...
+    ) -> Tuple[List[str], Optional[str], bool]:  # fmt: skip
+        ...
 
     def get_latest_modified_categories(
         self, content_type: Optional[Literal["Structure model", "EM metadata"]] = None

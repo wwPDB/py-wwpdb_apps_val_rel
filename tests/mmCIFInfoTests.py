@@ -4,7 +4,12 @@ import shutil
 import tempfile
 import unittest
 
-from wwpdb.apps.val_rel.utils.mmCIFInfo import _parsedate, is_simple_modification, mmCIFInfo
+from wwpdb.apps.val_rel.utils.mmCIFInfo import (
+    _parsedate,
+    is_simple_emdb_modification,
+    is_simple_modification,
+    mmCIFInfo,
+)
 
 
 class mmCIFInfoTests(unittest.TestCase):
@@ -105,7 +110,7 @@ loop_
 """
         self.write_mmcif()
         mf = mmCIFInfo(mmCIF_file=self.mmCIF_file)
-        cats, ordinal = mf.get_latest_modified_categories()
+        cats, ordinal = mf.get_latest_modified_categories()  # pylint: disable=unbalanced-tuple-unpacking
         self.assertTrue(cats == ["citation_author", "citation"])
         self.assertEqual(ordinal, "2")
 
@@ -118,7 +123,7 @@ loop_
     def test_get_latest_modified_categories_missing_returns_empty(self) -> None:
         self.write_mmcif()
         mf = mmCIFInfo(mmCIF_file=self.mmCIF_file)
-        cats, ordinal = mf.get_latest_modified_categories()
+        cats, ordinal = mf.get_latest_modified_categories()  # pylint: disable=unbalanced-tuple-unpacking
         self.assertTrue(cats == [])
         self.assertTrue(ordinal is None)
 
@@ -250,28 +255,6 @@ loop_
         self.write_mmcif()
         self.assertFalse(is_simple_modification(self.mmCIF_file))
 
-    def test_is_simple_modification_true_for_emdb_revision_category(self) -> None:
-        self.additional_content = """
-loop_
-    _pdbx_audit_revision_history.ordinal
-    _pdbx_audit_revision_history.data_content_type
-    _pdbx_audit_revision_history.major_revision
-    _pdbx_audit_revision_history.minor_revision
-    _pdbx_audit_revision_history.revision_date
-    1 'Structure model' 1 0 2017-03-01
-    2 'EM metadata'     1 0 2017-03-08
-#
-loop_
-    _pdbx_audit_revision_category.ordinal
-    _pdbx_audit_revision_category.revision_ordinal
-    _pdbx_audit_revision_category.data_content_type
-    _pdbx_audit_revision_category.category
-    1 1 'Structure Model' 'entity'
-#
-"""
-        self.write_mmcif()
-        self.assertTrue(is_simple_modification(self.mmCIF_file))
-
     def test_is_simple_modification_true_for_pdb_and_emdb_revisioncategory(self) -> None:
         self.additional_content = """
 loop_
@@ -294,6 +277,49 @@ loop_
         self.write_mmcif()
         self.assertTrue(is_simple_modification(self.mmCIF_file))
 
+    def test_is_simple_modification_true_for_emdb_revision_category(self) -> None:
+        self.additional_content = """
+loop_
+    _pdbx_audit_revision_history.ordinal
+    _pdbx_audit_revision_history.data_content_type
+    _pdbx_audit_revision_history.major_revision
+    _pdbx_audit_revision_history.minor_revision
+    _pdbx_audit_revision_history.revision_date
+    1 'Structure model' 1 0 2017-03-01
+    2 'EM metadata'     1 0 2017-03-01
+#
+loop_
+    _pdbx_audit_revision_category.ordinal
+    _pdbx_audit_revision_category.revision_ordinal
+    _pdbx_audit_revision_category.data_content_type
+    _pdbx_audit_revision_category.category
+    1 2 'EM metadata' 'citation'
+#
+"""
+        self.write_mmcif()
+        self.assertTrue(is_simple_emdb_modification(self.mmCIF_file))
+
+    def test_is_simple_modification_false_for_emdb_revision_category(self) -> None:
+        self.additional_content = """
+loop_
+    _pdbx_audit_revision_history.ordinal
+    _pdbx_audit_revision_history.data_content_type
+    _pdbx_audit_revision_history.major_revision
+    _pdbx_audit_revision_history.minor_revision
+    _pdbx_audit_revision_history.revision_date
+    1 'Structure model' 1 0 2017-03-01
+    2 'EM metadata'     1 0 2017-03-01
+#
+loop_
+    _pdbx_audit_revision_category.ordinal
+    _pdbx_audit_revision_category.revision_ordinal
+    _pdbx_audit_revision_category.data_content_type
+    _pdbx_audit_revision_category.category
+    1 2 'EM metadata' 'em_map'
+#
+"""
+        self.write_mmcif()
+        self.assertFalse(is_simple_emdb_modification(self.mmCIF_file))
 
     def test_parsedate_valid_date(self) -> None:
         date_str = "2023-06-15"
