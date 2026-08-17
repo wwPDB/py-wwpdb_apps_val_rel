@@ -1,11 +1,23 @@
+import datetime
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Literal, Optional, Tuple, Union, overload
 
 from mmcif.api.DataCategory import DataCategory
 from mmcif.api.PdbxContainers import CifName, DataContainer
 from mmcif.io.IoAdapterCore import IoAdapterCore
 
 logger = logging.getLogger(__name__)
+
+
+def _parsedate(date_str: str) -> Optional[datetime.date]:
+    """Parses a date string in YYYY-MM-DD format, returning a datetime.date.
+
+    Returns None if the string cannot be parsed.
+    """
+    try:
+        return datetime.datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=datetime.timezone.utc).date()
+    except (TypeError, ValueError):
+        return None
 
 
 def is_simple_modification(model_path: str) -> bool:
@@ -97,7 +109,7 @@ def is_simple_modification(model_path: str) -> bool:
     SKIP_ATTR = {"database_2": ["pdbx_DOI", "pdbx_database_accession"]}
 
     cf = mmCIFInfo(model_path)
-    modified_cats, latest_ordinal = cf.get_latest_modified_categories()
+    modified_cats, latest_ordinal, no_audit = cf.get_latest_modified_categories(content_type="Structure model")
     if latest_ordinal:
         attrs = cf.get_modified_items(latest_ordinal)
     else:
@@ -122,7 +134,12 @@ def is_simple_modification(model_path: str) -> bool:
 
         logger.debug("%s only a simple modification: %s", model_path, ",".join(modified_cats))
         return True
-    return False
+
+    # Revision history not relevant here to PDB - so return True
+    if no_audit:
+        return False
+    # We have audit records - but this release not relevant to model file
+    return True
 
 
 class mmCIFInfo:
@@ -220,28 +237,78 @@ class mmCIFInfo:
     #                 return contour_level
     #     return None
 
-    def get_latest_modified_categories(self) -> Tuple[List[str], Optional[str]]:
-        """Returns the latet modified categories and ordinal associated with it"""
+    @overload
+    def get_latest_modified_categories(self, content_type: None = None) -> Tuple[List[str], Optional[str]]: ...
+
+    @overload
+    def get_latest_modified_categories(
+        self, content_type: Literal["Structure model", "EM metadata"]
+    ) -> Tuple[List[str], Optional[str], bool]: ...
+
+    def get_latest_modified_categories(
+        self, content_type: Optional[Literal["Structure model", "EM metadata"]] = None
+    ) -> Union[Tuple[List[str], Optional[str]], Tuple[List[str], Optional[str], bool]]:
+        """Returns the latet modified categories and ordinal associated with it for a given content type (Structure model or EM metadata)
+        If content_type is None - returns True if no audit history present
+        """
         latest_audit_ordinal: Optional[str] = None
         latest_audit_categories: List[str] = []
+        latest_audit_revision: Optional[datetime.date] = None
+        ret_no_audit = (
+            True  # two or three arguments depending on content_type - if None - return True if no audit history
+        )
+
+        if content_type is None:
+            content_type = "Structure model"  # default to structure model
+            ret_no_audit = False
+
         ret = self.__get_category_list_of_dictionaries(category="pdbx_audit_revision_history")
+
+        # We will determine the latest date as a reference and then find values for proper categories.  It is
+        # possible that the coordinate file might be updated one week and not a map volume.
         if ret:
+            # Get the latest revision date - as that is global
             for row in ret:
-                ordinal = row.get("ordinal")  # Better be there
-                if ordinal and latest_audit_ordinal:  # This should use int!!!!
-                    latest_audit_ordinal = max(latest_audit_ordinal, ordinal)
+                revision_date = row.get("revision_date")  # Better be there
+
+                if not revision_date:
+                    continue
+                rdate = _parsedate(revision_date)
+                # if could not parse -- skip
+                if not rdate:
+                    continue
+                if latest_audit_revision:
+                    latest_audit_revision = max(latest_audit_revision, rdate)
                 else:
+                    latest_audit_revision = rdate
+
+        if latest_audit_revision:
+            # Now get the latest ordinal for this date matching the content type
+            for row in ret:
+                revision_date = row.get("revision_date")  # Better be there
+                ordinal = row.get("ordinal")
+                if not revision_date or not ordinal:
+                    continue
+                rdate = _parsedate(revision_date)
+                if not rdate:
+                    continue
+                if rdate == latest_audit_revision and row.get("data_content_type") == content_type:
                     latest_audit_ordinal = ordinal
+                    break
+
         if latest_audit_ordinal:
             logger.debug("latest audit ordinal: %s", latest_audit_ordinal)
+
             ret = self.__get_category_list_of_dictionaries(category="pdbx_audit_revision_category")
             if ret:
                 for row in ret:
-                    revision_ordinal = row.get("revision_ordinal")
+                    revision_ordinal = row.get("revision_ordinal")  # Better be there
                     category = row.get("category")
                     if category and revision_ordinal == latest_audit_ordinal:
                         latest_audit_categories.append(category)
 
+        if ret_no_audit:
+            return latest_audit_categories, latest_audit_ordinal, bool(not ret)
         return latest_audit_categories, latest_audit_ordinal
 
     def get_modified_items(self, ordinal: str) -> Dict[str, List[str]]:
