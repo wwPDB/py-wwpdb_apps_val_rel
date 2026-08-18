@@ -1,39 +1,48 @@
 import argparse
 import logging
 import os
+from typing import Dict, List, Optional, Set, Union
 
 from wwpdb.utils.config.ConfigInfo import getSiteId
 
 from wwpdb.apps.val_rel.utils.FindEntries import FindEntries
-from wwpdb.apps.val_rel.utils.XmlInfo import XmlInfo
 from wwpdb.apps.val_rel.utils.getFilesRelease import getFilesRelease
 from wwpdb.apps.val_rel.utils.mmCIFInfo import mmCIFInfo
 from wwpdb.apps.val_rel.utils.outputFiles import outputFiles
+from wwpdb.apps.val_rel.utils.XmlInfo import XmlInfo
 
 logger = logging.getLogger(__name__)
 
 
 class FindAndProcessEntries:
-
-    def __init__(self, entry_string='', entry_list=[], entry_file='',
-                 skip_emdb=False,
-                 pdb_release=False, emdb_release=False,
-                 site_id=getSiteId(),
-                 nocache=False):
-        self.entry_list = entry_list
-        self.entry_string = entry_string
-        self.entry_file = entry_file
-        self.site_id = site_id
-        self.entries = []
-        self.pdb_entries = []
-        self.emdb_entries = []
-        self.all_pdb_entries = set()
-        self.added_entries = []
-        self.messages = []
-        self.pdb_release = pdb_release
-        self.emdb_release = emdb_release
-        self.skip_emdb = skip_emdb
-        self.__nocache = nocache
+    def __init__(
+        self,
+        entry_string: str = "",
+        entry_list: Optional[List[str]] = None,
+        entry_file: str = "",
+        skip_emdb: bool = False,
+        pdb_release: bool = False,
+        emdb_release: bool = False,
+        site_id: Optional[str] = None,
+        nocache: bool = False,
+    ) -> None:  # pylint: disable=unused-argument
+        if site_id is None:
+            site_id = getSiteId()
+        if entry_list is None:
+            entry_list = []
+        self.__entry_list = entry_list
+        self.__entry_string = entry_string
+        self.__entry_file = entry_file
+        self.__site_id = site_id
+        self.__entries: List[str] = []
+        self.__pdb_entries: List[str] = []
+        self.__emdb_entries: List[str] = []
+        self.__all_pdb_entries: Set[str] = set()
+        self.__added_entries: List[str] = []
+        self.__messages: List[Dict[str, Union[Optional[str], bool]]] = []
+        self.__pdb_release = pdb_release
+        self.__emdb_release = emdb_release
+        self.__skip_emdb = skip_emdb  # pylint: disable=unused-private-member  # Not used right now.
         of = outputFiles(siteID=site_id)
 
         if nocache:
@@ -41,7 +50,7 @@ class FindAndProcessEntries:
         else:
             self.__cache = of.get_ftp_cache_folder()
 
-    def find_and_process_entries(self):
+    def find_and_process_entries(self) -> None:
         self.find_onedep_entries()
         self.process_entry_file()
         self.process_entry_list()
@@ -50,113 +59,127 @@ class FindAndProcessEntries:
         self.process_emdb_entries()
         self.process_pdb_entries()
 
-    def run_process(self):
+    def run_process(self) -> None:
         self.find_and_process_entries()
 
-    def find_onedep_entries(self):
-        fe = FindEntries(siteID=self.site_id)
-        if self.pdb_release:
-            self.pdb_entries.extend(fe.get_added_pdb_entries())
-            self.pdb_entries.extend(fe.get_modified_pdb_entries())
-            self.all_pdb_entries = set(self.pdb_entries[:])
-        if self.emdb_release:
-            self.emdb_entries.extend(fe.get_emdb_entries())
+    def find_onedep_entries(self) -> None:
+        fe = FindEntries(siteID=self.__site_id)
+        if self.__pdb_release:
+            self.__pdb_entries.extend(fe.get_added_pdb_entries())
+            self.__pdb_entries.extend(fe.get_modified_pdb_entries())
+            self.__all_pdb_entries = set(self.__pdb_entries[:])
+        if self.__emdb_release:
+            self.__emdb_entries.extend(fe.get_emdb_entries())
 
-    def process_entry_file(self):
-        if self.entry_file:
-            if os.path.exists(self.entry_file):
-                with open(self.entry_file) as inFile:
+    def process_entry_file(self) -> None:
+        if self.__entry_file:
+            if os.path.exists(self.__entry_file):
+                with open(self.__entry_file) as inFile:
                     for file_line in inFile:
-                        self.entries.append(file_line.strip())
+                        self.__entries.append(file_line.strip())
             else:
-                logging.error("file: %s not found", self.entry_file)
+                logger.error("file: %s not found", self.__entry_file)
 
-    def process_entry_list(self):
-        if self.entry_list:
-            logging.info('entries from input list: {}'.format(self.entry_list))
-            self.entries.extend(self.entry_list)
+    def process_entry_list(self) -> None:
+        if self.__entry_list:
+            logger.info("entries from input list: %s", self.__entry_list)
+            self.__entries.extend(self.__entry_list)
 
-    def process_entry_string(self):
-        if self.entry_string:
-            entries_from_entry_string = self.entry_string.split(",")
-            logging.info('entries from input string: {}'.format(entries_from_entry_string))
-            self.entries.extend(entries_from_entry_string)
+    def process_entry_string(self) -> None:
+        if self.__entry_string:
+            entries_from_entry_string = self.__entry_string.split(",")
+            logger.info("entries from input string: %s", entries_from_entry_string)
+            self.__entries.extend(entries_from_entry_string)
 
-    def categorise_entries(self):
-        for entry in self.entries:
+    def categorise_entries(self) -> None:
+        for entry in self.__entries:
             if "EMD-" in entry.upper():
-                self.emdb_entries.append(entry)
+                self.__emdb_entries.append(entry)
             else:
-                self.pdb_entries.append(entry)
+                self.__pdb_entries.append(entry)
 
-    def process_emdb_entries(self):
-        for emdb_entry in self.emdb_entries:
-            if emdb_entry not in self.added_entries:
+    def process_emdb_entries(self) -> None:
+        for emdb_entry in self.__emdb_entries:
+            if emdb_entry not in self.__added_entries:
                 # stop duplication of making EM validation reports twice
                 logger.debug(emdb_entry)
                 try:
-                    re = getFilesRelease(siteID=self.site_id, emdb_id=emdb_entry, pdb_id=None,
-                                         cache=self.__cache)
+                    re = getFilesRelease(siteID=self.__site_id, emdb_id=emdb_entry, pdb_id=None, cache=self.__cache)
                     em_xml = re.get_emdb_xml()
 
                     em_vol = re.get_emdb_volume()
                     if em_vol:
-                        logger.debug('using XML: %s', em_xml)
+                        logger.debug("using XML: %s", em_xml)
+                        if em_xml is None:
+                            logger.warning("No EMDB XML file found for %s", emdb_entry)
+                            continue
                         pdbids = XmlInfo(em_xml).get_pdbids_from_xml()
                         if pdbids:
-                            logger.info(
-                                "PDB entries associated with %s: %s", emdb_entry, ",".join(pdbids)
-                            )
-                            for pdbid in pdbids:
-                                pdbid = pdbid.lower()
+                            logger.info("PDB entries associated with %s: %s", emdb_entry, ",".join(pdbids))
+                            for pdb_id in pdbids:
+                                pdbid = pdb_id.lower()
                                 re.set_pdb_id(pdb_id=pdbid)
                                 pdb_file = re.get_model()
                                 if pdb_file:
                                     cf = mmCIFInfo(pdb_file)
                                     associated_emdb = cf.get_associated_emdb()
                                     if associated_emdb == emdb_entry:
-                                        if pdbid in self.pdb_entries:
+                                        if pdbid in self.__pdb_entries:
                                             logger.info(
                                                 "removing %s from the PDB queue to stop duplication of report generation",
-                                                pdbid
+                                                pdbid,
                                             )
-                                            self.pdb_entries.remove(pdbid)
+                                            self.__pdb_entries.remove(pdbid)
                                         else:
-                                            self.all_pdb_entries.add(pdbid)
+                                            self.__all_pdb_entries.add(pdbid)
                                     # what if its not? should it be added to the queue?
-                                else:
-                                    if pdbid in self.pdb_entries:
-                                        logger.info('removing %s as pdb file does not exist', pdbid)
-                                        self.pdb_entries.remove(pdbid)
+                                elif pdbid in self.__pdb_entries:
+                                    logger.info("removing %s as pdb file does not exist", pdbid)
+                                    self.__pdb_entries.remove(pdbid)
 
-                        message = {"emdbID": emdb_entry}
-                        self.messages.append(message)
-                        self.added_entries.append(emdb_entry)
+                        message: Dict[str, Union[Optional[str], bool]] = {"emdbID": emdb_entry}
+                        self.__messages.append(message)
+                        self.__added_entries.append(emdb_entry)
                     re.remove_local_temp_files()
-                except:  # noqa: E722,BLE001
+                except:  # noqa: E722,BLE001 pylint: disable=bare-except
                     logger.exception("ERROR processing %s", emdb_entry)
 
-    def process_pdb_entries(self):
-        for pdb_entry in self.pdb_entries:
-            if pdb_entry not in self.added_entries:
-                message = {"pdbID": pdb_entry}
-                self.messages.append(message)
-                self.added_entries.append(pdb_entry)
+    def process_pdb_entries(self) -> None:
+        for pdb_entry in self.__pdb_entries:
+            if pdb_entry not in self.__added_entries:
+                message: Dict[str, Union[Optional[str], bool]] = {"pdbID": pdb_entry}
+                self.__messages.append(message)
+                self.__added_entries.append(pdb_entry)
 
-    def get_found_entries(self):
-        return self.messages
+    def get_found_entries(self) -> List[Dict[str, Union[Optional[str], bool]]]:
+        return self.__messages
 
-    def get_pdb_entries(self):
-        return self.pdb_entries
+    def get_pdb_entries(self) -> List[str]:
+        """Returns list of PDB entries as a list -- might have duplicates"""
+        return self.__pdb_entries
 
-    def get_emdb_entries(self):
-        return self.emdb_entries
+    def get_emdb_entries(self) -> List[str]:
+        return self.__emdb_entries
+
+    def get_all_pdb_entries(self) -> Set[str]:
+        """Returns the unique set of pdb_entries"""
+        return self.__all_pdb_entries
+
+    def get_added_entries(self) -> List[str]:
+        return self.__added_entries
+
+    def add_message(self, message: Dict[str, Union[Optional[str], bool]]) -> None:
+        self.__messages.append(message)
+
+    def add_entry(self, entry: str) -> None:
+        """Adds an entry to the list of added added entries"""
+        self.__added_entries.append(entry)
 
 
-def main():
+def main() -> None:
     # Create logger -
-    logger = logging.getLogger()
-    FORMAT = '[%(asctime)s %(levelname)s]-%(module)s.%(funcName)s: %(message)s'
+    logger = logging.getLogger()  # pylint: disable=redefined-outer-name
+    FORMAT = "[%(asctime)s %(levelname)s]-%(module)s.%(funcName)s: %(message)s"
     logging.basicConfig(format=FORMAT)
 
     parser = argparse.ArgumentParser()
@@ -169,38 +192,28 @@ def main():
         const=logging.DEBUG,
         default=logging.INFO,
     )
-    parser.add_argument(
-        "--entry_list", help="comma separated list of entries", type=str
-    )
-    parser.add_argument(
-        "--entry_file", help="file containing list of entries - one per line", type=str
-    )
-    parser.add_argument(
-        "--pdb_release", help="run PDB entries scheduled for release", action="store_true"
-    )
-    parser.add_argument(
-        "--emdb_release", help="run EMDB entries scheduled for release", action="store_true"
-    )
-    parser.add_argument(
-        "--skip_emdb", help="skip emdb validation report calculation", action="store_true"
-    )
+    parser.add_argument("--entry_list", help="comma separated list of entries", type=str)
+    parser.add_argument("--entry_file", help="file containing list of entries - one per line", type=str)
+    parser.add_argument("--pdb_release", help="run PDB entries scheduled for release", action="store_true")
+    parser.add_argument("--emdb_release", help="run EMDB entries scheduled for release", action="store_true")
+    parser.add_argument("--skip_emdb", help="skip emdb validation report calculation", action="store_true")
     parser.add_argument("--siteID", help="siteID", type=str, default=getSiteId())
-    parser.add_argument(
-        "--nocache", help="Do not use the FTP cache", action="store_true"
-    )
+    parser.add_argument("--nocache", help="Do not use the FTP cache", action="store_true")
     args = parser.parse_args()
     logger.setLevel(args.loglevel)
 
-    fape = FindAndProcessEntries(entry_string=args.entry_list,
-                                 entry_file=args.entry_file,
-                                 pdb_release=args.pdb_release,
-                                 emdb_release=args.emdb_release,
-                                 site_id=args.siteID,
-                                 skip_emdb=args.skip_emdb,
-                                 nocache=args.nocache)
+    fape = FindAndProcessEntries(
+        entry_string=args.entry_list,
+        entry_file=args.entry_file,
+        pdb_release=args.pdb_release,
+        emdb_release=args.emdb_release,
+        site_id=args.siteID,
+        skip_emdb=args.skip_emdb,
+        nocache=args.nocache,
+    )
 
     fape.run_process()
-    return fape.messages
+    # return fape.messages ---- Is this correct? Should it be printed to stdout or written to a file? For now, just print it.
 
 
 if "__main__" in __name__:

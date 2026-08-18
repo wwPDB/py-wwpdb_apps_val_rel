@@ -1,0 +1,309 @@
+import datetime
+import ftplib
+import logging
+import os
+import shutil
+import tempfile
+import time
+from typing import List, Optional
+
+from wwpdb.apps.val_rel.utils.PersistFileCache import PersistFileCache
+
+logger = logging.getLogger(__name__)
+
+
+def setup_local_temp_ftp(temp_dir: Optional[str], suffix: str, session_path: str) -> str:
+    if not temp_dir:
+        if not os.path.exists(session_path):
+            os.makedirs(session_path)
+        temp_dir = tempfile.mkdtemp(dir=session_path, prefix=f"ftp_{suffix}_")
+    return temp_dir
+
+
+def remove_local_temp_ftp(temp_dir: Optional[str], require_empty: bool = False) -> None:
+    """Removes the temporary directory. If require_empty true, will skip if not"""
+    if temp_dir and os.path.exists(temp_dir):
+        if require_empty:
+            dlist = os.listdir(temp_dir)
+            if len(dlist) > 0:
+                logger.debug("Skipping removal of %s as not empty", temp_dir)
+                return
+        shutil.rmtree(temp_dir, ignore_errors=True)
+
+
+class GetRemoteFiles:
+    def __init__(self, server: str, cache: Optional[str] = None) -> None:
+        # Single underscore for __del__ to be able to find
+        self._ftp: Optional[ftplib.FTP] = self.__connect(server)
+        # logger.info("Connect!!! %s", self._ftp)
+        self._ftp.login()
+        self.__cache = cache
+        # The current remote directory as we go up and down tree
+        self.__curdir = "."
+        # logger.debug("Setup for %s to %s", server, output_path)
+
+    def __del__(self) -> None:
+        # for cases where ftplib.FTP.__init__() failed
+        if hasattr(self, "_ftp"):
+            # possible exceptions in ftp.quit() will be ignored
+            self.disconnect()
+
+    def __connect(self, server: str) -> ftplib.FTP:  # noqa: RET503
+        """Connects to remote server with retry"""
+
+        retry = 0
+        sleep = 2
+
+        while 1:
+            try:
+                ret = ftplib.FTP(server)  # noqa: S321
+                return ret
+            except ftplib.error_temp as e:
+                ecode = str(e)[:3]
+                if ecode == "421":
+                    if retry > 7:
+                        raise
+                    logger.error("Remote resource unavailable - sleep %s and retry %s", sleep, str(e))
+                    time.sleep(sleep)
+                    retry += 1
+                    sleep *= 2
+                    continue
+            # unhandled exception not caught - raises us
+        # Never reached
+
+    def _check_connection(self) -> str:
+        if not self._ftp:
+            raise ValueError
+
+        retries = 3
+
+        while retries > 0:
+            try:
+                return self._ftp.voidcmd("noop")
+            except Exception as e:  # noqa: E722,BLE001
+                logger.error(e)
+                retries -= 1
+                if not self._ftp:
+                    break
+                self._ftp.login()
+
+        emsg = "error connecting to server"
+        raise Exception(emsg)  # noqa: TRY002  pylint: disable=broad-exception-raised
+
+    def _setup_output_path(self, output_path: str) -> None:
+        if not os.path.exists(output_path):
+            os.makedirs(output_path)
+
+    def get_file(self, remote_file: str, output_path: str) -> None:
+        self._check_connection()
+        self._setup_output_path(output_path)
+
+        file_name = os.path.join(output_path, remote_file)
+        logger.debug("Transferring file %s to %s", remote_file, file_name)
+        # logger.debug("Cache is %s", self.__cache)
+        if self.__cache is not None:
+            # See if in cache
+            pfc = PersistFileCache(self.__cache)
+            rp = os.path.join(self.__curdir, remote_file)
+            if pfc.exists(rp):
+                pfc.get_file(rp, file_name, symlink=True)
+                logger.debug("Found %s in cache", rp)
+                return
+            # logger.debug("Did not find %s in cache", remote_file)
+
+        if not self._ftp:
+            raise ValueError
+        with open(file_name, "wb") as out_file:
+            self._ftp.retrbinary("RETR " + remote_file, out_file.write)
+
+        # File always exist - but might be zero length.... Annoying interface
+        # logger.debug("Output exists? %s", os.path.exists(file_name))
+        # See if can get details..
+        mtime = self.get_remote_file_mtime(remote_file)
+        if mtime is not None:
+            logger.debug("Setting mtime on %s to %s", file_name, mtime)
+            os.utime(file_name, (mtime, mtime))
+        if self.__cache is not None:
+            pfc.add_file(file_name, rp)
+            # logger.debug("Adding %s to cache", rp)
+
+    def get_remote_file_mtime(self, remote_file: str) -> Optional[float]:
+        self._check_connection()
+        # Try to retrieve remote file time from server.
+        # Returns None if could not be determined
+
+        # See https://stackoverflow.com/questions/29026709/how-to-get-ftp-files-modify-time-using-python-ftplib
+        # Python 3 has added mlsd which could be used - but we are not there yet
+
+        # Several attempts to see if server supports one. Raises exception if command not know
+        ts = None
+        try:
+            # MDTM is supported by all wwpdb partner ftp sites
+            if not self._ftp:
+                raise ValueError  # noqa: TRY301
+            mdtmr = self._ftp.voidcmd("MDTM %s" % remote_file)
+            # Make sure get 213 return
+            if mdtmr[0:3] != "213":
+                return None
+            ts = mdtmr[4:].strip()
+
+            # Fall through
+
+        except Exception as exc:  # noqa: E722,BLE001
+            try:
+                # Fall back on MLST - which is more machine readable - but less universal
+                if not self._ftp:
+                    raise ValueError from exc  # noqa: TRY301
+                mlst = self._ftp.voidcmd("MLST %s" % remote_file)
+
+                if not mlst:
+                    return None
+                for line in mlst.split("\n"):
+                    if line[0:3] == "250":
+                        continue
+                    ls = line.strip()
+                    facts_found, _, _fname = ls.partition(" ")
+                    factsd = {}
+                    # Last ends in semicolor
+                    for fact in facts_found[:-1].split(";"):
+                        key, _dum, value = fact.partition("=")
+                        factsd[key.lower()] = value
+                ts = factsd.get("modify")
+                # None caught below
+
+            except Exception:  # noqa: E722,BLE001
+                return None
+
+        # print("TS: %s" % ts)
+        if not ts:
+            return None
+
+        try:
+            # Parse string like 0200704134000  -- 14 digits ["." 1*digit]
+            # Could have optional tenths of second after period
+            bts = ts.split(".")[0]
+            dt = datetime.datetime.strptime(bts, "%Y%m%d%H%M%S")  # noqa: DTZ007
+            time_tuple = dt.timetuple()
+            timestamp = time.mktime(time_tuple)
+            return timestamp
+        except:  # noqa: E722,BLE001  pylint: disable=bare-except
+            return None
+
+    def get_size(self, remote_file: str) -> Optional[int]:
+        self._check_connection()
+
+        size: Optional[int] = 0
+        try:
+            if self._ftp is None:
+                emsg = "self._ftp not set"
+                raise ValueError(emsg)
+            size = self._ftp.size(remote_file)
+        except:  # noqa: E722,BLE001  pylint: disable=bare-except
+            size = None
+        return size
+
+    def is_file(self, remote_file: str) -> bool:
+        self._check_connection()
+
+        if self.get_size(remote_file):
+            return True
+        return False
+
+    def change_ftp_directory(self, directory: Optional[str]) -> bool:
+        self._check_connection()
+
+        logger.debug("Changing directory %s", directory)
+        if directory:
+            try:
+                if self._ftp is None:
+                    emsg = "self._ftp not set"
+                    raise ValueError(emsg)  # noqa: TRY301
+
+                self._ftp.cwd(directory)
+                if directory[0] == "/":
+                    self.__curdir = directory
+                else:
+                    self.__curdir = os.path.join(self.__curdir, directory)
+                logger.debug("cur directory is %s", self.__curdir)
+                return True
+            except Exception as e:  # noqa: E722,BLE001
+                logger.error(e)
+        return False
+
+    def get_url(self, output_path: str, directory: Optional[str] = None, filename: Optional[str] = None) -> List[str]:
+        """Retrieves files from directory.  Returns list of files retrieved"""
+        self._check_connection()
+
+        ret_files = []
+        # logger.debug("Directory %s, filename %s", directory, filename)
+        if directory:
+            ok = self.change_ftp_directory(directory)
+            if not ok:
+                logger.error("Failed to change directory to %s", directory)
+                return []
+        if filename:
+            files = [filename]
+        else:
+            if not self._ftp:
+                raise ValueError
+            files = self._ftp.nlst()
+        for fname in files:
+            if self.is_file(fname):
+                self.get_file(fname, output_path)
+                ret_files.append(fname)
+        return ret_files
+
+    def get_directory(self, directory: str, output_path: str) -> bool:
+        """Recursivle retrieve contents of directory"""
+        self._check_connection()
+
+        # Improvement - cache nlst?
+        ok = self.change_ftp_directory(directory)
+        if not ok:
+            return False
+        if not self._ftp:
+            raise ValueError
+        objects = self._ftp.nlst()
+        if objects:
+            for obj in objects:
+                # Skip nfs turds... or any files that start with "."
+                if obj[0] == "." and len(obj) > 2:
+                    logger.debug("Skipping NFS garbage: %s %s", directory, obj)
+                    continue
+                if self.is_file(obj):
+                    self.get_file(obj, output_path)
+                else:
+                    logger.debug("not a file: %s", obj)
+                    # Skip recursion
+                    if obj == "." or obj == "..":
+                        continue
+
+                    output_path = os.path.join(output_path, obj)
+                    self._setup_output_path(output_path)
+                    self.get_directory(obj, output_path)
+
+                    self._ftp.cwd("..")
+                    output_path = os.path.join(output_path, "..")
+                    self.__curdir = os.path.join(self.__curdir, "..")
+                    logger.debug("curr directory %s", self.__curdir)
+            return True
+        return False
+
+    def disconnect(self) -> None:
+        """Issues 'QUIT' command to server
+
+        Note: `quit()` may also raise an exception (see [1])
+        It will be ignored by __del__ even if not wrapped by try/except (see [2]), so try/except
+        is necessary for when disconnect() is called directly, as to set self._ftp to None
+
+        [1] https://docs.python.org/3.9/library/ftplib.html#ftplib.FTP.quit
+        [2] https://docs.python.org/3/reference/datamodel.html#object.__del__
+        """
+        if self._ftp is not None:
+            # logger.info("Disconnect %s", self._ftp)
+            try:
+                self._ftp.quit()
+            except:  # noqa: E722,BLE001  pylint: disable=bare-except
+                logger.error("Error trying to close ftp connection")
+
+            self._ftp = None

@@ -1,11 +1,12 @@
 import logging
 import os
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
 
-def already_run(test_file, output_folder):
-    logging.info('checking for {}'.format(test_file))
+def already_run(test_file: Optional[str], output_folder: Optional[str]) -> bool:
+    logger.info("checking for %s", test_file)
     if test_file and output_folder:
         if os.path.exists(test_file):
             if os.path.exists(output_folder):
@@ -14,15 +15,11 @@ def already_run(test_file, output_folder):
                 if input_modification_time < output_modification_time:
                     logger.info("already run validation")
                     return True
-                else:
-                    logger.info("validation to be run")
-                    return False
-            else:
                 logger.info("validation to be run")
                 return False
-        else:
-            logger.info("missing input file %s - not running", test_file)
-            return True
-    else:
-        logger.info("missing input file - %s - not running", test_file)
+            logger.info("validation to be run")
+            return False
+        logger.info("missing input file %s - not running", test_file)
         return True
+    logger.info("missing input file - %s - not running", test_file)
+    return True

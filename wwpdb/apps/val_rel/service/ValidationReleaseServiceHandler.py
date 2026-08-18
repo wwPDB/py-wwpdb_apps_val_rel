@@ -11,31 +11,25 @@
 #
 ##
 import glob
-import sys
-import os
-import platform
-import time
 import json
 import logging
+import os
+import platform
+import sys
+import time
+from argparse import ArgumentParser as ArgParser
+from typing import Optional, Union
 
-
-try:
-    from argparse import ArgumentParser as ArgParser
-except ImportError:
-    from optparse import OptionParser as ArgParser
-
-# from optparse import OptionParser
-
+from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
 from wwpdb.utils.detach.DetachedProcessBase import DetachedProcessBase
 from wwpdb.utils.message_queue.MessageConsumerBase import MessageConsumerBase
-from wwpdb.utils.message_queue.MessageSubscriberBase import MessageSubscriberBase
 from wwpdb.utils.message_queue.MessageQueueConnection import MessageQueueConnection
-from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
+from wwpdb.utils.message_queue.MessageSubscriberBase import MessageSubscriberBase
+
 from wwpdb.apps.val_rel.config.ValConfig import ValConfig
 from wwpdb.apps.val_rel.ValidateRelease import (
     runValidation,
 )
-
 
 # from wwpdb.apps.val_ws_server.validate.Validate import Validate
 
@@ -47,18 +41,17 @@ logging.basicConfig(
 logging.getLogger("pika").setLevel(logging.INFO)
 
 
-class MessageConsumer(MessageConsumerBase):
-    def __init__(self, amqpUrl, priority):
+class MessageConsumer(MessageConsumerBase):  # type: ignore[misc]
+    def __init__(self, amqpUrl: str, priority: bool) -> None:
         super(MessageConsumer, self).__init__(amqpUrl, priority)
 
-    def workerMethod(self, msgBody, deliveryTag=None):
+    def workerMethod(self, msgBody: str, deliveryTag: Optional[str] = None) -> bool:  # noqa: ARG002
         try:
             logger.debug("Message body %r", msgBody)
             pD = json.loads(msgBody)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error("Message format error - discarding %r", str(e))
             return False
-        #
         successFlag = True
         try:
             logger.info("Message body %r", pD)
@@ -69,18 +62,17 @@ class MessageConsumer(MessageConsumerBase):
         return successFlag
 
 
-class MessageSubscriber(MessageSubscriberBase):
-    def __init__(self, amqpUrl):
+class MessageSubscriber(MessageSubscriberBase):  # type: ignore[misc]
+    def __init__(self, amqpUrl: str) -> None:
         super(MessageSubscriber, self).__init__(amqpUrl)
 
-    def workerMethod(self, msgBody, deliveryTag=None):
+    def workerMethod(self, msgBody: str, deliveryTag: Optional[str] = None) -> bool:  # noqa: ARG002
         try:
             logger.debug("Message body %r", msgBody)
             pD = json.loads(msgBody)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error("Message format error - discarding %r", str(e))
             return False
-        #
         successFlag = True
         try:
             logger.info("Message body %r", pD)
@@ -91,24 +83,22 @@ class MessageSubscriber(MessageSubscriberBase):
         return successFlag
 
 
-class MessageConsumerWorker(object):
-    def __init__(self, siteID, priority=False):
+class MessageConsumerWorker:
+    def __init__(self, siteID: Optional[str], priority: bool = False) -> None:
         self.__siteID = siteID
         self.__priority = priority
         self.__setup()
 
-    def __setup(self):
+    def __setup(self) -> None:
         mqc = MessageQueueConnection()
-        url = mqc._getDefaultConnectionUrl()
+        url = mqc._getDefaultConnectionUrl()  # noqa: SLF001  pylint: disable=protected-access
         self.__mc = MessageConsumer(amqpUrl=url, priority=self.__priority)
         vc = ValConfig(self.__siteID)
         self.__mc.setQueue(queueName=vc.queue_name, routingKey=vc.routing_key)
         self.__mc.setExchange(exchange=vc.exchange, exchangeType="topic")
-        #
 
-    def run(self):
-        """  Run async consumer
-        """
+    def run(self) -> None:
+        """Run async consumer"""
         startTime = time.time()
         logger.info("Starting ")
         try:
@@ -123,27 +113,26 @@ class MessageConsumerWorker(object):
         endTime = time.time()
         logger.info("Completed (%f seconds)", (endTime - startTime))
 
-    def suspend(self):
+    def suspend(self) -> None:
         logger.info("Suspending consumer worker... ")
         self.__mc.stop()
 
 
-class MessageSubscriberWorker(object):
-    def __init__(self, siteID, exchange_name):
-        self.__siteID = siteID
+class MessageSubscriberWorker:
+    def __init__(self, siteID: Optional[str], exchange_name: str) -> None:  # noqa: ARG002  pylint: disable=unused-argument
+        # self.__siteID = siteID
         self.__exchange_name = exchange_name
         self.__setup()
 
-    def __setup(self):
+    def __setup(self) -> None:
+        # No siteID available in the API
         mqc = MessageQueueConnection()
-        url = mqc._getDefaultConnectionUrl()
+        url = mqc._getDefaultConnectionUrl()  # noqa: SLF001 pylint: disable=protected-access
         self.__subscriber = MessageSubscriber(amqpUrl=url)
         self.__subscriber.add_exchange(self.__exchange_name)
-        #
 
-    def run(self):
-        """  Run async consumer
-        """
+    def run(self) -> None:
+        """Run async consumer"""
         startTime = time.time()
         logger.info("Starting ")
         try:
@@ -154,35 +143,37 @@ class MessageSubscriberWorker(object):
                 self.__subscriber.stop()
         except Exception as e:
             logger.exception("MessageConsumer failing %r", str(e))
-            raise Exception
+            raise Exception from e  # noqa: TRY002  pylint: disable=broad-exception-raised
 
         endTime = time.time()
         logger.info("Completed (%f seconds)", (endTime - startTime))
 
-    def suspend(self):
+    def suspend(self) -> None:
         logger.info("Suspending consumer worker... ")
         self.__subscriber.stop()
 
 
-class MyDetachedProcess(DetachedProcessBase):
-    """  This class implements the run() method of the DetachedProcessBase() utility class.
+class MyDetachedProcess(DetachedProcessBase):  # type: ignore[misc]
+    """This class implements the run() method of the DetachedProcessBase() utility class.
 
-         Illustrates the use of python logging and various I/O channels in detached process.
+    Illustrates the use of python logging and various I/O channels in detached process.
     """
 
+    __mcw: Union[MessageConsumerWorker, MessageSubscriberWorker]
+
     def __init__(
-            self,
-            pidFile="/tmp/DetachedProcessBase.pid",
-            stdin=os.devnull,
-            stdout=os.devnull,
-            stderr=os.devnull,
-            wrkDir="/",
-            siteID=None,
-            gid=None,
-            uid=None,
-            priority=False,
-            subscribe=None
-    ):
+        self,
+        pidFile: str = "/tmp/DetachedProcessBase.pid",  # noqa: S108
+        stdin: str = os.devnull,
+        stdout: str = os.devnull,
+        stderr: str = os.devnull,
+        wrkDir: str = "/",
+        siteID: Optional[str] = None,
+        gid: Optional[int] = None,
+        uid: Optional[int] = None,
+        priority: bool = False,
+        subscribe: Optional[str] = None,
+    ) -> None:
         super(MyDetachedProcess, self).__init__(
             pidFile=pidFile,
             stdin=stdin,
@@ -198,19 +189,19 @@ class MyDetachedProcess(DetachedProcessBase):
         else:
             self.__mcw = MessageSubscriberWorker(siteID, exchange_name=subscribe)
 
-    def run(self):
+    def run(self) -> None:
         logger.info("STARTING detached run method")
         self.__mcw.run()
 
-    def suspend(self):
+    def suspend(self) -> None:
         logger.info("SUSPENDING detached process")
         try:
             self.__mcw.suspend()
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error("SUSPENDING failed %r", str(e))
 
 
-def main():
+def main() -> None:
     # adding a conservative permission mask for this
     # os.umask(0o022)
     #
@@ -219,12 +210,6 @@ def main():
 
     description = "Validation release service handler"
     parser = ArgParser(description=description)
-    # py 2/3 issue  for optparse.OptionParser add an `add_argument` method for
-    # compatibility with argparse.ArgumentParser
-    try:
-        parser.add_argument = parser.add_option
-    except AttributeError:
-        pass
 
     parser.add_argument(
         "--start",
@@ -271,12 +256,14 @@ def main():
         help="Instance number [1-n]",
     )
     parser.add_argument("--siteID", default=getSiteId(), type=str, help="wwPDB site ID")
-    #
-    parser.add_argument("--priority", action='store_true', dest='priority', help="make a priority queue")
-    #
-    parser.add_argument("--subscribe", default=None, type=str, help="exchange name for optional subscriber rather than standard consumer")
-    #
-    parser.add_argument("--list", action='store_true', dest='list', help="list all running process ids")
+    parser.add_argument("--priority", action="store_true", dest="priority", help="make a priority queue")
+    parser.add_argument(
+        "--subscribe",
+        default=None,
+        type=str,
+        help="exchange name for optional subscriber rather than standard consumer",
+    )
+    parser.add_argument("--list", action="store_true", dest="list", help="list all running process ids")
 
     # (options, args) = parser.parse_args()
 
@@ -295,55 +282,37 @@ def main():
     #    topPath = cI.get('SITE_WEB_APPS_TOP_PATH')
     topSessionPath = cI.get("SITE_WEB_APPS_TOP_SESSIONS_PATH")
 
-    #
     myFullHostName = platform.uname()[1]
     myHostName = str(myFullHostName.split(".")[0]).lower()
-    #
     wsLogDirPath = os.path.join(topSessionPath, "rel-val-logs")
     if not os.path.exists(wsLogDirPath):
         os.makedirs(wsLogDirPath)
 
-    #
-    pidFilePath = os.path.join(
-        wsLogDirPath, myHostName + "_" + str(args.instanceNo) + ".pid"
-    )
-    stdoutFilePath = os.path.join(
-        wsLogDirPath, myHostName + "_" + str(args.instanceNo) + "_stdout.log"
-    )
-    stderrFilePath = os.path.join(
-        wsLogDirPath, myHostName + "_" + str(args.instanceNo) + "_stderr.log"
-    )
-    wfLogFilePath = os.path.join(
-        wsLogDirPath, myHostName + "_" + str(args.instanceNo) + "_" + now + ".log"
-    )
-    #
-    logger = logging.getLogger(name="root")
+    pidFilePath = os.path.join(wsLogDirPath, myHostName + "_" + str(args.instanceNo) + ".pid")
+    stdoutFilePath = os.path.join(wsLogDirPath, myHostName + "_" + str(args.instanceNo) + "_stdout.log")
+    stderrFilePath = os.path.join(wsLogDirPath, myHostName + "_" + str(args.instanceNo) + "_stderr.log")
+    wfLogFilePath = os.path.join(wsLogDirPath, myHostName + "_" + str(args.instanceNo) + "_" + now + ".log")
+    logger = logging.getLogger(name="root")  # pylint: disable=redefined-outer-name
     logging.captureWarnings(True)
-    formatter = logging.Formatter(
-        "%(asctime)s [%(levelname)s]-%(module)s.%(funcName)s: %(message)s"
-    )
+    formatter = logging.Formatter("%(asctime)s [%(levelname)s]-%(module)s.%(funcName)s: %(message)s")
     handler = logging.FileHandler(wfLogFilePath)
     handler.setFormatter(formatter)
     logger.addHandler(handler)
-    #
     lt = time.strftime("%Y %m %d %H:%M:%S", time.localtime())
-    #
     if args.debugLevel > 2:
         logger.setLevel(logging.DEBUG)
     elif args.debugLevel > 0:
         logger.setLevel(logging.INFO)
     else:
         logger.setLevel(logging.ERROR)
-    #
     if args.list:
         pidfiledir = os.path.dirname(pidFilePath)
         logpath = os.path.join(pidfiledir, "*.pid")
         logger.info("consumer process ids from %s", logpath)
         for path in glob.glob(logpath):
-            with open(path, "r") as r:
+            with open(path) as r:
                 logger.info(r.read())
         sys.exit()
-    #
     logger.info("launching process with pid file %s", pidFilePath)
     myDP = MyDetachedProcess(
         pidFile=pidFilePath,
@@ -352,32 +321,23 @@ def main():
         wrkDir=wsLogDirPath,
         siteID=siteId,
         priority=args.priority,
-        subscribe=args.subscribe
+        subscribe=args.subscribe,
     )
 
     if args.startOp:
-        sys.stdout.write(
-            "+DetachedMessageConsumer() starting consumer service at %s\n" % lt
-        )
+        sys.stdout.write("+DetachedMessageConsumer() starting consumer service at %s\n" % lt)
         logger.info("DetachedMessageConsumer() starting consumer service at %s", lt)
         myDP.start()
     elif args.stopOp:
-        sys.stdout.write(
-            "+DetachedMessageConsumer() stopping consumer service at %s\n" % lt
-        )
+        sys.stdout.write("+DetachedMessageConsumer() stopping consumer service at %s\n" % lt)
         logger.info("DetachedMessageConsumer() stopping consumer service at %s", lt)
         myDP.stop()
     elif args.restartOp:
-        sys.stdout.write(
-            "+DetachedMessageConsumer() restarting consumer service at %s\n" % lt
-        )
+        sys.stdout.write("+DetachedMessageConsumer() restarting consumer service at %s\n" % lt)
         logger.info("DetachedMessageConsumer() restarting consumer service at %s", lt)
         myDP.restart()
     elif args.statusOp:
-        sys.stdout.write(
-            "+DetachedMessageConsumer() reporting status for consumer service at %s\n"
-            % lt
-        )
+        sys.stdout.write("+DetachedMessageConsumer() reporting status for consumer service at %s\n" % lt)
         sys.stdout.write(myDP.status())
 
 

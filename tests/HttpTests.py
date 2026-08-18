@@ -1,0 +1,234 @@
+import gzip
+import logging
+import os
+import shutil
+import tempfile
+import unittest
+from typing import List, Optional, cast
+from unittest.mock import patch
+
+if __package__ is None or __package__ == "":
+    import sys
+    from os import path
+
+    sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
+    from commonsetup import FtpStandardConfig  # type: ignore[import-not-found]  # pylint: disable=import-error
+else:
+    from .commonsetup import (  # noqa: TID252  # pragma: no cover
+        FtpStandardConfig,
+    )
+
+from wwpdb.apps.val_rel.config.ValConfig import ValConfig
+from wwpdb.apps.val_rel.utils.http_protocol.getFilesReleaseHTTP_EMDB import getFilesReleaseHttpEMDB
+from wwpdb.apps.val_rel.utils.http_protocol.getFilesReleaseHTTP_PDB import getFilesReleaseHttpPDB
+from wwpdb.apps.val_rel.utils.http_protocol.getRemoteFilesHTTP import GetRemoteFilesHttp
+from wwpdb.apps.val_rel.utils.XmlInfo import XmlInfo
+
+logger = logging.getLogger(__name__)
+
+
+class MygetFilesReleaseHttpEMDB(getFilesReleaseHttpEMDB):
+    """Subclass of getFilesReleaseHttpEMDB for testing purposes"""
+
+    def __init__(self, emdb_id: str, site_id: Optional[str] = None) -> None:
+        super().__init__(emdb_id, site_id)
+
+    def get_emdb_masks(self) -> List[str]:
+        return self._get_emdb_masks()
+
+    def get_emdb_half_maps(self) -> List[Optional[str]]:
+        half_map_1, half_map_2 = self._get_emdb_half_maps()
+        return [half_map_1, half_map_2]
+
+
+class TestHTTP(unittest.TestCase):
+    def setUp(self) -> None:
+        self.patcher = patch("wwpdb.utils.config.ConfigInfoApp.ConfigInfo", side_effect=FtpStandardConfig)
+        self.patcher.start()
+        logger.info("running setup")
+        pdb_testpath = "https://files.wwpdb.org/pub/pdb/data/structures/all/mmCIF"
+        emdb_testpath = "https://files.wwpdb.org/pub/emdb/structures"
+        zipfiles = ["8glv.cif.gz", "7n82.cif.gz"]
+        non_existent_files = ["1abc.cif.gz"]
+        xmlfile = os.path.join(emdb_testpath, "EMD-5030", "header", "emd-5030-v30.xml")
+        self.large_test_file = "https://ftp.ensemblgenomes.ebi.ac.uk/pub/plants/release-59/fasta/triticum_aestivum/dna/Triticum_aestivum.IWGSC.dna.toplevel.fa.gz"
+        self.zipfiles = [os.path.join(pdb_testpath, file) for file in zipfiles]
+        self.non_existent_files = [os.path.join(pdb_testpath, file) for file in non_existent_files]
+        self.temp_dir = tempfile.mkdtemp()
+        self.xmlfiles = [xmlfile]
+        self.xray_id = "2aco"
+        self.nmr_id = "2l9r"
+        self.pdb_non_existent = "0abc"
+        self.emdb_id = "EMD-5030"
+        self.emdb_fsc_id = "EMD-10294"
+        self.emdb_half_map_id = "EMD-0036"
+        self.emdb_mask_id = "EMD-0034"
+        self.emdb_non_existent = "EMD-0000"
+        self.temp_paths: List[Optional[str]] = []
+        logger.info("created temp dir %s", self.temp_dir)
+
+    def tearDown(self) -> None:
+        logger.info("running teardown")
+        if os.path.exists(self.temp_dir):
+            for f in os.listdir(self.temp_dir):
+                os.unlink(os.path.join(self.temp_dir, f))
+            shutil.rmtree(self.temp_dir)
+        else:
+            logger.warning("Temp dir does not exist")
+        self.assertFalse(os.path.exists(self.temp_dir), "error - could not remove temp dir %s" % self.temp_dir)
+        if self.temp_paths and len(self.temp_paths) > 0:
+            vc = ValConfig()
+            session_path = vc.session_path
+            for pth in self.temp_paths:
+                entry = cast("str", pth).replace(session_path, "")
+                if entry.startswith("/"):
+                    entry = entry[1:]
+                basename = entry.split("/")[0]
+                self.assertNotEqual(basename, "", "error - could not parse path %s" % pth)
+                temp_path = os.path.join(session_path, basename)
+                if os.path.exists(temp_path):
+                    shutil.rmtree(temp_path)
+                    logger.info("removing temp path %s", temp_path)
+                else:
+                    logger.warning("could not remove temp path %s", temp_path)
+
+    def test_is_file(self) -> None:
+        logger.info("testing is_file")
+        grf = GetRemoteFilesHttp()
+        # test status code 200
+        for file in self.zipfiles:
+            self.assertTrue(grf.is_file(file), "error - %s" % os.path.basename(file))
+        self.assertTrue(grf.is_file(self.large_test_file), "error - %s" % self.large_test_file)
+        # test 404 error
+        for file in self.non_existent_files:
+            self.assertFalse(grf.is_file(file), "error - %s" % os.path.basename(file))
+
+    def test_streaming_http_request(self) -> None:
+        logger.info("testing streaming http_request")
+        grf = GetRemoteFilesHttp()
+        logger.info("saving files to %s", self.temp_dir)
+        # test download
+        for file in self.zipfiles:
+            outfile = os.path.join(self.temp_dir, os.path.basename(file))
+            self.assertTrue(grf.httpRequest(file, outfile), "error downloading - %s" % os.path.basename(file))
+            # verify readable zip file
+            with gzip.open(outfile, "rb") as r:
+                self.assertTrue(r.read(1), "error reading gzip file %s" % os.path.basename(file))
+        # test 404 error
+        for file in self.non_existent_files:
+            self.assertFalse(
+                grf.httpRequest(file, os.path.join(self.temp_dir, os.path.basename(file))),
+                "error downloading - %s" % os.path.basename(file),
+            )
+
+    def test_xml_header_file(self) -> None:
+        logger.info("testing xml header file")
+        grf = GetRemoteFilesHttp()
+        logger.info("saving files to %s", self.temp_dir)
+        # test download
+        for file in self.xmlfiles:
+            outfile = os.path.join(self.temp_dir, os.path.basename(file))
+            logger.info("downloading %s to %s", file, outfile)
+            self.assertTrue(grf.httpRequest(file, outfile), "error downloading - %s" % os.path.basename(file))
+            # verify readable file
+            pdbids = XmlInfo(outfile).get_pdbids_from_xml()
+            self.assertTrue(isinstance(pdbids, list), "error - no pdbids found in xml file %s" % os.path.basename(file))
+            self.assertTrue(len(pdbids) > 0, "error - no pdbids found in xml file %s" % os.path.basename(file))
+
+    def test_gfr_pdb(self) -> None:
+        logger.info("testing get files release pdb")
+        # test xray
+        pdbid = self.xray_id
+        gfr = getFilesReleaseHttpPDB(pdbid)
+        model_path = gfr.get_model()
+        self.assertTrue(model_path and os.path.exists(model_path), "error - could not download %s" % model_path)
+        logger.info("downloaded %s", model_path)
+        self.temp_paths.append(model_path)
+        sf_path = gfr.get_sf()
+        self.assertTrue(sf_path and os.path.exists(sf_path), "error - could not download %s" % sf_path)
+        logger.info("downloaded %s", sf_path)
+        self.temp_paths.append(sf_path)
+        # test nmr
+        pdbid = self.nmr_id
+        gfr = getFilesReleaseHttpPDB(pdbid)
+        cs_path = gfr.get_cs()
+        self.assertTrue(cs_path and os.path.exists(cs_path), "error - could not download %s" % model_path)
+        logger.info("downloaded %s", cs_path)
+        self.temp_paths.append(cs_path)
+        nmr_data_path = gfr.get_nmr_data()
+        self.assertTrue(nmr_data_path and os.path.exists(nmr_data_path), "error - could not download %s" % sf_path)
+        logger.info("downloaded %s", nmr_data_path)
+        self.temp_paths.append(nmr_data_path)
+        # test non-existent
+        pdbid = self.pdb_non_existent
+        gfr = getFilesReleaseHttpPDB(pdbid)
+        model_path = gfr.get_model()
+        self.assertFalse(model_path, "error - downloaded %s" % model_path)
+        sf_path = gfr.get_sf()
+        self.assertFalse(sf_path, "error - downloaded %s" % sf_path)
+
+    def test_gfr_emdb(self) -> None:
+        logger.info("testing get files release emdb")
+        emdbid = self.emdb_id
+        gfr = MygetFilesReleaseHttpEMDB(emdbid)
+        # test volume file
+        vol_path = gfr.get_emdb_volume()
+        self.assertTrue(vol_path and os.path.exists(vol_path), "error - could not download %s" % vol_path)
+        logger.info("downloaded %s", vol_path)
+        self.temp_paths.append(vol_path)
+        # test xml file
+        xml_path = gfr.get_emdb_xml()
+        self.assertTrue(xml_path and os.path.exists(xml_path), "error - could not download %s" % xml_path)
+        logger.info("downloaded %s", xml_path)
+        self.temp_paths.append(xml_path)
+        # test fsc file
+        emdbid = self.emdb_fsc_id
+        gfr = MygetFilesReleaseHttpEMDB(emdbid)
+        fsc_path = gfr.get_emdb_fsc()
+        self.assertTrue(fsc_path and os.path.exists(fsc_path), "error - could not download %s" % fsc_path)
+        logger.info("downloaded %s", fsc_path)
+        self.temp_paths.append(fsc_path)
+        # test half maps
+        emdbid = self.emdb_half_map_id
+        gfr = MygetFilesReleaseHttpEMDB(emdbid)
+        half_map_1, half_map_2 = gfr.get_emdb_half_maps()
+        self.assertTrue(half_map_1 and os.path.exists(half_map_1), "error - could not download %s" % half_map_1)
+        logger.info("downloaded %s", half_map_1)
+        self.temp_paths.append(half_map_1)
+        self.assertTrue(half_map_2 and os.path.exists(half_map_2), "error - could not download %s" % half_map_2)
+        logger.info("downloaded %s", half_map_2)
+        self.temp_paths.append(half_map_2)
+        # test masks
+        emdbid = self.emdb_mask_id
+        gfr = MygetFilesReleaseHttpEMDB(emdbid)
+        masks = gfr.get_emdb_masks()
+        mask1 = None
+        mask2 = None
+        if masks:
+            mask1 = masks[0]
+            mask2 = masks[1]
+        self.assertTrue(mask1 and os.path.exists(mask1), "error - could not download %s" % mask1)
+        logger.info("downloaded %s", mask1)
+        self.temp_paths.append(mask1)
+        self.assertTrue(mask2 and os.path.exists(mask2), "error - could not download %s" % mask2)
+        logger.info("downloaded %s", mask2)
+        self.temp_paths.append(mask2)
+        # test non-existent
+        emdbid = self.emdb_non_existent
+        gfr = MygetFilesReleaseHttpEMDB(emdbid)
+        vol_path = gfr.get_emdb_volume()
+        self.assertFalse(vol_path, "error - downloaded %s" % vol_path)
+        xml_path = gfr.get_emdb_xml()
+        self.assertFalse(xml_path, "error - downloaded %s" % xml_path)
+        fsc_path = gfr.get_emdb_fsc()
+        self.assertFalse(fsc_path, "error - downloaded %s" % fsc_path)
+        half_map_1, half_map_2 = gfr.get_emdb_half_maps()
+        self.assertFalse(half_map_1, "error - downloaded %s" % half_map_1)
+        self.assertFalse(half_map_2, "error - downloaded %s" % half_map_2)
+        masks = gfr.get_emdb_masks()
+        self.assertFalse(masks, "error - downloaded masks")
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG)
+    unittest.main()

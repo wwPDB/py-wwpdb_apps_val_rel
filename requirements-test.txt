@@ -1,2 +1,18 @@
 # Fake wwpdb.apps.validation
 https://github.com/wwPDB/py-fake-wwpdb_apps_validation/archive/refs/heads/main.tar.gz
+
+# Other packages
+filelock
+mmcif
+oslo_concurrency
+requests
+urllib3
+# wwpdb.apps.validation ~= 2.49
+wwpdb.io >=0.15, < 2.0
+wwpdb.utils.config >= 0.24
+wwpdb.utils.detach
+wwpdb.utils.dp
+wwpdb.utils.message_queue ~= 0.6
+wwpdb.utils.nmr
+wwpdb.utils.session
+wwpdb.utils.ws_utils
