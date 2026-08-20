@@ -94,7 +94,9 @@ class CheckResultTests(unittest.TestCase):
 
     def test_check_entry_calls_process_message_with_expected_dict(self) -> None:
         self._configure_rv(model_path=None, output_files={})
-        cr = CheckResult(output_folder="/out", pdbid="1abc", emdbid=None, siteID=SITE_ID, validation_sub_folder="current")
+        cr = CheckResult(
+            output_folder="/out", pdbid="1abc", emdbid=None, siteID=SITE_ID, validation_sub_folder="current"
+        )
         cr.check_entry()
         self.mock_rv.process_message.assert_called_once_with(
             {

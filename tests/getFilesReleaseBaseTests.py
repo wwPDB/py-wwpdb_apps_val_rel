@@ -70,7 +70,10 @@ class GetFilesReleaseBaseEMDBTests(unittest.TestCase):
 
     def test_constructor_stores_arguments(self) -> None:
         obj = ConcreteGetFilesReleaseBaseEMDB(
-            emdbid="EMD-1234", site_id="PDBE", local_ftp_emdb_path="/ftp/emdb", cache="/tmp"  # noqa: S108
+            emdbid="EMD-1234",
+            site_id="PDBE",
+            local_ftp_emdb_path="/ftp/emdb",
+            cache="/tmp",  # noqa: S108
         )
         self.assertEqual(obj._emdbid, "EMD-1234")  # noqa: SLF001 pylint: disable=protected-access
         self.assertEqual(obj._siteid, "PDBE")  # noqa: SLF001 pylint: disable=protected-access
