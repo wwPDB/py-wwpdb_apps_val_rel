@@ -103,7 +103,7 @@ class getFilesRelease:
 
     def get_model(self) -> Optional[str]:
         """
-        get the PDB model file - from OneDep then local FTP
+        get the PDB model file - from OneDep then local/remote FTP
         :param pdbid: PDB ID
         :return: file name if present or None
         """

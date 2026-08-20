@@ -91,6 +91,7 @@ class TestHTTP(unittest.TestCase):
                     logger.info("removing temp path %s", temp_path)
                 else:
                     logger.warning("could not remove temp path %s", temp_path)
+        self.patcher.stop()
 
     def test_is_file(self) -> None:
         logger.info("testing is_file")
