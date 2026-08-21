@@ -1,6 +1,7 @@
 import logging
 from typing import Optional, Type
 
+from wwpdb.io.locator.localFTPPathInfo import LocalFTPPathInfo
 from wwpdb.utils.config.ConfigInfo import getSiteId
 
 from wwpdb.apps.val_rel.config.ValConfig import ValConfig
@@ -10,6 +11,8 @@ from wwpdb.apps.val_rel.utils.getFilesReleaseBase import GetFilesReleaseBaseEMDB
 from wwpdb.apps.val_rel.utils.getFilesReleaseOneDep import getFilesReleaseOneDep
 from wwpdb.apps.val_rel.utils.http_protocol.getFilesReleaseHTTP_EMDB import getFilesReleaseHttpEMDB
 from wwpdb.apps.val_rel.utils.http_protocol.getFilesReleaseHTTP_PDB import getFilesReleaseHttpPDB
+from wwpdb.apps.val_rel.utils.local_archive_protocol.getFilesReleaseLocal_EMDB import getFilesReleaseLocal_EMDB
+from wwpdb.apps.val_rel.utils.local_archive_protocol.getFilesReleaseLocal_PDB import getFilesReleaseLocal_PDB
 
 logger = logging.getLogger(__name__)
 
@@ -41,11 +44,23 @@ class getFilesRelease:
 
         # Determine which routing
         config = ValConfig(site_id=siteID)
-        if config.val_rel_protocol in ["http", "https"]:
+
+        local_ftp = LocalFTPPathInfo()
+
+        # Handle PDB
+        if local_ftp.get_ftp_pdb():
+            self.__files_pdb_func = getFilesReleaseLocal_PDB
+        elif config.val_rel_protocol in ["http", "https"]:
             self.__files_pdb_func = getFilesReleaseHttpPDB
-            self.__files_emdb_func = getFilesReleaseHttpEMDB
         else:
             self.__files_pdb_func = getFilesReleaseFtpPDB
+
+        # Handle EMDB
+        if local_ftp.get_ftp_emdb():
+            self.__files_emdb_func = getFilesReleaseLocal_EMDB
+        elif config.val_rel_protocol in ["http", "https"]:
+            self.__files_emdb_func = getFilesReleaseHttpEMDB
+        else:
             self.__files_emdb_func = getFilesReleaseFtpEMDB
 
         self.__release_file_from_onedep = getFilesReleaseOneDep(siteID=self.__siteID, pdb_id=pdb_id, emdb_id=emdb_id)
