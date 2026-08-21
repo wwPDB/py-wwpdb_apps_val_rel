@@ -21,10 +21,6 @@ class getFilesReleaseHttpPDB(GetFilesReleaseBasePDB):
         super().__init__(pdbid=pdbid, site_id=site_id, cache=cache)
         self.__cache = cache
 
-        # This provides access to local ftp tree.  If SITE_PDB_FTP_ROOT_DIR site-config variable not set
-        # get_ftp_pdb() will return ""
-        self.__local_ftp = LocalFTPPathInfo()
-
         self.__temp_local_ftp = None
         self.__site_id = site_id
 
@@ -45,24 +41,19 @@ class getFilesReleaseHttpPDB(GetFilesReleaseBasePDB):
         # The local sessiondir download path
         self.__local_http_path: Optional[str] = None
 
-        self.__grf = None
-
-        if not self.__local_ftp.get_ftp_pdb():
-            self.__grf = GetRemoteFilesHttp(server=self.__server, cache=self.__cache, site_id=self.__site_id)
+        self.__grf: Optional[GetRemoteFilesHttp] = GetRemoteFilesHttp(
+            server=self.__server, cache=self.__cache, site_id=self.__site_id
+        )
 
     def get_model(self) -> Optional[str]:
         """
         get the PDB model file - from OneDep then local FTP and then the remote HTTP
         :return: file name if present or None
         """
-        if not self.__local_ftp.get_ftp_pdb():
-            url = self.__remote_http.get_model_fname(self.__pdb_id)
-            zip_file_name = ReleaseFileNames().get_model(accession=self.__pdb_id, for_release=False)
-            temp_file_path = self.__get_remote_http_file(url=url, filename=zip_file_name)
-        else:
-            file_path = self.__local_ftp.get_model_fname(accession=self.__pdb_id)
-            logger.debug("checking local model filepath: %s", file_path)
-            return self.__check_filename(file_path)
+        url = self.__remote_http.get_model_fname(self.__pdb_id)
+        zip_file_name = ReleaseFileNames().get_model(accession=self.__pdb_id, for_release=False)
+        temp_file_path = self.__get_remote_http_file(url=url, filename=zip_file_name)
+
         logger.debug("final model filepath: %s", temp_file_path)
         return temp_file_path
 
@@ -71,14 +62,10 @@ class getFilesReleaseHttpPDB(GetFilesReleaseBasePDB):
         get the PDB structure factor file - from OneDep then local FTP and then the remote HTTP
         :return: file name if present or None
         """
-        if not self.__local_ftp.get_ftp_pdb():
-            url = self.__remote_http.get_structure_factors_fname(self.__pdb_id)
-            zip_file_name = ReleaseFileNames().get_structure_factor(accession=self.__pdb_id, for_release=False)
-            temp_file_path = self.__get_remote_http_file(url=url, filename=zip_file_name)
-        else:
-            file_path = self.__local_ftp.get_structure_factors_fname(accession=self.__pdb_id)
-            logger.debug("checking local structure factor filepath: %s", file_path)
-            return self.__check_filename(file_path)
+        url = self.__remote_http.get_structure_factors_fname(self.__pdb_id)
+        zip_file_name = ReleaseFileNames().get_structure_factor(accession=self.__pdb_id, for_release=False)
+        temp_file_path = self.__get_remote_http_file(url=url, filename=zip_file_name)
+
         logger.debug("final structure factor filepath: %s", temp_file_path)
         return temp_file_path
 
@@ -87,14 +74,10 @@ class getFilesReleaseHttpPDB(GetFilesReleaseBasePDB):
         get the PDB chemical shift file - from OneDep then local FTP and then the remote HTP
         :return: file name if present or None
         """
-        if not self.__local_ftp.get_ftp_pdb():
-            url = self.__remote_http.get_chemical_shifts_fname(self.__pdb_id)
-            zip_file_name = ReleaseFileNames().get_chemical_shifts(accession=self.__pdb_id, for_release=False)
-            temp_file_path = self.__get_remote_http_file(url=url, filename=zip_file_name)
-        else:
-            file_path = self.__local_ftp.get_chemical_shifts_fname(accession=self.__pdb_id)
-            logger.debug("checking local chemical shift filepath: %s", file_path)
-            return self.__check_filename(file_path)
+        url = self.__remote_http.get_chemical_shifts_fname(self.__pdb_id)
+        zip_file_name = ReleaseFileNames().get_chemical_shifts(accession=self.__pdb_id, for_release=False)
+        temp_file_path = self.__get_remote_http_file(url=url, filename=zip_file_name)
+
         logger.debug("final chemical shift filepath: %s", temp_file_path)
         return temp_file_path
 
@@ -103,14 +86,10 @@ class getFilesReleaseHttpPDB(GetFilesReleaseBasePDB):
         Get the PDB combined NMR data file - from OneDep then local FTP and then the remote HTTP
         :return: file name if present or None
         """
-        if not self.__local_ftp.get_ftp_pdb():
-            url = self.__remote_http.get_nmr_data_fname(self.__pdb_id)
-            zip_file_name = ReleaseFileNames().get_nmr_data(accession=self.__pdb_id, for_release=False)
-            temp_file_path = self.__get_remote_http_file(url=url, filename=zip_file_name)
-        else:
-            file_path = self.__local_ftp.get_nmr_data_fname(accession=self.__pdb_id)
-            logger.debug("checking local NMR data filepath: %s", file_path)
-            return self.__check_filename(file_path)
+        url = self.__remote_http.get_nmr_data_fname(self.__pdb_id)
+        zip_file_name = ReleaseFileNames().get_nmr_data(accession=self.__pdb_id, for_release=False)
+        temp_file_path = self.__get_remote_http_file(url=url, filename=zip_file_name)
+
         logger.debug("final NMR data filepath: %s", temp_file_path)
         return temp_file_path
 
@@ -166,18 +145,6 @@ class getFilesReleaseHttpPDB(GetFilesReleaseBasePDB):
                 temp_dir=self.__temp_local_ftp, session_path=session_path, suffix=self.__pdb_id
             )
         return self.__local_http_path
-
-    @staticmethod
-    def __check_filename(file_name: str) -> Optional[str]:
-        """
-        check that a file name actually exists
-        :param file_name: file name
-        :return: file name if present, None if not
-        """
-        if file_name:
-            if os.path.exists(file_name):
-                return file_name
-        return None
 
     def remove_local_temp_files(self) -> None:
         """Cleanup of local ftp directory if present"""

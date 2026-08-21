@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import Optional, cast
+from typing import Optional
 
 from wwpdb.io.locator.localFTPPathInfo import LocalFTPPathInfo
 from wwpdb.io.locator.ReleaseFileNames import ReleaseFileNames
@@ -26,7 +26,6 @@ class getFilesReleaseFtpPDB(GetFilesReleaseBasePDB):
         super().__init__(pdbid=pdbid, site_id=site_id, cache=cache)
 
         self.__rf = ReleaseFileNames()
-        self.__local_ftp = LocalFTPPathInfo()
         self.__temp_local_ftp = None  # Used once as a constant!!!
         vc = ValConfig(self.__site_id)
         self.__server = vc.ftp_server
@@ -37,10 +36,7 @@ class getFilesReleaseFtpPDB(GetFilesReleaseBasePDB):
         self.__url_prefix = self.__remote_ftp.get_ftp_pdb()
         self.__pdb_id = pdbid
         self.__local_ftp_path: Optional[str] = None
-        self.__grf = None
-
-        if not self.__local_ftp.get_ftp_pdb():
-            self.__grf = GetRemoteFiles(server=self.__server, cache=self.__cache)
+        self.__grf: Optional[GetRemoteFiles] = GetRemoteFiles(server=self.__server, cache=self.__cache)
 
     @staticmethod
     def check_filename(file_name: str) -> Optional[str]:
@@ -117,13 +113,8 @@ class getFilesReleaseFtpPDB(GetFilesReleaseBasePDB):
         :param pdbid: PDB ID
         :return: file name if present or None
         """
-        if self.__local_ftp.get_ftp_pdb():
-            file_path = self.__local_ftp.get_model_fname(accession=self.__pdb_id)
-            logger.debug("checking local model filepath: %s", file_path)
-            file_name = self.check_filename(file_path)
-        else:
-            fpart = self.__rf.get_model(accession=self.__pdb_id, for_release=False)
-            file_name = self.get_remote_ftp_file(file_path=self.__remote_ftp.get_model_path(), filename=fpart)
+        fpart = self.__rf.get_model(accession=self.__pdb_id, for_release=False)
+        file_name = self.get_remote_ftp_file(file_path=self.__remote_ftp.get_model_path(), filename=fpart)
         logger.debug("final model filepath: %s", file_name)
         return file_name
 
@@ -133,14 +124,8 @@ class getFilesReleaseFtpPDB(GetFilesReleaseBasePDB):
         :param pdbid: PDB ID
         :return: file name if present or None
         """
-        if self.__local_ftp.get_ftp_pdb():
-            file_path = self.__local_ftp.get_structure_factors_fname(accession=self.__pdb_id)
-            # file_path = os.path.join(self.get_temp_local_ftp_path(), fpart)
-            logger.debug("checking local structure factor filepath: %s", file_path)
-            file_name = self.check_filename(file_path)
-        else:
-            fpart = self.__rf.get_structure_factor(accession=self.__pdb_id, for_release=False)
-            file_name = self.get_remote_ftp_file(file_path=self.__remote_ftp.get_sf_path(), filename=fpart)
+        fpart = self.__rf.get_structure_factor(accession=self.__pdb_id, for_release=False)
+        file_name = self.get_remote_ftp_file(file_path=self.__remote_ftp.get_sf_path(), filename=fpart)
         logger.debug("final structure factor filepath: %s", file_name)
         return file_name
 
@@ -151,13 +136,8 @@ class getFilesReleaseFtpPDB(GetFilesReleaseBasePDB):
         :return: file name if present or None
         """
         # file_path = os.path.join(self.get_temp_local_ftp_path(), fpart)
-        if self.__local_ftp.get_ftp_pdb():
-            file_path = self.__local_ftp.get_chemical_shifts_fname(accession=self.__pdb_id)
-            logger.debug("checking local chemical shift filepath: %s", file_path)
-            file_name = self.check_filename(file_path)
-        else:
-            fpart = self.__rf.get_chemical_shifts(accession=self.__pdb_id, for_release=False)
-            file_name = self.get_remote_ftp_file(file_path=self.__remote_ftp.get_cs_path(), filename=fpart)
+        fpart = self.__rf.get_chemical_shifts(accession=self.__pdb_id, for_release=False)
+        file_name = self.get_remote_ftp_file(file_path=self.__remote_ftp.get_cs_path(), filename=fpart)
         logger.debug("final chemical shift filepath: %s", file_name)
         return file_name
 
@@ -167,15 +147,8 @@ class getFilesReleaseFtpPDB(GetFilesReleaseBasePDB):
         :param pdbid: PDB ID
         :return: file name if present or None
         """
-        file_path: Optional[str] = None
-        if self.__local_ftp.get_ftp_pdb():
-            file_path = cast("str", self.__local_ftp.get_nmr_data_fname(accession=self.__pdb_id))
-            # file_path = os.path.join(self.get_temp_local_ftp_path(), fpart)
-            logger.debug("checking local NMR data filepath: %s", file_path)
-            file_name = self.check_filename(file_path)
-        else:
-            fpart = self.__rf.get_nmr_data(accession=self.__pdb_id, for_release=False)
-            file_name = self.get_remote_ftp_file(file_path=self.__remote_ftp.get_nmr_data_path(), filename=fpart)
+        fpart = self.__rf.get_nmr_data(accession=self.__pdb_id, for_release=False)
+        file_name = self.get_remote_ftp_file(file_path=self.__remote_ftp.get_nmr_data_path(), filename=fpart)
 
         logger.debug("final NMR data filepath: %s", file_name)
         return file_name
