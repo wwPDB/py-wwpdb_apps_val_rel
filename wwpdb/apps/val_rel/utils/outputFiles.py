@@ -33,7 +33,6 @@ class outputFiles:
         self.__pdb_output_folder: Optional[str] = None
         self.__emdb_output_folder: Optional[str] = None
         self.__entry_output_folder: Optional[str] = None
-        self.__with_emdb = False
         self.__accession = ""
         self.__rf = ReleaseFileNames()
         self.get_pdb_output_folder()

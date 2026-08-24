@@ -123,14 +123,14 @@ class ProcessMessageTests(BaseValidateReleaseTest):
         rv = runValidation()
         rv.process_message({})
         self.mock_get_site_id.assert_called()
-        self.assertEqual(rv.siteID, SITE_ID)
+        self.assertEqual(rv.get_siteId(), SITE_ID)
 
     def test_explicit_site_id_skips_get_site_id(self) -> None:
         rv = runValidation()
         self.mock_get_site_id.reset_mock()
         rv.process_message({"siteID": "OTHER_SITE"})
         self.mock_get_site_id.assert_not_called()
-        self.assertEqual(rv.siteID, "OTHER_SITE")
+        self.assertEqual(rv.get_siteId(), "OTHER_SITE")
 
     def test_pdbid_lowercased(self) -> None:
         rv = runValidation()

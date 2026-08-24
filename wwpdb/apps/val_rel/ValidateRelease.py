@@ -34,7 +34,7 @@ class runValidation:
         self.__run_map_only: bool = False
         self.__pdbids: List[str] = []
         self.__pythonSiteID: Optional[str] = None
-        self.siteID: Optional[str] = None
+        self.__siteID: Optional[str] = None
         # self.__da_internal = None
         self.__outputRoot: Optional[str] = None
         self.__alternativeOutputFolder: Optional[bool] = False
@@ -74,7 +74,7 @@ class runValidation:
     def __setupRelFiles(self, init: bool = False) -> None:
         if not init and self.__rel_files:
             self.__rel_files.close_connections()
-        self.__rel_files = getFilesRelease(siteID=self.siteID, cache=self.__cachedir)
+        self.__rel_files = getFilesRelease(siteID=self.__siteID, cache=self.__cachedir)
 
     def setOutputRoot(self, outdir: str) -> None:
         self.__outputRoot = outdir
@@ -128,6 +128,9 @@ class runValidation:
         if not self.__modelPath:
             self.set_model_file()
         return self.__modelPath
+
+    def get_siteId(self) -> Optional[str]:
+        return self.__siteID
 
     def getEMXMLPath(self) -> Optional[str]:
         if not self.__emXmlPath:
@@ -187,11 +190,11 @@ class runValidation:
         return emdb_pdb_string
 
     def set_output_dir_and_files(self) -> None:
-        # Sets output folder and files - based on the __temp_output_dir
+        """Sets output folder and files - based on the __temp_output_dir"""
         of = outputFiles(
             pdbID=self.__pdbid,
             emdbID=self.__emdbid,
-            siteID=self.siteID,
+            siteID=self.__siteID,
             outputRoot=self.__outputRoot,
             validation_sub_directory=self.__validation_sub_folder,
             temp_output_folder=self.__temp_output_dir,
@@ -222,9 +225,9 @@ class runValidation:
         self.__emdbid = cast("Optional[str]", message.get("emdbID"))
         if self.__emdbid:
             self.__emdbid = self.__emdbid.upper()
-        self.siteID = cast("Optional[str]", message.get("siteID"))
-        if not self.siteID:
-            self.siteID = getSiteId()
+        self.__siteID = cast("Optional[str]", message.get("siteID"))
+        if not self.__siteID:
+            self.__siteID = getSiteId()
         # siteID changed, correct validation rel_files so proper session directory used
         self.__setupRelFiles()
         self.__outputRoot = cast("Optional[str]", message.get("outputRoot"))
@@ -234,7 +237,7 @@ class runValidation:
         self.__keepLog = cast("bool", message.get("keepLog", False))
         self.__validation_sub_folder = cast("str", message.get("subfolder", "current"))
         self.__remove_validation_files = cast("bool", message.get("removeValFiles", False))
-        self.__pythonSiteID = cast("str", message.get("python_site_id", self.siteID))
+        self.__pythonSiteID = cast("str", message.get("python_site_id", self.__siteID))
         self.__entry_output_folder = None
         self.__nocache = cast("bool", message.get("nocache", False))
         if self.__outputRoot:
@@ -396,7 +399,7 @@ class runValidation:
             em_of = outputFiles(
                 pdbID=self.__pdbid,
                 emdbID=self.__emdbid,
-                siteID=self.siteID,
+                siteID=self.__siteID,
                 outputRoot=self.__outputRoot,
                 validation_sub_directory=self.__validation_sub_folder,
             )
@@ -408,14 +411,12 @@ class runValidation:
             pdb_of = outputFiles(
                 pdbID=self.__pdbid,
                 emdbID=None,
-                siteID=self.siteID,
+                siteID=self.__siteID,
                 outputRoot=self.__outputRoot,
                 validation_sub_directory=self.__validation_sub_folder,
             )
             pdb_output_file_dict = pdb_of.get_core_validation_files()
             remove_files(pdb_output_file_dict.values())
-            pass
-
 
     # def copy_to_emdb(self, copy_to_root_emdb: bool = False) -> bool:
     #     """For map + model validation report, copy the validation report to names for EMDB, and then
@@ -428,7 +429,7 @@ class runValidation:
     #         of = outputFiles(
     #             pdbID=self.__pdbid,
     #             emdbID=self.__emdbid,
-    #             siteID=self.siteID,
+    #             siteID=self.__siteID,
     #             outputRoot=self.__outputRoot,
     #             temp_output_folder=temp_output_dir,
     #             validation_sub_directory=self.__validation_sub_folder,
@@ -463,7 +464,7 @@ class runValidation:
         Get start and end times from OneDep configuration and parse the values
         :return: start and end cut off times for this week
         """
-        cut_off_times = ValConfig(self.siteID).val_cut_off
+        cut_off_times = ValConfig(self.__siteID).val_cut_off
         start_cut_off_time, end_cut_off_time = get_start_end_cut_off(cut_off_times=cut_off_times)
 
         return start_cut_off_time, end_cut_off_time
@@ -543,10 +544,10 @@ class runValidation:
                 self.__fscPath = self.__rel_files.get_emdb_fsc()
 
             # worked = False
-            sm = SessionManager(topPath=ValConfig(self.siteID).top_session_path)
+            sm = SessionManager(topPath=ValConfig(self.__siteID).top_session_path)
             sm.assignId()
             self.__sessionPath = sm.makeSessionPath()
-            # self.__sessionPath = ValConfig(self.siteID).session_path
+            # self.__sessionPath = ValConfig(self.__siteID).session_path
 
             sessTempDir = tempfile.mkdtemp(
                 dir=self.__sessionPath,
