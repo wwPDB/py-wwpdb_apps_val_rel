@@ -187,6 +187,7 @@ class runValidation:
         return emdb_pdb_string
 
     def set_output_dir_and_files(self) -> None:
+        # Sets output folder and files - based on the __temp_output_dir
         of = outputFiles(
             pdbID=self.__pdbid,
             emdbID=self.__emdbid,
@@ -386,11 +387,12 @@ class runValidation:
         return False
 
     def remove_existing_files(self) -> None:
-        """Removes existing validation files"""
-        # X ? ? X--- when split - what to do -- what is the __emdbid line
+        """Removes existing validation files - first the run directory (__temp_output_directory) and the destination"""
         self.set_output_dir_and_files()
         remove_files(list(self.__output_file_dict.values()))
-        if self.__emdbid:
+
+        if self.__emdbid and not self.__pdbid:
+            # remove the output EMDB output only files when EMDB side calculating by itself
             em_of = outputFiles(
                 pdbID=self.__pdbid,
                 emdbID=self.__emdbid,
@@ -398,9 +400,22 @@ class runValidation:
                 outputRoot=self.__outputRoot,
                 validation_sub_directory=self.__validation_sub_folder,
             )
-            em_of.set_accession_variables(with_emdb=True)
             emdb_output_file_dict = em_of.get_core_validation_files()
             remove_files(emdb_output_file_dict.values())
+
+        if self.__pdbid:
+            # Remove the PDB output files -- even if EMDB id present
+            pdb_of = outputFiles(
+                pdbID=self.__pdbid,
+                emdbID=None,
+                siteID=self.siteID,
+                outputRoot=self.__outputRoot,
+                validation_sub_directory=self.__validation_sub_folder,
+            )
+            pdb_output_file_dict = pdb_of.get_core_validation_files()
+            remove_files(pdb_output_file_dict.values())
+            pass
+
 
     # def copy_to_emdb(self, copy_to_root_emdb: bool = False) -> bool:
     #     """For map + model validation report, copy the validation report to names for EMDB, and then

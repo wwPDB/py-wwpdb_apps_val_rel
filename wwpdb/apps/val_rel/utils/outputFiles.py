@@ -34,7 +34,6 @@ class outputFiles:
         self.__emdb_output_folder: Optional[str] = None
         self.__entry_output_folder: Optional[str] = None
         self.__with_emdb = False
-        self.__copy_to_root_emdb = False
         self.__accession = ""
         self.__rf = ReleaseFileNames()
         self.get_pdb_output_folder()
@@ -103,18 +102,10 @@ class outputFiles:
             return self._entryID
         return ""
 
-    def set_accession_variables(self, with_emdb: bool = False, copy_to_root_emdb: bool = False) -> None:
-        self.__with_emdb = with_emdb
-        self.__copy_to_root_emdb = copy_to_root_emdb
-
     def set_accession(self) -> str:
         self.__accession = f"{self._entryID}"
         if self._emdbID and not self._pdbID:
             self.__accession = self.get_emdb_lower_underscore()
-        if self._pdbID and self._emdbID and self.__with_emdb:
-            self.__accession = f"{self.get_emdb_lower_underscore()}_{self._pdbID}"
-        if self._emdbID and self.__copy_to_root_emdb:
-            self.__accession = f"{self.get_emdb_lower_underscore()}"
 
         return self.__accession
 
