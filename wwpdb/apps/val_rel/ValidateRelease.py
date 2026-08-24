@@ -387,6 +387,7 @@ class runValidation:
 
     def remove_existing_files(self) -> None:
         """Removes existing validation files"""
+        # X ? ? X--- when split - what to do -- what is the __emdbid line
         self.set_output_dir_and_files()
         remove_files(list(self.__output_file_dict.values()))
         if self.__emdbid:
@@ -401,46 +402,46 @@ class runValidation:
             emdb_output_file_dict = em_of.get_core_validation_files()
             remove_files(emdb_output_file_dict.values())
 
-    def copy_to_emdb(self, copy_to_root_emdb: bool = False) -> bool:
-        """For map + model validation report, copy the validation report to names for EMDB, and then
-        copy to proper output directory with potential compression
-        """
-        if self.__emdbid:
-            temp_output_dir = tempfile.mkdtemp(
-                dir=self.__sessionPath, prefix="%s_validation_release_emdb_temp_output_dir_" % self.__entry_id
-            )
-            of = outputFiles(
-                pdbID=self.__pdbid,
-                emdbID=self.__emdbid,
-                siteID=self.siteID,
-                outputRoot=self.__outputRoot,
-                temp_output_folder=temp_output_dir,
-                validation_sub_directory=self.__validation_sub_folder,
-            )
-            logger.info("EMDB ID: %s", self.__emdbid)
-            __emdb_output_folder = of.get_emdb_output_folder()
-            if __emdb_output_folder != self.__entry_output_folder:
-                logger.info("EMDB output folder: %s", __emdb_output_folder)
-                of.set_accession_variables(with_emdb=True, copy_to_root_emdb=copy_to_root_emdb)
-                emdb_output_file_dict = of.get_core_validation_files()
-                logger.info("EMDB output file dict: %s", emdb_output_file_dict)
+    # def copy_to_emdb(self, copy_to_root_emdb: bool = False) -> bool:
+    #     """For map + model validation report, copy the validation report to names for EMDB, and then
+    #     copy to proper output directory with potential compression
+    #     """
+    #     if self.__emdbid:
+    #         temp_output_dir = tempfile.mkdtemp(
+    #             dir=self.__sessionPath, prefix="%s_validation_release_emdb_temp_output_dir_" % self.__entry_id
+    #         )
+    #         of = outputFiles(
+    #             pdbID=self.__pdbid,
+    #             emdbID=self.__emdbid,
+    #             siteID=self.siteID,
+    #             outputRoot=self.__outputRoot,
+    #             temp_output_folder=temp_output_dir,
+    #             validation_sub_directory=self.__validation_sub_folder,
+    #         )
+    #         logger.info("EMDB ID: %s", self.__emdbid)
+    #         __emdb_output_folder = of.get_emdb_output_folder()
+    #         if __emdb_output_folder != self.__entry_output_folder:
+    #             logger.info("EMDB output folder: %s", __emdb_output_folder)
+    #             of.set_accession_variables(with_emdb=True, copy_to_root_emdb=copy_to_root_emdb)
+    #             emdb_output_file_dict = of.get_core_validation_files()
+    #             logger.info("EMDB output file dict: %s", emdb_output_file_dict)
 
-                for k in self.__output_file_dict:
-                    if k in emdb_output_file_dict:
-                        in_file = self.__output_file_dict[k]
-                        em_in_file = emdb_output_file_dict[k]
-                        if os.path.exists(in_file):
-                            shutil.copy(in_file, em_in_file)
-                files_to_copy = emdb_output_file_dict.values()
-                if self.__skip_gzip:
-                    self.__copy_output(filelist=files_to_copy, output_folder=__emdb_output_folder)
-                else:
-                    self.__gzip_output(filelist=files_to_copy, output_folder=__emdb_output_folder)
+    #             for k in self.__output_file_dict:
+    #                 if k in emdb_output_file_dict:
+    #                     in_file = self.__output_file_dict[k]
+    #                     em_in_file = emdb_output_file_dict[k]
+    #                     if os.path.exists(in_file):
+    #                         shutil.copy(in_file, em_in_file)
+    #             files_to_copy = emdb_output_file_dict.values()
+    #             if self.__skip_gzip:
+    #                 self.__copy_output(filelist=files_to_copy, output_folder=__emdb_output_folder)
+    #             else:
+    #                 self.__gzip_output(filelist=files_to_copy, output_folder=__emdb_output_folder)
 
-            # Clean up intermediate staging directoy
-            shutil.rmtree(temp_output_dir)
+    #         # Clean up intermediate staging directoy
+    #         shutil.rmtree(temp_output_dir)
 
-        return True
+    #     return True
 
     def get_start_end_cut_off(self) -> Tuple[datetime, datetime]:
         """
@@ -629,13 +630,13 @@ class runValidation:
                 # Set the time on output_folder to now
                 os.utime(self.__entry_output_folder, None)
 
-            if self.__pdbid and self.__emdbid:
-                ok = self.copy_to_emdb()
-                if not ok:
-                    logger.error("failed to copy to emdb folder")
-                    if self.__sds:
-                        self.__sds.setValidationRunning(False)
-                    return False, validation_run
+            # if self.__pdbid and self.__emdbid:
+            #     ok = self.copy_to_emdb()
+            #     if not ok:
+            #         logger.error("failed to copy to emdb folder")
+            #         if self.__sds:
+            #             self.__sds.setValidationRunning(False)
+            #         return False, validation_run
 
             if not self.__validation_files_alternative_location:
                 emsg = "No alternative location for validation files set for %s" % self.__entry_id

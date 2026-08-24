@@ -453,24 +453,24 @@ class RunValidationTests(BaseValidateReleaseTest):
         self.mock_minimal_cif_class.assert_called_once_with(emdb_xml="emd.xml")
         self.mock_minimal_cif_class.return_value.write_out.assert_called_once()
 
-    def test_run_validation_copies_to_emdb_when_both_ids_set(self) -> None:
-        rv = self._make_rv(pdbid="1abc", emdbid="EMD-1234")
-        with patch.object(rv, "check_modified", return_value=True), patch.object(
-            rv, "is_ok_to_copy", return_value=True
-        ), patch.object(rv, "copy_to_emdb", return_value=True) as mock_copy_to_emdb:
-            worked, validation_ran = rv.run_validation()
-        self.assertTrue(worked)
-        self.assertTrue(validation_ran)
-        mock_copy_to_emdb.assert_called_once()
+    # def test_run_validation_copies_to_emdb_when_both_ids_set(self) -> None:
+    #     rv = self._make_rv(pdbid="1abc", emdbid="EMD-1234")
+    #     with patch.object(rv, "check_modified", return_value=True), patch.object(
+    #         rv, "is_ok_to_copy", return_value=True
+    #     ), patch.object(rv, "copy_to_emdb", return_value=True) as mock_copy_to_emdb:
+    #         worked, validation_ran = rv.run_validation()
+    #     self.assertTrue(worked)
+    #     self.assertTrue(validation_ran)
+    #     mock_copy_to_emdb.assert_called_once()
 
-    def test_run_validation_copy_to_emdb_failure_returns_false(self) -> None:
-        rv = self._make_rv(pdbid="1abc", emdbid="EMD-1234")
-        with patch.object(rv, "check_modified", return_value=True), patch.object(
-            rv, "is_ok_to_copy", return_value=True
-        ), patch.object(rv, "copy_to_emdb", return_value=False):
-            worked, validation_ran = rv.run_validation()
-        self.assertFalse(worked)
-        self.assertTrue(validation_ran)
+    # def test_run_validation_copy_to_emdb_failure_returns_false(self) -> None:
+    #     rv = self._make_rv(pdbid="1abc", emdbid="EMD-1234")
+    #     with patch.object(rv, "check_modified", return_value=True), patch.object(
+    #         rv, "is_ok_to_copy", return_value=True
+    #     ), patch.object(rv, "copy_to_emdb", return_value=False):
+    #         worked, validation_ran = rv.run_validation()
+    #     self.assertFalse(worked)
+    #     self.assertTrue(validation_ran)
 
 
 if __name__ == "__main__":  # pragma: no cover
