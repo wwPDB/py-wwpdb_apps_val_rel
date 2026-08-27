@@ -16,7 +16,7 @@ from wwpdb.apps.val_rel.utils.checkModifications import already_run
 from wwpdb.apps.val_rel.utils.CutOffUtils import get_start_end_cut_off, ok_to_copy
 from wwpdb.apps.val_rel.utils.fileConversion import convert_cs_file
 from wwpdb.apps.val_rel.utils.Files import copy_file, gzip_file, remove_files
-from wwpdb.apps.val_rel.utils.getFilesRelease import getFilesRelease
+from wwpdb.apps.val_rel.utils.getFilesRelease import File, FileContext, FileSource, getFilesRelease
 from wwpdb.apps.val_rel.utils.mmCIFInfo import is_simple_modification, mmCIFInfo
 from wwpdb.apps.val_rel.utils.outputFiles import outputFiles
 from wwpdb.apps.val_rel.utils.ValDataStore import ValDataStore
@@ -39,13 +39,13 @@ class runValidation:
         self.__outputRoot: Optional[str] = None
         self.__alternativeOutputFolder: Optional[bool] = False
         self.__entry_id: Optional[str] = None
-        self.__modelPath: Optional[str] = None
-        self.__csPath: Optional[str] = None  # overloaded.  Sometime CS fie, sometimes nmr-data
-        self.__resPath: Optional[str] = None
-        self.__sfPath: Optional[str] = None
-        self.__emXmlPath: Optional[str] = None
-        self.__volPath: Optional[str] = None
-        self.__fscPath: Optional[str] = None
+        self.__modelFile: File = File()
+        self.__csFile: File = File()  # overloaded.  Sometime CS fie, sometimes nmr-data
+        self.__resFile: File = File()
+        self.__sfFile: File = File()
+        self.__emXmlFile: File = File()
+        self.__volFile: File = File()
+        self.__fscFile: File = File()
         self.__sessionPath = None
         # self.contour_level = None # not needed as its in the xml
         self.__entry_output_folder: Optional[str] = None
@@ -87,13 +87,13 @@ class runValidation:
         self.__emdbid = emdbid
 
     def setEmXmlPath(self, path: str) -> None:
-        self.__emXmlPath = path
+        self.__emXmlFile = File(path, FileContext.EMDB_XML)
 
     def setAlwaysRecalculate(self, recalc: bool) -> None:
         self.__always_recalculate = recalc
 
     def setModelPath(self, path: str) -> None:
-        self.__modelPath = path
+        self.__modelFile = File(path, FileContext.MODEL)
 
     def setPdbOutputFolder(self, path: str) -> None:
         self.__pdb_output_folder = path
@@ -125,17 +125,17 @@ class runValidation:
         return self.__pdbid
 
     def getModelPath(self) -> Optional[str]:
-        if not self.__modelPath:
+        if not self.__modelFile.path:
             self.set_model_file()
-        return self.__modelPath
+        return self.__modelFile.path
 
     def get_siteId(self) -> Optional[str]:
         return self.__siteID
 
     def getEMXMLPath(self) -> Optional[str]:
-        if not self.__emXmlPath:
+        if not self.__emXmlFile.path:
             self.set_xml_file()
-        return self.__emXmlPath
+        return self.__emXmlFile.path
 
     @staticmethod
     def exptl_is_em(exp_methods: List[str]) -> bool:
@@ -148,16 +148,16 @@ class runValidation:
         if self.__always_recalculate:
             return True
         modified = False
-        if not already_run(self.__modelPath, self.__pdb_output_folder):
-            if not is_simple_modification(cast("str", self.__modelPath)):
+        if not already_run(self.__modelFile.path, self.__pdb_output_folder):
+            if not is_simple_modification(cast("str", self.__modelFile.path)):
                 modified = True
-        if self.__sfPath:
+        if self.__sfFile.path:
             if self.__rel_files and self.__rel_files.is_sf_current():
-                if not already_run(self.__sfPath, self.__pdb_output_folder):
+                if not already_run(self.__sfFile.path, self.__pdb_output_folder):
                     modified = True
-        if self.__csPath:  # CS or nmr-data. The get_nmr_data() side affects to set is_cs_current
+        if self.__csFile.path:  # CS or nmr-data. The get_nmr_data() side affects to set is_cs_current
             if self.__rel_files.is_cs_current():
-                if not already_run(self.__csPath, self.__pdb_output_folder):
+                if not already_run(self.__csFile.path, self.__pdb_output_folder):
                     modified = True
         return modified
 
@@ -170,7 +170,7 @@ class runValidation:
         #   or
         #   if the EMDB XML is present in the for_release/emd folder - i.e. the XML is modified
         if self.__alternativeOutputFolder or (self.__rel_files and self.__rel_files.is_em_xml_current()):
-            if not already_run(self.__emXmlPath, self.__emdb_output_folder):
+            if not already_run(self.__emXmlFile.path, self.__emdb_output_folder):
                 modified = True
         return modified
 
@@ -248,30 +248,30 @@ class runValidation:
         if not self.__rel_files:
             logger.error("No rel_files object")
             return
-        self.__modelPath = self.__rel_files.get_model()
+        self.__modelFile = self.__rel_files.get_model()
 
     def set_pdb_files(self) -> None:
         self.__rel_files.set_pdb_id(cast("str", self.__pdbid))
         self.set_model_file()
-        self.__sfPath = self.__rel_files.get_sf()
-        nmrDataPath = self.__rel_files.get_nmr_data()  # sets is_cs_current
-        self.__resPath = None
-        if nmrDataPath:
-            self.__csPath = nmrDataPath
-            self.__resPath = self.__csPath
+        self.__sfFile = self.__rel_files.get_sf()
+        nmrDataFile = self.__rel_files.get_nmr_data()  # sets is_cs_current
+        self.__resFile = File()
+        if nmrDataFile.path:
+            self.__csFile = nmrDataFile
+            self.__resFile = self.__csFile
         else:
-            self.__csPath = self.__rel_files.get_cs()  # sets is_cs_current
+            self.__csFile = self.__rel_files.get_cs()  # sets is_cs_current
 
     def set_xml_file(self) -> None:
         self.__rel_files.set_emdb_id(cast("str", self.__emdbid))
-        self.__emXmlPath = self.__rel_files.get_emdb_xml()
+        self.__emXmlFile = self.__rel_files.get_emdb_xml()
 
     def set_emdb_files(self) -> None:
         self.__rel_files.set_emdb_id(cast("str", self.__emdbid))
         self.set_xml_file()
-        self.__volPath = self.__rel_files.get_emdb_volume()
-        logger.debug("xml path: %s", self.__emXmlPath)
-        logger.debug("EM vol path: %s", self.__volPath)
+        self.__volFile = self.__rel_files.get_emdb_volume()
+        logger.debug("xml path: %s", self.__emXmlFile.path)
+        logger.debug("EM vol path: %s", self.__volFile.path)
 
     def set_entry_id(self) -> bool:
         if self.__pdbid:
@@ -330,13 +330,13 @@ class runValidation:
 
         if self.__emdbid:
             self.set_emdb_files()
-            if self.__volPath:
+            if self.__volFile.path:
                 self.__run_map_only = True
 
         if self.__pdbid:
             self.set_pdb_files()
 
-            cf = mmCIFInfo(cast("str", self.__modelPath))
+            cf = mmCIFInfo(cast("str", self.__modelFile.path))
             exp_methods = cf.get_exp_methods()
             if self.exptl_is_em(exp_methods) and not self.__skip_emdb:
                 if not self.__emdbid:
@@ -351,18 +351,18 @@ class runValidation:
 
         if self.__emdbid:
             if self.__emdbid not in run_emdb:
-                if self.__volPath and self.__emXmlPath:
+                if self.__volFile.path and self.__emXmlFile.path:
                     # da_internal_pdbids = self.da_internal.selectData('PDBIDs_FROM_ASSOC_EMDBID', self.__emdbid)
                     # logging.info('data from da_internal')
                     # logger.info(da_internal_pdbids)
-                    self.__pdbids = XmlInfo(self.__emXmlPath).get_pdbids_from_xml()
+                    self.__pdbids = XmlInfo(self.__emXmlFile.path).get_pdbids_from_xml()
                     if self.__pdbids:
                         for self.__pdbid in self.__pdbids:  # noqa: B020
                             self.__pdbid = self.__pdbid.lower()  # noqa: PLW2901  # Should not alter loop variable
                             if self.get_emdb_pdb_string() not in run_emdb_and_pdbid:
                                 self.__rel_files.set_pdb_id(pdb_id=self.__pdbid)
-                                self.__modelPath = self.__rel_files.get_model()
-                                if self.__modelPath:
+                                self.__modelFile = self.__rel_files.get_model()
+                                if self.__modelFile.path:
                                     # run validation
                                     worked, validation_ran = self.run_validation()
                                     all_worked.append(worked)
@@ -418,47 +418,6 @@ class runValidation:
             pdb_output_file_dict = pdb_of.get_core_validation_files()
             remove_files(pdb_output_file_dict.values())
 
-    # def copy_to_emdb(self, copy_to_root_emdb: bool = False) -> bool:
-    #     """For map + model validation report, copy the validation report to names for EMDB, and then
-    #     copy to proper output directory with potential compression
-    #     """
-    #     if self.__emdbid:
-    #         temp_output_dir = tempfile.mkdtemp(
-    #             dir=self.__sessionPath, prefix="%s_validation_release_emdb_temp_output_dir_" % self.__entry_id
-    #         )
-    #         of = outputFiles(
-    #             pdbID=self.__pdbid,
-    #             emdbID=self.__emdbid,
-    #             siteID=self.__siteID,
-    #             outputRoot=self.__outputRoot,
-    #             temp_output_folder=temp_output_dir,
-    #             validation_sub_directory=self.__validation_sub_folder,
-    #         )
-    #         logger.info("EMDB ID: %s", self.__emdbid)
-    #         __emdb_output_folder = of.get_emdb_output_folder()
-    #         if __emdb_output_folder != self.__entry_output_folder:
-    #             logger.info("EMDB output folder: %s", __emdb_output_folder)
-    #             of.set_accession_variables(with_emdb=True, copy_to_root_emdb=copy_to_root_emdb)
-    #             emdb_output_file_dict = of.get_core_validation_files()
-    #             logger.info("EMDB output file dict: %s", emdb_output_file_dict)
-
-    #             for k in self.__output_file_dict:
-    #                 if k in emdb_output_file_dict:
-    #                     in_file = self.__output_file_dict[k]
-    #                     em_in_file = emdb_output_file_dict[k]
-    #                     if os.path.exists(in_file):
-    #                         shutil.copy(in_file, em_in_file)
-    #             files_to_copy = emdb_output_file_dict.values()
-    #             if self.__skip_gzip:
-    #                 self.__copy_output(filelist=files_to_copy, output_folder=__emdb_output_folder)
-    #             else:
-    #                 self.__gzip_output(filelist=files_to_copy, output_folder=__emdb_output_folder)
-
-    #         # Clean up intermediate staging directoy
-    #         shutil.rmtree(temp_output_dir)
-
-    #     return True
-
     def get_start_end_cut_off(self) -> Tuple[datetime, datetime]:
         """
         Get start and end times from OneDep configuration and parse the values
@@ -513,20 +472,20 @@ class runValidation:
         try:
             if self.__emdbid:
                 self.__rel_files.set_emdb_id(self.__emdbid)
-                if not self.__emXmlPath:
-                    self.__emXmlPath = self.__rel_files.get_emdb_xml()
+                if not self.__emXmlFile.path:
+                    self.__emXmlFile = self.__rel_files.get_emdb_xml()
             if self.__pdbid:
                 self.__rel_files.set_pdb_id(self.__pdbid)
-                self.__sfPath = self.__rel_files.get_sf()
+                self.__sfFile = self.__rel_files.get_sf()
 
-                nmrDataPath = self.__rel_files.get_nmr_data()  # sets is_cs_current
-                self.__resPath = None
+                nmrDataFile = self.__rel_files.get_nmr_data()  # sets is_cs_current
+                self.__resFile = File()
 
-                if nmrDataPath:
-                    self.__csPath = nmrDataPath
-                    self.__resPath = self.__csPath
+                if nmrDataFile.path:
+                    self.__csFile = nmrDataFile
+                    self.__resFile = self.__csFile
                 else:
-                    self.__csPath = self.__rel_files.get_cs()  # sets is_cs_current
+                    self.__csFile = self.__rel_files.get_cs()  # sets is_cs_current
 
             # check if any input files have changed and set output folders
             is_modified = self.check_modified()
@@ -539,9 +498,9 @@ class runValidation:
             # get EMDB data from FTP to after check for modification
             if self.__emdbid:
                 logger.debug("getting EMDB volume")
-                self.__volPath = self.__rel_files.get_emdb_volume()
+                self.__volFile = self.__rel_files.get_emdb_volume()
                 logger.debug("getting FSC")
-                self.__fscPath = self.__rel_files.get_emdb_fsc()
+                self.__fscFile = self.__rel_files.get_emdb_fsc()
 
             # worked = False
             sm = SessionManager(topPath=ValConfig(self.__siteID).top_session_path)
@@ -560,11 +519,11 @@ class runValidation:
 
             csPath = None
             resPath = None
-            if self.__csPath:  # CS or nmr-data
+            if self.__csFile.path:  # CS or nmr-data
                 csPath = convert_cs_file(
                     entry_id=cast("str", self.__entry_id),
-                    cs_file=self.__csPath,
-                    model_file=cast("str", self.__modelPath),
+                    cs_file=self.__csFile.path,
+                    model_file=cast("str", self.__modelFile.path),
                     working_dir=sessTempDir,
                 )
                 if not csPath:
@@ -572,8 +531,8 @@ class runValidation:
                     if self.__sds:
                         self.__sds.setValidationRunning(False)
                     return False, validation_run
-                # If self.__resPath was set, nmr-data - need converted file
-                if self.__resPath is not None:
+                # If self.__resFile was set, nmr-data - need converted file
+                if self.__resFile.path is not None:
                     resPath = csPath
 
             logger.info("Entry output folder: %s", self.__entry_output_folder)
@@ -585,10 +544,12 @@ class runValidation:
 
             # map only generation
             if not self.__pdbid:
-                self.__modelPath = os.path.join(sessTempDir, f"{self.__emdbid}_minimal.cif")
-                logger.info("generating minimal cif: %s", self.__modelPath)
-                logger.info("using XML file: %s", self.__emXmlPath)
-                GenerateMinimalCif(emdb_xml=self.__emXmlPath).write_out(output_cif=self.__modelPath)
+                self.__modelFile = File(
+                    os.path.join(sessTempDir, f"{self.__emdbid}_minimal.cif"), FileContext.MODEL, FileSource.RUNDIR
+                )
+                logger.info("generating minimal cif: %s", self.__modelFile.path)
+                logger.info("using XML file: %s", self.__emXmlFile.path)
+                GenerateMinimalCif(emdb_xml=self.__emXmlFile.path).write_out(output_cif=self.__modelFile.path)
 
             if self.__temp_output_dir is None:
                 emsg = "Temp output dir not set for %s" % self.__entry_id
@@ -596,29 +557,29 @@ class runValidation:
             log_path = os.path.join(self.__temp_output_dir, "validation.log")
 
             logger.info("input files")
-            logger.info("model: %s", self.__modelPath)
-            logger.info("SF: %s", self.__sfPath)
+            logger.info("model: %s", self.__modelFile.path)
+            logger.info("SF: %s", self.__sfFile.path)
             logger.info("cs: %s", csPath)
             logger.info("restraints: %s", resPath)
-            logger.info("EM volume: %s", self.__volPath)
-            logger.info("EM XML: %s", self.__emXmlPath)
+            logger.info("EM volume: %s", self.__volFile.path)
+            logger.info("EM XML: %s", self.__emXmlFile.path)
             logger.info("entry_id: %s", self.__entry_id)
             logger.info("pdb_id: %s", self.__pdbid)
             logger.info("emdb_id: %s", self.__emdbid)
 
             data_dict = {
-                "model": self.__modelPath,
-                "sf": self.__sfPath,
+                "model": self.__modelFile.path,
+                "sf": self.__sfFile.path,
                 "cs": csPath,
                 "res": resPath,
-                "emvol": self.__volPath,
-                "emxml": self.__emXmlPath,
+                "emvol": self.__volFile.path,
+                "emxml": self.__emXmlFile.path,
                 "pdb_id": self.__pdbid,
                 "entry_id": self.__entry_id,
                 "emdb_id": self.__emdbid,
                 "tempDir": sessTempDir,
                 "rundir": run_dir,
-                "fsc": self.__fscPath,
+                "fsc": self.__fscFile.path,
                 "keeplog": self.__keepLog,
                 "logpath": log_path,
                 "outfiledict": self.__output_file_dict,

@@ -6,6 +6,7 @@ import unittest
 from typing import Any, Dict, Optional
 from unittest.mock import MagicMock, patch
 
+from wwpdb.apps.val_rel.utils.getFilesRelease import File
 from wwpdb.apps.val_rel.ValidateRelease import runValidation
 
 SITE_ID = "WWPDB_DEPLOY_TEST"
@@ -169,7 +170,7 @@ class ProcessMessageTests(BaseValidateReleaseTest):
 
 class LazyLoadTests(BaseValidateReleaseTest):
     def test_get_model_path_lazily_sets_via_rel_files(self) -> None:
-        self.mock_gfr.get_model.return_value = "model.cif"
+        self.mock_gfr.get_model.return_value = File("model.cif")
         rv = runValidation()
         rv.setPdbId("1abc")
         self.assertEqual(rv.getModelPath(), "model.cif")
@@ -182,7 +183,7 @@ class LazyLoadTests(BaseValidateReleaseTest):
         self.mock_gfr.get_model.assert_not_called()
 
     def test_get_em_xml_path_lazily_sets_via_rel_files(self) -> None:
-        self.mock_gfr.get_emdb_xml.return_value = "emd.xml"
+        self.mock_gfr.get_emdb_xml.return_value = File("emd.xml")
         rv = runValidation()
         rv.setEmdbId("EMD-1234")
         self.assertEqual(rv.getEMXMLPath(), "emd.xml")
@@ -269,8 +270,8 @@ class RunProcessTests(BaseValidateReleaseTest):
     def test_run_process_emdb_only_no_volume_no_map_only(self) -> None:
         # Nothing to run (no pdbid, no volume => no map-only pass) means
         # all_worked stays empty, which run_process treats as overall failure.
-        self.mock_gfr.get_emdb_volume.return_value = None
-        self.mock_gfr.get_emdb_xml.return_value = None
+        self.mock_gfr.get_emdb_volume.return_value = File()
+        self.mock_gfr.get_emdb_xml.return_value = File()
         rv = runValidation()
         with patch.object(rv, "run_validation", return_value=(True, True)) as mock_run_validation:
             ret = rv.run_process(self._message(emdbID="EMD-1234"))
@@ -278,8 +279,8 @@ class RunProcessTests(BaseValidateReleaseTest):
         mock_run_validation.assert_not_called()
 
     def test_run_process_emdb_with_volume_runs_map_only(self) -> None:
-        self.mock_gfr.get_emdb_volume.return_value = "emd.map"
-        self.mock_gfr.get_emdb_xml.return_value = None
+        self.mock_gfr.get_emdb_volume.return_value = File("emd.map")
+        self.mock_gfr.get_emdb_xml.return_value = File()
         rv = runValidation()
         with patch.object(rv, "run_validation", return_value=(True, True)) as mock_run_validation:
             ret = rv.run_process(self._message(emdbID="EMD-1234"))
@@ -287,9 +288,9 @@ class RunProcessTests(BaseValidateReleaseTest):
         mock_run_validation.assert_called_once()
 
     def test_run_process_associated_pdbids_from_xml_are_run(self) -> None:
-        self.mock_gfr.get_emdb_volume.return_value = "emd.map"
-        self.mock_gfr.get_emdb_xml.return_value = "emd.xml"
-        self.mock_gfr.get_model.return_value = "model.cif"
+        self.mock_gfr.get_emdb_volume.return_value = File("emd.map")
+        self.mock_gfr.get_emdb_xml.return_value = File("emd.xml")
+        self.mock_gfr.get_model.return_value = File("model.cif")
         rv = runValidation()
         with patch.object(rv, "run_validation", return_value=(True, True)) as mock_run_validation, patch(
             f"{MODULE}.XmlInfo"
@@ -370,12 +371,12 @@ class RunValidationTests(BaseValidateReleaseTest):
         # branch (e.g. a truthy MagicMock default for get_nmr_data would
         # otherwise look like a real CS/nmr-data file being present).
         self.mock_gfr.get_model.return_value = "model.cif"
-        self.mock_gfr.get_sf.return_value = None
-        self.mock_gfr.get_cs.return_value = None
-        self.mock_gfr.get_nmr_data.return_value = None
-        self.mock_gfr.get_emdb_xml.return_value = None
-        self.mock_gfr.get_emdb_volume.return_value = None
-        self.mock_gfr.get_emdb_fsc.return_value = None
+        self.mock_gfr.get_sf.return_value = File()
+        self.mock_gfr.get_cs.return_value = File()
+        self.mock_gfr.get_nmr_data.return_value = File()
+        self.mock_gfr.get_emdb_xml.return_value = File()
+        self.mock_gfr.get_emdb_volume.return_value = File()
+        self.mock_gfr.get_emdb_fsc.return_value = File()
 
     def _make_rv(self, pdbid: Optional[str] = "1abc", emdbid: Optional[str] = None) -> runValidation:
         rv = runValidation()
@@ -441,7 +442,7 @@ class RunValidationTests(BaseValidateReleaseTest):
         self.assertFalse(validation_ran)
 
     def test_run_validation_map_only_generates_minimal_cif(self) -> None:
-        self.mock_gfr.get_emdb_xml.return_value = "emd.xml"
+        self.mock_gfr.get_emdb_xml.return_value = File("emd.xml")
         rv = self._make_rv(pdbid=None, emdbid="EMD-1234")
         rv.setEmXmlPath("emd.xml")
         with patch.object(rv, "check_modified", return_value=True), patch.object(

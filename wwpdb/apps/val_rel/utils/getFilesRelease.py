@@ -1,4 +1,6 @@
 import logging
+from dataclasses import dataclass
+from enum import Enum, auto
 from typing import Optional, Type
 
 from wwpdb.io.locator.localFTPPathInfo import LocalFTPPathInfo
@@ -15,6 +17,40 @@ from wwpdb.apps.val_rel.utils.local_archive_protocol.getFilesReleaseLocal_EMDB i
 from wwpdb.apps.val_rel.utils.local_archive_protocol.getFilesReleaseLocal_PDB import getFilesReleaseLocal_PDB
 
 logger = logging.getLogger(__name__)
+
+
+class FileSource(Enum):
+    NONE = auto()  # When none found
+    ONEDEP_REL = auto()  # OneDep for_release/{added/modified/emd}
+    ONEDEP_PREV = auto()  # Onedep for_release/previous/....
+    REMOTE = auto()  # Public archive
+    RUNDIR = auto()  # A local running directory
+
+    @classmethod
+    def get_default(cls) -> "FileSource":
+        return cls.NONE
+
+
+class FileContext(Enum):
+    UNKNOWN = auto()
+    MODEL = auto()
+    SF = auto()
+    CS = auto()
+    NMR_DATA = auto()
+    EMDB_XML = auto()
+    EMDB_VOL = auto()
+    EMDB_FSC = auto()
+
+    @classmethod
+    def get_default(cls) -> "FileContext":
+        return cls.UNKNOWN
+
+
+@dataclass
+class File:
+    path: Optional[str] = None
+    context: FileContext = FileContext.UNKNOWN
+    loc: FileSource = FileSource.NONE
 
 
 class getFilesRelease:
@@ -116,69 +152,105 @@ class getFilesRelease:
         self.__release_file_from_remote_pdb.remove_local_temp_files()
         self.__release_file_from_remote_emdb.remove_local_temp_files()
 
-    def get_model(self) -> Optional[str]:
+    def get_model(self) -> File:
         """
         get the PDB model file - from OneDep then local/remote FTP
         :param pdbid: PDB ID
         :return: file name if present or None
         """
-        file_name, _ = self.__release_file_from_onedep.get_model()
+        loc = FileSource.NONE
+        file_name, cur = self.__release_file_from_onedep.get_model()
         if not file_name:
             file_name = self.__release_file_from_remote_pdb.get_model()
-        return file_name
+            if file_name:
+                loc = FileSource.REMOTE
+        else:
+            loc = FileSource.ONEDEP_REL if cur else FileSource.ONEDEP_PREV
+        return File(file_name, FileContext.MODEL, loc)
 
-    def get_sf(self) -> Optional[str]:
+    def get_sf(self) -> File:
         """
         get the PDB structure factor file - from OneDep then local FTP
         :param pdbid: PDB ID
         :return: file name if present or None
         """
+        loc = FileSource.NONE
         file_name, self.__sf_current = self.__release_file_from_onedep.get_sf()
         if not file_name:
             file_name = self.__release_file_from_remote_pdb.get_sf()
-        return file_name
+            if file_name:
+                loc = FileSource.REMOTE
+        else:
+            loc = FileSource.ONEDEP_REL if self.__sf_current else FileSource.ONEDEP_PREV
+        return File(file_name, FileContext.SF, loc)
 
-    def get_cs(self) -> Optional[str]:
+    def get_cs(self) -> File:
         """
         get the PDB chemical shift file - from OneDep then local FTP
         :param pdbid: PDB ID
         :return: file name if present or None
         """
+        loc = FileSource.NONE
         file_name, self.__cs_current = self.__release_file_from_onedep.get_cs()
         if not file_name:
             file_name = self.__release_file_from_remote_pdb.get_cs()
-        return file_name
+            if file_name:
+                loc = FileSource.REMOTE
+        else:
+            loc = FileSource.ONEDEP_REL if self.__cs_current else FileSource.ONEDEP_PREV
+        return File(file_name, FileContext.CS, loc)
 
-    def get_nmr_data(self) -> Optional[str]:
+    def get_nmr_data(self) -> File:
         """
         Get the PDB combined NMR data file - from OneDep then local FTP
         :param pdbid: PDB ID
         :return: file name if present or None
         """
+        loc = FileSource.NONE
         file_name, self.__cs_current = self.__release_file_from_onedep.get_nmr_data()
         if not file_name:
             file_name = self.__release_file_from_remote_pdb.get_nmr_data()
-        return file_name
+            if file_name:
+                loc = FileSource.REMOTE
+        else:
+            loc = FileSource.ONEDEP_REL if self.__cs_current else FileSource.ONEDEP_PREV
+        return File(file_name, FileContext.NMR_DATA, loc)
 
-    def get_emdb_xml(self) -> Optional[str]:
+    def get_emdb_xml(self) -> File:
+        loc = FileSource.NONE
         file_name, self.__em_xml_current = self.__release_file_from_onedep.get_emdb_xml()
         if not file_name:
             file_name = self.__release_file_from_remote_emdb.get_emdb_xml()
-        return file_name
+            if file_name:
+                loc = FileSource.REMOTE
+        else:
+            loc = FileSource.ONEDEP_REL if self.__cs_current else FileSource.ONEDEP_PREV
 
-    def get_emdb_volume(self) -> Optional[str]:
+        return File(file_name, FileContext.EMDB_XML, loc)
+
+    def get_emdb_volume(self) -> File:
+        loc = FileSource.NONE
         file_name, _ = self.__release_file_from_onedep.get_emdb_volume()
         if not file_name:
             file_name = self.__release_file_from_remote_emdb.get_emdb_volume()
+            if file_name:
+                loc = FileSource.REMOTE
+        else:
+            loc = FileSource.ONEDEP_REL if self.__cs_current else FileSource.ONEDEP_PREV
 
-        return file_name
+        return File(file_name, FileContext.EMDB_VOL, loc)
 
-    def get_emdb_fsc(self) -> Optional[str]:
+    def get_emdb_fsc(self) -> File:
+        loc = FileSource.NONE
         file_name, _ = self.__release_file_from_onedep.get_emdb_fsc()
         if not file_name:
             file_name = self.__release_file_from_remote_emdb.get_emdb_fsc()
+            if file_name:
+                loc = FileSource.REMOTE
+        else:
+            loc = FileSource.ONEDEP_REL if self.__cs_current else FileSource.ONEDEP_PREV
 
-        return file_name
+        return File(file_name, FileContext.EMDB_FSC, loc)
 
     def is_sf_current(self) -> bool:
         return self.__sf_current

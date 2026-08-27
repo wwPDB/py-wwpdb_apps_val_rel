@@ -108,18 +108,19 @@ class FindAndProcessEntries:
                     em_xml = re.get_emdb_xml()
 
                     em_vol = re.get_emdb_volume()
-                    if em_vol:
-                        logger.debug("using XML: %s", em_xml)
-                        if em_xml is None:
+                    if em_vol.path:
+                        logger.debug("using XML: %s", em_xml.path)
+                        if em_xml.path is None:
                             logger.warning("No EMDB XML file found for %s", emdb_entry)
                             continue
-                        pdbids = XmlInfo(em_xml).get_pdbids_from_xml()
+                        pdbids = XmlInfo(em_xml.path).get_pdbids_from_xml()
                         if pdbids:
                             logger.info("PDB entries associated with %s: %s", emdb_entry, ",".join(pdbids))
                             for pdb_id in pdbids:
                                 pdbid = pdb_id.lower()
                                 re.set_pdb_id(pdb_id=pdbid)
-                                pdb_file = re.get_model()
+                                model = re.get_model()
+                                pdb_file = model.path
                                 if pdb_file:
                                     cf = mmCIFInfo(pdb_file)
                                     associated_emdb = cf.get_associated_emdb()
