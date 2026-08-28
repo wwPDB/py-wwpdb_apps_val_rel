@@ -47,7 +47,7 @@ class getFilesReleaseLocal_EMDB(GetFilesReleaseBaseEMDB):
         self.__local_ftp.set_ftp_emdb_root(ftp_path)
         self.__local_ftp_emdb_path = ftp_path
 
-    def get_emdb_subfolder(self, sub_folder: Literal["header", "map", "fsc"]) -> str:
+    def get_emdb_subfolder(self, sub_folder: Literal["header", "map", "fsc", "metadata"]) -> str:
         if not self.__emdb_id:
             emsg = "EMDB ID is not set. Cannot get EMDB subfolder."
             raise ValueError(emsg)
@@ -61,6 +61,9 @@ class getFilesReleaseLocal_EMDB(GetFilesReleaseBaseEMDB):
 
     def emdb_fsc_folder(self) -> str:
         return self.get_emdb_subfolder(sub_folder="fsc")
+
+    def emdb_metadata_folder(self) -> str:
+        return self.get_emdb_subfolder(sub_folder="metadata")
 
     def setup_local_temp_ftp(self, session_path: Optional[str] = None) -> str:
         if not self.__temp_local_ftp:
@@ -144,6 +147,17 @@ class getFilesReleaseLocal_EMDB(GetFilesReleaseBaseEMDB):
         logger.debug("trying local FTP")
         file_name = self.get_emdb_local_ftp_file(
             filename=self.__rf.get_emdb_fsc(self.__emdb_id), emdb_path=self.emdb_fsc_folder()
+        )
+        logger.debug("returning: %s", file_name)
+        return file_name
+
+    def get_emdb_metadata(self) -> Optional[str]:
+        logger.debug("metadata")
+        local_ftp = self.__local_ftp.get_ftp_emdb()
+        logger.debug('local FTP path: "%s"', local_ftp)
+        logger.debug("trying local FTP")
+        file_name = self.get_emdb_local_ftp_file(
+            filename=self.__rf.get_emdb_metadata(self.__emdb_id), emdb_path=self.emdb_metadata_folder()
         )
         logger.debug("returning: %s", file_name)
         return file_name

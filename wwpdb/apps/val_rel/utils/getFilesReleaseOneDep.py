@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import List, Optional, Tuple
+from typing import List, Literal, Optional, Tuple
 
 from wwpdb.io.locator.ReleaseFileNames import ReleaseFileNames
 from wwpdb.io.locator.ReleasePathInfo import ReleasePathInfo
@@ -95,7 +95,11 @@ class getFilesReleaseOneDep:
             return file_path, False
         return None, False
 
-    def check_emdb_current_then_previous(self, filename: str, subfolder: str) -> Tuple[Optional[str], bool]:
+    def check_emdb_current_then_previous(
+        self,
+        filename: str,
+        subfolder: Literal["header", "map", "fsc", "images", "masks", "metadata", "other", "validation"],
+    ) -> Tuple[Optional[str], bool]:
         """Looks for filename in for_release/emd/emdb_id/subfolder/filename
         and if not found for_release/previous/....
 
@@ -141,3 +145,8 @@ class getFilesReleaseOneDep:
 
     def get_emdb_fsc(self) -> Tuple[Optional[str], bool]:
         return self.check_emdb_current_then_previous(filename=self.__rf.get_emdb_fsc(self.__emdb_id), subfolder="fsc")
+
+    def get_emdb_metadata(self) -> Tuple[Optional[str], bool]:  # XXXX TEST
+        return self.check_emdb_current_then_previous(
+            filename=self.__rf.get_emdb_metadata(self.__emdb_id), subfolder="metadata"
+        )

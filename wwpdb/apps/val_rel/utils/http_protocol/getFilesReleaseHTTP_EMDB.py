@@ -83,6 +83,17 @@ class getFilesReleaseHttpEMDB(GetFilesReleaseBaseEMDB):
         logger.debug("returning: %s", temp_file_path)
         return temp_file_path
 
+    def get_emdb_metadata(self) -> Optional[str]:
+        logger.debug("retrieving metadata")
+        meta_file_name = self.__rf.get_emdb_metadata(self.__emdb_id)
+        if self.__grf is None:
+            self.__grf = GetRemoteFilesHttp(server=self.__server, cache=self.__cache, site_id=self.__site_id)
+        url = os.path.join(self.__url_prefix, self.__emdb_metadata_folder(), meta_file_name)
+        temp_file_path = None
+        if self.__grf.is_file(url):
+            temp_file_path = self.__get_file_from_remote_http(url=url, subfolder=self.__emdb_metadata_folder())
+        return temp_file_path
+
     def get_emdb_volume(self) -> Optional[str]:
         logger.debug("em volume")
 
@@ -182,7 +193,10 @@ class getFilesReleaseHttpEMDB(GetFilesReleaseBaseEMDB):
     def __emdb_mask_folder(self) -> str:
         return self.__get_emdb_subfolder(sub_folder="masks")
 
-    def __get_emdb_subfolder(self, sub_folder: Literal["header", "map", "fsc", "other", "masks"]) -> str:
+    def __emdb_metadata_folder(self) -> str:
+        return self.__get_emdb_subfolder(sub_folder="metadata")
+
+    def __get_emdb_subfolder(self, sub_folder: Literal["header", "map", "fsc", "other", "masks", "metadata"]) -> str:
         """Generic returns sub_folder in public archive layout"""
         if not self.__emdb_id:
             emsg = "EMDB ID must be specified"

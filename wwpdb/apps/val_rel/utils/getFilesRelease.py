@@ -40,6 +40,7 @@ class FileContext(Enum):
     EMDB_XML = auto()
     EMDB_VOL = auto()
     EMDB_FSC = auto()
+    EMDB_METADATA = auto()
 
     @classmethod
     def get_default(cls) -> "FileContext":
@@ -224,31 +225,42 @@ class getFilesRelease:
             if file_name:
                 loc = FileSource.REMOTE
         else:
-            loc = FileSource.ONEDEP_REL if self.__cs_current else FileSource.ONEDEP_PREV
+            loc = FileSource.ONEDEP_REL if self.__em_xml_current else FileSource.ONEDEP_PREV
 
         return File(file_name, FileContext.EMDB_XML, loc)
 
     def get_emdb_volume(self) -> File:
         loc = FileSource.NONE
-        file_name, _ = self.__release_file_from_onedep.get_emdb_volume()
+        file_name, cur = self.__release_file_from_onedep.get_emdb_volume()
         if not file_name:
             file_name = self.__release_file_from_remote_emdb.get_emdb_volume()
             if file_name:
                 loc = FileSource.REMOTE
         else:
-            loc = FileSource.ONEDEP_REL if self.__cs_current else FileSource.ONEDEP_PREV
+            loc = FileSource.ONEDEP_REL if cur else FileSource.ONEDEP_PREV
 
         return File(file_name, FileContext.EMDB_VOL, loc)
 
+    def get_emdb_metadata(self) -> File:
+        loc = FileSource.NONE
+        file_name, cur = self.__release_file_from_onedep.get_emdb_metadata()
+        if not file_name:
+            file_name = self.__release_file_from_remote_emdb.get_emdb_metadata()
+            if file_name:
+                loc = FileSource.REMOTE
+        else:
+            loc = FileSource.ONEDEP_REL if cur else FileSource.ONEDEP_PREV
+        return File(file_name, FileContext.EMDB_METADATA, loc)
+
     def get_emdb_fsc(self) -> File:
         loc = FileSource.NONE
-        file_name, _ = self.__release_file_from_onedep.get_emdb_fsc()
+        file_name, cur = self.__release_file_from_onedep.get_emdb_fsc()
         if not file_name:
             file_name = self.__release_file_from_remote_emdb.get_emdb_fsc()
             if file_name:
                 loc = FileSource.REMOTE
         else:
-            loc = FileSource.ONEDEP_REL if self.__cs_current else FileSource.ONEDEP_PREV
+            loc = FileSource.ONEDEP_REL if cur else FileSource.ONEDEP_PREV
 
         return File(file_name, FileContext.EMDB_FSC, loc)
 

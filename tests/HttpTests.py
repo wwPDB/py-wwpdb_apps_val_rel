@@ -229,6 +229,18 @@ class TestHTTP(unittest.TestCase):
         masks = gfr.get_emdb_masks()
         self.assertFalse(masks, "error - downloaded masks")
 
+        # Test metadata
+        emdbid = "EMD-0007"
+        gfr = MygetFilesReleaseHttpEMDB(emdbid)
+        meta = gfr.get_emdb_metadata()
+        self.assertIsNone(meta, "Unexpected finding of meta data")
+
+        emdbid = "EMD-0070"
+        gfr = MygetFilesReleaseHttpEMDB(emdbid)
+        meta = gfr.get_emdb_metadata()
+        self.assertIsNotNone(meta, "Did not find of meta data")
+        self.temp_paths.append(meta)
+
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)

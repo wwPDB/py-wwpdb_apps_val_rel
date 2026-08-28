@@ -163,6 +163,21 @@ class CommonTests:
         self.assertIsNotNone(emdb_fsc, "EMDB FSC should not be None for existing entry")
         self.assertTrue(os.path.exists(cast("str", emdb_fsc)), "EMDB FSC should exist: %s" % emdb_fsc)
 
+    def test_get_local_emdb_metadata(self) -> None:
+        """Test that the local emdb FSC file can be retrieved."""
+        gfr_non_existant = getFilesRelease(emdb_id="EMD-0000")
+        self.assertIsNotNone(gfr_non_existant, "getFilesRelease instance should not be None")
+
+        # Test non-existant entry
+        emdb_meta = gfr_non_existant.get_emdb_metadata().path
+        self.assertIsNone(emdb_meta, "EMDB metadata should be None for non-existant entry")
+
+        # Test for existing entry
+        gfr = getFilesRelease(emdb_id="EMD-10021")
+        emdb_meta = gfr.get_emdb_metadata().path
+        self.assertIsNotNone(emdb_meta, "EMDB metadata should not be None for existing entry")
+        self.assertTrue(os.path.exists(cast("str", emdb_meta)), "EMDB FSC should exist: %s" % emdb_meta)
+
 
 class GetFilesReleaseLocalTests(CommonTests, unittest.TestCase):
     def setUp(self) -> None:

@@ -101,7 +101,7 @@ class GetFilesReleaseBaseEMDB(ABC):
 
     @abstractmethod
     def get_emdb_fsc(self) -> Optional[str]:
-        """Get the EMDB FSD file.
+        """Get the EMDB FSC file.
 
         Returns:
             File name if filename present or None
@@ -113,4 +113,12 @@ class GetFilesReleaseBaseEMDB(ABC):
 
         Returns:
             File name or path containing files
+        """
+
+    @abstractmethod
+    def get_emdb_metadata(self) -> Optional[str]:
+        """Returs path to EMDB metadata file if present
+
+        Returns:
+            File name if present or none.
         """

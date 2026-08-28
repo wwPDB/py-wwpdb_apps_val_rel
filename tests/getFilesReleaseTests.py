@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from wwpdb.apps.val_rel.utils.getFilesRelease import getFilesRelease
+from wwpdb.apps.val_rel.utils.getFilesRelease import FileContext, FileSource, getFilesRelease
 
 SITE_ID = "WWPDB_DEPLOY_TEST"
 MODULE = "wwpdb.apps.val_rel.utils.getFilesRelease"
@@ -167,91 +167,224 @@ class GetFilesReleaseTests(unittest.TestCase):
     def test_get_model_uses_onedep_when_present(self) -> None:
         self.mock_onedep.get_model.return_value = ("onedep.cif", True)
         gfr = getFilesRelease(pdb_id="1abc", siteID=SITE_ID)
-        self.assertEqual(gfr.get_model().path, "onedep.cif")
+        model = gfr.get_model()
+        self.assertEqual(model.path, "onedep.cif")
+        self.assertEqual(model.context, FileContext.MODEL)
+        self.assertEqual(model.loc, FileSource.ONEDEP_REL)
+        self.mock_http_pdb.get_model.assert_not_called()
+
+    def test_get_model_uses_onedep_prev(self) -> None:
+        self.mock_onedep.get_model.return_value = ("onedep.cif", False)
+        gfr = getFilesRelease(pdb_id="1abc", siteID=SITE_ID)
+        model = gfr.get_model()
+        self.assertEqual(model.path, "onedep.cif")
+        self.assertEqual(model.context, FileContext.MODEL)
+        self.assertEqual(model.loc, FileSource.ONEDEP_PREV)
         self.mock_http_pdb.get_model.assert_not_called()
 
     def test_get_model_falls_back_to_remote(self) -> None:
         self.mock_onedep.get_model.return_value = (None, False)
         self.mock_http_pdb.get_model.return_value = "remote.cif"
         gfr = getFilesRelease(pdb_id="1abc", siteID=SITE_ID)
-        self.assertEqual(gfr.get_model().path, "remote.cif")
+        model = gfr.get_model()
+        self.assertEqual(model.path, "remote.cif")
+        self.assertEqual(model.context, FileContext.MODEL)
+        self.assertEqual(model.loc, FileSource.REMOTE)
 
     def test_get_sf_uses_onedep_and_sets_current_flag(self) -> None:
         self.mock_onedep.get_sf.return_value = ("onedep-sf.cif", True)
         gfr = getFilesRelease(pdb_id="1abc", siteID=SITE_ID)
-        self.assertEqual(gfr.get_sf().path, "onedep-sf.cif")
+        sf = gfr.get_sf()
+        self.assertEqual(sf.path, "onedep-sf.cif")
+        self.assertEqual(sf.context, FileContext.SF)
+        self.assertEqual(sf.loc, FileSource.ONEDEP_REL)
         self.assertTrue(gfr.is_sf_current())
+        self.mock_http_pdb.get_sf.assert_not_called()
+
+    def test_get_sf_uses_onedep_prev(self) -> None:
+        self.mock_onedep.get_sf.return_value = ("onedep-sf.cif", False)
+        gfr = getFilesRelease(pdb_id="1abc", siteID=SITE_ID)
+        sf = gfr.get_sf()
+        self.assertEqual(sf.path, "onedep-sf.cif")
+        self.assertEqual(sf.context, FileContext.SF)
+        self.assertEqual(sf.loc, FileSource.ONEDEP_PREV)
+        self.assertFalse(gfr.is_sf_current())
         self.mock_http_pdb.get_sf.assert_not_called()
 
     def test_get_sf_falls_back_and_current_false(self) -> None:
         self.mock_onedep.get_sf.return_value = (None, False)
         self.mock_http_pdb.get_sf.return_value = "remote-sf.cif"
         gfr = getFilesRelease(pdb_id="1abc", siteID=SITE_ID)
-        self.assertEqual(gfr.get_sf().path, "remote-sf.cif")
+        sf = gfr.get_sf()
+        self.assertEqual(sf.path, "remote-sf.cif")
+        self.assertEqual(sf.context, FileContext.SF)
+        self.assertEqual(sf.loc, FileSource.REMOTE)
         self.assertFalse(gfr.is_sf_current())
 
     def test_get_cs_uses_onedep_and_sets_current_flag(self) -> None:
         self.mock_onedep.get_cs.return_value = ("onedep_cs.str", True)
         gfr = getFilesRelease(pdb_id="1abc", siteID=SITE_ID)
-        self.assertEqual(gfr.get_cs().path, "onedep_cs.str")
+        cs = gfr.get_cs()
+        self.assertEqual(cs.path, "onedep_cs.str")
+        self.assertEqual(cs.context, FileContext.CS)
+        self.assertEqual(cs.loc, FileSource.ONEDEP_REL)
         self.assertTrue(gfr.is_cs_current())
+
+    def test_get_cs_uses_onedep_prev(self) -> None:
+        self.mock_onedep.get_cs.return_value = ("onedep_cs.str", False)
+        gfr = getFilesRelease(pdb_id="1abc", siteID=SITE_ID)
+        cs = gfr.get_cs()
+        self.assertEqual(cs.path, "onedep_cs.str")
+        self.assertEqual(cs.context, FileContext.CS)
+        self.assertEqual(cs.loc, FileSource.ONEDEP_PREV)
+        self.assertFalse(gfr.is_cs_current())
 
     def test_get_cs_falls_back_to_remote(self) -> None:
         self.mock_onedep.get_cs.return_value = (None, False)
         self.mock_http_pdb.get_cs.return_value = "remote_cs.str"
         gfr = getFilesRelease(pdb_id="1abc", siteID=SITE_ID)
-        self.assertEqual(gfr.get_cs().path, "remote_cs.str")
+        cs = gfr.get_cs()
+        self.assertEqual(cs.path, "remote_cs.str")
+        self.assertEqual(cs.context, FileContext.CS)
+        self.assertEqual(cs.loc, FileSource.REMOTE)
 
     def test_get_nmr_data_uses_onedep(self) -> None:
         self.mock_onedep.get_nmr_data.return_value = ("onedep_nmr-data.str", True)
         gfr = getFilesRelease(pdb_id="1abc", siteID=SITE_ID)
-        self.assertEqual(gfr.get_nmr_data().path, "onedep_nmr-data.str")
+        nmr = gfr.get_nmr_data()
+        self.assertEqual(nmr.path, "onedep_nmr-data.str")
+        self.assertEqual(nmr.context, FileContext.NMR_DATA)
+        self.assertEqual(nmr.loc, FileSource.ONEDEP_REL)
+
+    def test_get_nmr_data_uses_onedep_prev(self) -> None:
+        self.mock_onedep.get_nmr_data.return_value = ("onedep_nmr-data.str", False)
+        gfr = getFilesRelease(pdb_id="1abc", siteID=SITE_ID)
+        nmr = gfr.get_nmr_data()
+        self.assertEqual(nmr.path, "onedep_nmr-data.str")
+        self.assertEqual(nmr.context, FileContext.NMR_DATA)
+        self.assertEqual(nmr.loc, FileSource.ONEDEP_PREV)
 
     def test_get_nmr_data_falls_back_to_remote(self) -> None:
         self.mock_onedep.get_nmr_data.return_value = (None, False)
         self.mock_http_pdb.get_nmr_data.return_value = "remote_nmr-data.str"
         gfr = getFilesRelease(pdb_id="1abc", siteID=SITE_ID)
-        self.assertEqual(gfr.get_nmr_data().path, "remote_nmr-data.str")
+        nmr = gfr.get_nmr_data()
+        self.assertEqual(nmr.path, "remote_nmr-data.str")
+        self.assertEqual(nmr.context, FileContext.NMR_DATA)
+        self.assertEqual(nmr.loc, FileSource.REMOTE)
 
     # -- EMDB fallbacks --------------------------------------------------------
 
     def test_get_emdb_xml_uses_onedep_and_sets_current_flag(self) -> None:
         self.mock_onedep.get_emdb_xml.return_value = ("onedep.xml", True)
         gfr = getFilesRelease(emdb_id="EMD-1234", siteID=SITE_ID)
-        self.assertEqual(gfr.get_emdb_xml().path, "onedep.xml")
+        xml = gfr.get_emdb_xml()
+        self.assertEqual(xml.path, "onedep.xml")
+        self.assertEqual(xml.context, FileContext.EMDB_XML)
+        self.assertEqual(xml.loc, FileSource.ONEDEP_REL)
         self.assertTrue(gfr.is_em_xml_current())
+        self.mock_http_emdb.get_emdb_xml.assert_not_called()
+
+    def test_get_emdb_xml_uses_onedep_prev(self) -> None:
+        self.mock_onedep.get_emdb_xml.return_value = ("onedep.xml", False)
+        gfr = getFilesRelease(emdb_id="EMD-1234", siteID=SITE_ID)
+        xml = gfr.get_emdb_xml()
+        self.assertEqual(xml.path, "onedep.xml")
+        self.assertEqual(xml.context, FileContext.EMDB_XML)
+        self.assertEqual(xml.loc, FileSource.ONEDEP_PREV)
+        self.assertFalse(gfr.is_em_xml_current())
         self.mock_http_emdb.get_emdb_xml.assert_not_called()
 
     def test_get_emdb_xml_falls_back_to_remote(self) -> None:
         self.mock_onedep.get_emdb_xml.return_value = (None, False)
         self.mock_http_emdb.get_emdb_xml.return_value = "remote.xml"
         gfr = getFilesRelease(emdb_id="EMD-1234", siteID=SITE_ID)
-        self.assertEqual(gfr.get_emdb_xml().path, "remote.xml")
+        xml = gfr.get_emdb_xml()
+        self.assertEqual(xml.path, "remote.xml")
+        self.assertEqual(xml.context, FileContext.EMDB_XML)
+        self.assertEqual(xml.loc, FileSource.REMOTE)
         self.assertFalse(gfr.is_em_xml_current())
 
     def test_get_emdb_volume_uses_onedep(self) -> None:
         self.mock_onedep.get_emdb_volume.return_value = ("onedep.map", True)
         gfr = getFilesRelease(emdb_id="EMD-1234", siteID=SITE_ID)
-        self.assertEqual(gfr.get_emdb_volume().path, "onedep.map")
+        vol = gfr.get_emdb_volume()
+        self.assertEqual(vol.path, "onedep.map")
+        self.assertEqual(vol.context, FileContext.EMDB_VOL)
+        self.assertEqual(vol.loc, FileSource.ONEDEP_REL)
+        self.mock_http_emdb.get_emdb_volume.assert_not_called()
+
+    def test_get_emdb_volume_uses_onedep_prev(self) -> None:
+        self.mock_onedep.get_emdb_volume.return_value = ("onedep.map", False)
+        gfr = getFilesRelease(emdb_id="EMD-1234", siteID=SITE_ID)
+        vol = gfr.get_emdb_volume()
+        self.assertEqual(vol.path, "onedep.map")
+        self.assertEqual(vol.context, FileContext.EMDB_VOL)
+        self.assertEqual(vol.loc, FileSource.ONEDEP_PREV)
         self.mock_http_emdb.get_emdb_volume.assert_not_called()
 
     def test_get_emdb_volume_falls_back_to_remote(self) -> None:
         self.mock_onedep.get_emdb_volume.return_value = (None, False)
         self.mock_http_emdb.get_emdb_volume.return_value = "remote.map"
         gfr = getFilesRelease(emdb_id="EMD-1234", siteID=SITE_ID)
-        self.assertEqual(gfr.get_emdb_volume().path, "remote.map")
+        vol = gfr.get_emdb_volume()
+        self.assertEqual(vol.path, "remote.map")
+        self.assertEqual(vol.context, FileContext.EMDB_VOL)
+        self.assertEqual(vol.loc, FileSource.REMOTE)
 
     def test_get_emdb_fsc_uses_onedep(self) -> None:
         self.mock_onedep.get_emdb_fsc.return_value = ("onedep_fsc.xml", True)
         gfr = getFilesRelease(emdb_id="EMD-1234", siteID=SITE_ID)
-        self.assertEqual(gfr.get_emdb_fsc().path, "onedep_fsc.xml")
+        fsc = gfr.get_emdb_fsc()
+        self.assertEqual(fsc.path, "onedep_fsc.xml")
+        self.assertEqual(fsc.context, FileContext.EMDB_FSC)
+        self.assertEqual(fsc.loc, FileSource.ONEDEP_REL)
+        self.mock_http_emdb.get_emdb_fsc.assert_not_called()
+
+    def test_get_emdb_fsc_uses_onedep_prev(self) -> None:
+        self.mock_onedep.get_emdb_fsc.return_value = ("onedep_fsc.xml", False)
+        gfr = getFilesRelease(emdb_id="EMD-1234", siteID=SITE_ID)
+        fsc = gfr.get_emdb_fsc()
+        self.assertEqual(fsc.path, "onedep_fsc.xml")
+        self.assertEqual(fsc.context, FileContext.EMDB_FSC)
+        self.assertEqual(fsc.loc, FileSource.ONEDEP_PREV)
         self.mock_http_emdb.get_emdb_fsc.assert_not_called()
 
     def test_get_emdb_fsc_falls_back_to_remote(self) -> None:
         self.mock_onedep.get_emdb_fsc.return_value = (None, False)
         self.mock_http_emdb.get_emdb_fsc.return_value = "remote_fsc.xml"
         gfr = getFilesRelease(emdb_id="EMD-1234", siteID=SITE_ID)
-        self.assertEqual(gfr.get_emdb_fsc().path, "remote_fsc.xml")
+        fsc = gfr.get_emdb_fsc()
+        self.assertEqual(fsc.path, "remote_fsc.xml")
+        self.assertEqual(fsc.context, FileContext.EMDB_FSC)
+        self.assertEqual(fsc.loc, FileSource.REMOTE)
+
+    def test_get_emdb_metadata_uses_onedep(self) -> None:
+        self.mock_onedep.get_emdb_metadata.return_value = ("onedep_metadata.cif.gz", True)
+        gfr = getFilesRelease(emdb_id="EMD-1234", siteID=SITE_ID)
+        meta = gfr.get_emdb_metadata()
+        self.assertEqual(meta.path, "onedep_metadata.cif.gz")
+        self.assertEqual(meta.context, FileContext.EMDB_METADATA)
+        self.assertEqual(meta.loc, FileSource.ONEDEP_REL)
+        self.mock_http_emdb.get_emdb_metadata.assert_not_called()
+
+    def test_get_emdb_metadata_uses_onedep_prev(self) -> None:
+        self.mock_onedep.get_emdb_metadata.return_value = ("onedep_metadata.cif.gz", False)
+        gfr = getFilesRelease(emdb_id="EMD-1234", siteID=SITE_ID)
+        meta = gfr.get_emdb_metadata()
+        self.assertEqual(meta.path, "onedep_metadata.cif.gz")
+        self.assertEqual(meta.context, FileContext.EMDB_METADATA)
+        self.assertEqual(meta.loc, FileSource.ONEDEP_PREV)
+        self.mock_http_emdb.get_emdb_metadata.assert_not_called()
+
+    def test_get_emdb_metadata_falls_back_to_remote(self) -> None:
+        self.mock_onedep.get_emdb_metadata.return_value = (None, False)
+        self.mock_http_emdb.get_emdb_metadata.return_value = "remote_metadata.cif.gz"
+        gfr = getFilesRelease(emdb_id="EMD-1234", siteID=SITE_ID)
+        meta = gfr.get_emdb_metadata()
+        self.assertEqual(meta.path, "remote_metadata.cif.gz")
+        self.assertEqual(meta.context, FileContext.EMDB_METADATA)
+        self.assertEqual(meta.loc, FileSource.REMOTE)
 
     # -- current flags default before any get_* call --------------------------
 
