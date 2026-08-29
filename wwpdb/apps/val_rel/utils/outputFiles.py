@@ -45,7 +45,7 @@ class outputFiles:
 
     def get_validation_images_root_folder(self) -> str:
         rp = ReleasePathInfo(self._siteID)
-        return cast("str", rp.getForReleasePath("val_images"))
+        return rp.getForReleasePath("val_images")
 
     def get_root_state_folder(self) -> str:
         # Place under pdb val-reports as extra directory
@@ -88,12 +88,12 @@ class outputFiles:
 
     def get_emdb_lower_hyphen(self) -> str:
         if self.get_emdb_id():
-            return cast("str", self.__rf.get_lower_emdb_hyphen_format(self.get_emdb_id()))
+            return self.__rf.get_lower_emdb_hyphen_format(self.get_emdb_id())
         return ""
 
     def get_emdb_lower_underscore(self) -> str:
         if self.get_emdb_id():
-            return cast("str", self.__rf.get_lower_emdb_underscore_format(self.get_emdb_id()))
+            return self.__rf.get_lower_emdb_underscore_format(self.get_emdb_id())
         return ""
 
     def get_entry_id(self) -> str:

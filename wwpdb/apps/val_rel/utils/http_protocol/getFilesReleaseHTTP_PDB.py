@@ -6,7 +6,7 @@ from wwpdb.io.locator.localFTPPathInfo import LocalFTPPathInfo
 from wwpdb.io.locator.ReleaseFileNames import ReleaseFileNames
 
 from wwpdb.apps.val_rel.config.ValConfig import ValConfig
-from wwpdb.apps.val_rel.utils.getFilesReleaseBase import GetFilesReleaseBasePDB
+from wwpdb.apps.val_rel.utils.getFilesReleaseBase import GetFilesReleaseBasePDB, raise_no_pdb
 from wwpdb.apps.val_rel.utils.http_protocol.getRemoteFilesHTTP import (
     GetRemoteFilesHttp,
     remove_local_temp_http,
@@ -50,6 +50,9 @@ class getFilesReleaseHttpPDB(GetFilesReleaseBasePDB):
         get the PDB model file - from OneDep then local FTP and then the remote HTTP
         :return: file name if present or None
         """
+        if self.__pdb_id is None:
+            raise_no_pdb()
+
         url = self.__remote_http.get_model_fname(self.__pdb_id)
         zip_file_name = ReleaseFileNames().get_model(accession=self.__pdb_id, for_release=False)
         temp_file_path = self.__get_remote_http_file(url=url, filename=zip_file_name)
@@ -62,6 +65,9 @@ class getFilesReleaseHttpPDB(GetFilesReleaseBasePDB):
         get the PDB structure factor file - from OneDep then local FTP and then the remote HTTP
         :return: file name if present or None
         """
+        if self.__pdb_id is None:
+            raise_no_pdb()
+
         url = self.__remote_http.get_structure_factors_fname(self.__pdb_id)
         zip_file_name = ReleaseFileNames().get_structure_factor(accession=self.__pdb_id, for_release=False)
         temp_file_path = self.__get_remote_http_file(url=url, filename=zip_file_name)
@@ -74,6 +80,9 @@ class getFilesReleaseHttpPDB(GetFilesReleaseBasePDB):
         get the PDB chemical shift file - from OneDep then local FTP and then the remote HTP
         :return: file name if present or None
         """
+        if self.__pdb_id is None:
+            raise_no_pdb()
+
         url = self.__remote_http.get_chemical_shifts_fname(self.__pdb_id)
         zip_file_name = ReleaseFileNames().get_chemical_shifts(accession=self.__pdb_id, for_release=False)
         temp_file_path = self.__get_remote_http_file(url=url, filename=zip_file_name)
@@ -86,6 +95,9 @@ class getFilesReleaseHttpPDB(GetFilesReleaseBasePDB):
         Get the PDB combined NMR data file - from OneDep then local FTP and then the remote HTTP
         :return: file name if present or None
         """
+        if self.__pdb_id is None:
+            raise_no_pdb()
+
         url = self.__remote_http.get_nmr_data_fname(self.__pdb_id)
         zip_file_name = ReleaseFileNames().get_nmr_data(accession=self.__pdb_id, for_release=False)
         temp_file_path = self.__get_remote_http_file(url=url, filename=zip_file_name)

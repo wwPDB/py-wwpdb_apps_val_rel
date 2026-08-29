@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import NoReturn, Optional
 
 
 class GetFilesReleaseBasePDB(ABC):
@@ -122,3 +122,13 @@ class GetFilesReleaseBaseEMDB(ABC):
         Returns:
             File name if present or none.
         """
+
+
+def raise_no_emdb() -> NoReturn:
+    msg = "EMDB id not set"
+    raise ValueError(msg)
+
+
+def raise_no_pdb() -> NoReturn:
+    msg = "PDB id not set"
+    raise ValueError(msg)

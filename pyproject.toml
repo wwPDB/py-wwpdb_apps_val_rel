@@ -169,7 +169,8 @@ run = ["tox"]
 
 # -------------------------  Mypy disable ---------
 [[tool.mypy.overrides]]
-module = ["oslo_concurrency.*", "wwpdb.io.*", "mmcif.*", "wwpdb.utils.ws_utils.*", "wwpdb.utils.dp.*", "wwpdb.apps.validation.*", "wwpdb.utils.detach.*","wwpdb.utils.message_queue.*", "wwpdb.utils.session.*", "filelock"]
+# Older oslo.concurrency in python 3.8 does not have typing
+module = ["oslo_concurrency.*", "wwpdb.io.file.*", "mmcif.*", "wwpdb.utils.ws_utils.*", "wwpdb.utils.dp.*", "wwpdb.apps.validation.*", "wwpdb.utils.detach.*","wwpdb.utils.message_queue.*", "wwpdb.utils.session.*", "filelock"]
 ignore_missing_imports = true
 
 [tool.mypy]

@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import Literal, Optional, cast
+from typing import Literal, Optional
 
 from wwpdb.io.locator.localFTPPathInfo import LocalFTPPathInfo
 from wwpdb.io.locator.ReleaseFileNames import ReleaseFileNames
@@ -11,7 +11,7 @@ from wwpdb.apps.val_rel.utils.ftp_protocol.getRemoteFilesFTP import (
     remove_local_temp_ftp,
     setup_local_temp_ftp,
 )
-from wwpdb.apps.val_rel.utils.getFilesReleaseBase import GetFilesReleaseBaseEMDB
+from wwpdb.apps.val_rel.utils.getFilesReleaseBase import GetFilesReleaseBaseEMDB, raise_no_emdb
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +31,9 @@ class getFilesReleaseLocal_EMDB(GetFilesReleaseBaseEMDB):
         self.__site_id = site_id
         self.__rf = ReleaseFileNames()
         self.__local_ftp = LocalFTPPathInfo()
-        self.__local_ftp_emdb_path = local_ftp_emdb_path if local_ftp_emdb_path else self.__local_ftp.get_ftp_emdb()
+        self.__local_ftp_emdb_path: Optional[str] = (
+            local_ftp_emdb_path if local_ftp_emdb_path else self.__local_ftp.get_ftp_emdb()
+        )
         self.__temp_local_ftp: Optional[str] = None
         vc = ValConfig(self.__site_id)
         self.__session_path = vc.session_path
@@ -41,7 +43,7 @@ class getFilesReleaseLocal_EMDB(GetFilesReleaseBaseEMDB):
         self.__emdb_id = emdbid
 
     def get_local_ftp_path(self) -> str:
-        return cast("str", self.__local_ftp.get_ftp_emdb())
+        return self.__local_ftp.get_ftp_emdb()
 
     def set_local_ftp_path(self, ftp_path: str) -> None:
         self.__local_ftp.set_ftp_emdb_root(ftp_path)
@@ -118,8 +120,9 @@ class getFilesReleaseLocal_EMDB(GetFilesReleaseBaseEMDB):
         logger.debug("EM XML")
         local_ftp = self.__local_ftp.get_ftp_emdb()
         logger.debug('local FTP path: "%s"', local_ftp)
-
         logger.debug("trying local FTP")
+        if self.__emdb_id is None:
+            raise_no_emdb()
         file_name = self.get_emdb_local_ftp_file(
             filename=self.__rf.get_emdb_xml(self.__emdb_id), emdb_path=self.emdb_xml_folder()
         )
@@ -133,6 +136,8 @@ class getFilesReleaseLocal_EMDB(GetFilesReleaseBaseEMDB):
         local_ftp = self.__local_ftp.get_ftp_emdb()
         logger.debug('local FTP path: "%s"', local_ftp)
         logger.debug("trying local FTP")
+        if self.__emdb_id is None:
+            raise_no_emdb()
         file_name = self.get_emdb_local_ftp_file(
             filename=self.__rf.get_emdb_map(self.__emdb_id), emdb_path=self.emdb_map_folder()
         )
@@ -145,6 +150,9 @@ class getFilesReleaseLocal_EMDB(GetFilesReleaseBaseEMDB):
         local_ftp = self.__local_ftp.get_ftp_emdb()
         logger.debug('local FTP path: "%s"', local_ftp)
         logger.debug("trying local FTP")
+        if self.__emdb_id is None:
+            raise_no_emdb()
+
         file_name = self.get_emdb_local_ftp_file(
             filename=self.__rf.get_emdb_fsc(self.__emdb_id), emdb_path=self.emdb_fsc_folder()
         )
@@ -156,6 +164,9 @@ class getFilesReleaseLocal_EMDB(GetFilesReleaseBaseEMDB):
         local_ftp = self.__local_ftp.get_ftp_emdb()
         logger.debug('local FTP path: "%s"', local_ftp)
         logger.debug("trying local FTP")
+        if self.__emdb_id is None:
+            raise_no_emdb()
+
         file_name = self.get_emdb_local_ftp_file(
             filename=self.__rf.get_emdb_metadata(self.__emdb_id), emdb_path=self.emdb_metadata_folder()
         )

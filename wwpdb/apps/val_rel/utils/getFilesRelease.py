@@ -134,7 +134,7 @@ class getFilesRelease:
     def set_emdb_id(self, emdb_id: str) -> None:
         """Sets up emdb_id for processing release files"""
 
-        # Do not create a new path if same pdb_id
+        # Do not create a new path if same emdb_id
         if self.__emdb_id != emdb_id:
             self.__emdb_id = emdb_id
             self.__release_file_from_onedep = getFilesReleaseOneDep(
