@@ -235,7 +235,7 @@ class FindAndProcessEntriesTests(unittest.TestCase):
         self.assertEqual(fape.get_found_entries(), [])
         self.assertEqual(fape.get_added_entries(), [])
 
-    def test_process_emdb_entries_removes_matching_pdb_from_queue(self) -> None:
+    def test_process_emdb_entries_leaves_matching_pdb_from_queue(self) -> None:
         self._mock_gfr()
         self.mock_xmlinfo_class.return_value.get_pdbids_from_xml.return_value = ["1ABC"]
         self.mock_mmcifinfo_class.return_value.get_associated_emdb.return_value = "EMD-1234"
@@ -243,7 +243,7 @@ class FindAndProcessEntriesTests(unittest.TestCase):
         fape.process_entry_string()
         fape.categorise_entries()
         fape.process_emdb_entries()
-        self.assertNotIn("1abc", fape.get_pdb_entries())
+        self.assertIn("1abc", fape.get_pdb_entries())
 
     def test_process_emdb_entries_adds_new_matching_pdb_to_all_entries(self) -> None:
         self._mock_gfr()

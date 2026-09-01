@@ -125,15 +125,13 @@ class FindAndProcessEntries:
                                     cf = mmCIFInfo(pdb_file)
                                     associated_emdb = cf.get_associated_emdb()
                                     if associated_emdb == emdb_entry:
-                                        if pdbid in self.__pdb_entries:
+                                        if pdbid not in self.__pdb_entries:
                                             logger.info(
-                                                "removing %s from the PDB queue to stop duplication of report generation",
+                                                "adding %s from the PDB queue to possibly trigger report generation",
                                                 pdbid,
                                             )
-                                            self.__pdb_entries.remove(pdbid)
-                                        else:
+                                            self.__pdb_entries.append(pdbid)
                                             self.__all_pdb_entries.add(pdbid)
-                                    # what if its not? should it be added to the queue?
                                 elif pdbid in self.__pdb_entries:
                                     logger.info("removing %s as pdb file does not exist", pdbid)
                                     self.__pdb_entries.remove(pdbid)
