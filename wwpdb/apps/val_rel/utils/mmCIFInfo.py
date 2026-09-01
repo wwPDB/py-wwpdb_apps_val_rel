@@ -1,12 +1,134 @@
 import datetime
 import logging
-from typing import Any, Dict, List, Literal, Optional, Tuple, Union, overload
+from typing import Any, Dict, List, Literal, Optional, Set, Tuple, Union, overload
 
 from mmcif.api.DataCategory import DataCategory
 from mmcif.api.PdbxContainers import CifName, DataContainer
 from mmcif.io.IoAdapterCore import IoAdapterCore
 
 logger = logging.getLogger(__name__)
+
+
+_EM_SKIP_LIST = {
+    "audit_conform",
+    "citation",
+    "citation_author",
+    "database_2",
+    "em_admin",  # Skip all but title - see SKIP_ATTR
+    "em_3d_fitting",
+    "em_buffer",
+    "em_crystal_formation",
+    "em_db_reference",
+    "em_entity_assembly",
+    "em_entity_assembly_molwt",
+    "em_entity_assembly_naturalsource",
+    "em_entity_assembly_recombinant",
+    "em_euler_angle_assignment",
+    "em_final_classification",
+    "em_grid_pretreatment",
+    "em_image_processing",
+    "em_image_scans",
+    "em_imaging_optics",
+    "em_obsolete",
+    "em_particle_selection",
+    "em_sample_support",
+    "em_software",
+    "em_specimen",
+    "em_staining",
+    "em_start_model",
+    "em_supersede",
+    "em_support_film",
+    "em_tomography_specimen",
+    "em_virus_entity",
+    "em_virus_natural_host",
+    "em_vitrification",
+    "pdbx_initial_refinement_model",
+    "pdbx_database_PDB_obs_spr",
+    "pdbx_entity_src_syn",
+    "struct_keywords",
+}
+
+_PDB_SKIP_LIST = {
+    "audit_conform",
+    "citation",
+    "citation_author",
+    "pdbx_audit_support",
+    "pdbx_contact_author",
+    "database_PDB_caveat",
+    "diffrn",
+    "diffrn_detector",
+    "diffrn_radiation",
+    "diffrn_radiation_wavelength",
+    "diffrn_source",
+    "entity_name_com",
+    "entity_src_gen",
+    "entity_src_nat",
+    "exptl_crystal",
+    "exptl_crystal_grow",
+    "pdbx_database_PDB_obs_spr",
+    "pdbx_entity_src_syn",
+    "pdbx_entry_details",
+    "pdbx_nmr_chem_shift_experiment",
+    "pdbx_nmr_chem_shift_ref",
+    "pdbx_nmr_chem_shift_reference",
+    "pdbx_nmr_chem_shift_software",
+    "pdbx_nmr_computing",
+    "pdbx_nmr_detail",
+    "pdbx_nmr_exptl",
+    "pdbx_nmr_exptl_sample",
+    "pdbx_nmr_exptl_sample_conditions",
+    "pdbx_nmr_force_constants",
+    "pdbx_nmr_refine",
+    "pdbx_nmr_sample_details",
+    "pdbx_nmr_software_task",
+    "pdbx_nmr_spectral_dim",
+    "pdbx_nmr_spectral_peak_list",
+    "pdbx_nmr_spectral_peak_software",
+    "pdbx_nmr_spectrometer",
+    "pdbx_nmr_systematic_chem_shift_offset",
+    "pdbx_refine_tls",
+    "pdbx_refine_tls_group",
+    "pdbx_struct_assembly",
+    "pdbx_struct_assembly_auth_evidence",
+    "pdbx_struct_assembly_gen",
+    "pdbx_struct_assembly_prop",
+    "pdbx_struct_oper_list",
+    "pdbx_struct_sheet_hbond",
+    "refine_ls_restr",
+    "refine_ls_restr_ncs",
+    "refine_ls_shell",
+    "reflns_shell",
+    "struct_conf",
+    "struct_conf_type",
+    "struct_keywords",
+    "struct_ncs_dom",
+    "struct_ncs_dom_lim",
+    "struct_ncs_ens",
+    "struct_sheet",
+    "struct_sheet_order",
+    "struct_sheet_range",
+    "struct_site",
+    "pdbx_initial_refinement_model",
+    "database_2",
+    "chem_comp_atom",
+    "chem_comp_bond",
+    "chem_comp_angle",
+    "pdbx_modification_feature",
+    "pdbx_nonpoly_feature",
+    "pdbx_nonpoly_atom_feature",
+    "pdbx_nonpoly_atom_feature_evidence",
+    "pdbx_nonpoly_feature_evidence",
+    "pdbx_nonpoly_atom_coordination",
+    "pdbx_nonpoly_atom_coordination_sphere",
+    "pdbx_nonpoly_atom_coordination_sphere_order",
+}
+
+_PDB_COMBINED_SKIP_LIST = _PDB_SKIP_LIST.union(_EM_SKIP_LIST)  # Bring in EM categories - in case in coordinate file
+
+_SKIP_ATTR = {
+    "database_2": ["pdbx_DOI", "pdbx_database_accession"],
+    "em_admin": ["emd_id", "current_status", "last_update", "deposition_date", "map_release_date", "details"],
+}
 
 
 def _parsedate(date_str: str) -> Optional[datetime.date]:
@@ -26,91 +148,7 @@ def is_simple_modification(model_path: str) -> bool:
 
     returns True is only simple changes present
     """
-
-    # database_2 is handled specially
-    SKIP_LIST = [
-        "audit_conform",
-        "citation",
-        "citation_author",
-        "pdbx_audit_support",
-        "pdbx_contact_author",
-        "database_PDB_caveat",
-        "diffrn",
-        "diffrn_detector",
-        "diffrn_radiation",
-        "diffrn_radiation_wavelength",
-        "diffrn_source",
-        "entity_name_com",
-        "entity_src_gen",
-        "entity_src_nat",
-        "exptl_crystal",
-        "exptl_crystal_grow",
-        "pdbx_audit_support",
-        "pdbx_contact_author",
-        "pdbx_database_PDB_obs_spr",
-        "pdbx_entity_src_syn",
-        "pdbx_entry_details",
-        "pdbx_nmr_chem_shift_experiment",
-        "pdbx_nmr_chem_shift_ref",
-        "pdbx_nmr_chem_shift_reference",
-        "pdbx_nmr_chem_shift_software",
-        "pdbx_nmr_computing",
-        "pdbx_nmr_detail",
-        "pdbx_nmr_exptl",
-        "pdbx_nmr_exptl_sample",
-        "pdbx_nmr_exptl_sample_conditions",
-        "pdbx_nmr_force_constants",
-        "pdbx_nmr_refine",
-        "pdbx_nmr_sample_details",
-        "pdbx_nmr_software_task",
-        "pdbx_nmr_spectral_dim",
-        "pdbx_nmr_spectral_peak_list",
-        "pdbx_nmr_spectral_peak_software",
-        "pdbx_nmr_spectrometer",
-        "pdbx_nmr_systematic_chem_shift_offset",
-        "pdbx_refine_tls",
-        "pdbx_refine_tls_group",
-        "pdbx_struct_assembly",
-        "pdbx_struct_assembly_auth_evidence",
-        "pdbx_struct_assembly_gen",
-        "pdbx_struct_assembly_prop",
-        "pdbx_struct_oper_list",
-        "pdbx_struct_sheet_hbond",
-        "refine_ls_restr",
-        "refine_ls_restr_ncs",
-        "refine_ls_shell",
-        "reflns_shell",
-        "struct_conf",
-        "struct_conf_type",
-        "struct_keywords",
-        "struct_ncs_dom",
-        "struct_ncs_dom_lim",
-        "struct_ncs_ens",
-        "struct_sheet",
-        "struct_sheet",
-        "struct_sheet_order",
-        "struct_sheet_order",
-        "struct_sheet_range",
-        "struct_sheet_range",
-        "struct_site",
-        "pdbx_initial_refinement_model",
-        "database_2",
-        "chem_comp_atom",
-        "chem_comp_bond",
-        "chem_comp_angle",
-        "pdbx_modification_feature",
-        "pdbx_nonpoly_feature",
-        "pdbx_nonpoly_atom_feature",
-        "pdbx_nonpoly_atom_feature_evidence",
-        "pdbx_nonpoly_feature_evidence",
-        "pdbx_nonpoly_atom_coordination",
-        "pdbx_nonpoly_atom_coordination_sphere",
-        "pdbx_nonpoly_atom_coordination_sphere_order",
-    ]
-
-    SKIP_ATTR = {"database_2": ["pdbx_DOI", "pdbx_database_accession"]}
-
-    return __simple_modification(model_path, "Structure model", SKIP_LIST, SKIP_ATTR)
+    return __simple_modification(model_path, "Structure model", _PDB_COMBINED_SKIP_LIST, _SKIP_ATTR)
 
 
 def is_simple_emdb_modification(model_path: str) -> bool:
@@ -119,59 +157,13 @@ def is_simple_emdb_modification(model_path: str) -> bool:
 
     returns True is only simple changes present
     """
-
-    # database_2 is handled specially
-    SKIP_LIST = [
-        "audit_conform",
-        "citation",
-        "citation_author",
-        "database_2",
-        "em_admin",  # Skip all but title - see SKIP_ATTR
-        "em_3d_fitting",
-        "em_buffer",
-        "em_crystal_formation",
-        "em_db_reference",
-        "em_entity_assembly",
-        "em_entity_assembly_molwt",
-        "em_entity_assembly_naturalsource",
-        "em_entity_assembly_recombinant",
-        "em_euler_angle_assignment",
-        "em_final_classification",
-        "em_grid_pretreatment",
-        "em_image_processing",
-        "em_image_scans",
-        "em_imaging_optics",
-        "em_obsolete",
-        "em_particle_selection",
-        "em_sample_support",
-        "em_software",
-        "em_specimen",
-        "em_staining",
-        "em_start_model",
-        "em_supersede",
-        "em_support_film",
-        "em_tomography_specimen",
-        "em_virus_entity",
-        "em_virus_natural_host",
-        "em_vitrification",
-        "pdbx_initial_refinement_model",
-        "pdbx_database_PDB_obs_spr",
-        "pdbx_entity_src_syn",
-        "struct_keywords",
-    ]
-
-    SKIP_ATTR = {
-        "database_2": ["pdbx_DOI", "pdbx_database_accession"],
-        "em_admin": ["emd_id", "current_status", "last_update", "deposition_date", "map_release_date", "details"],
-    }
-
-    return __simple_modification(model_path, "EM metadata", SKIP_LIST, SKIP_ATTR)
+    return __simple_modification(model_path, "EM metadata", _EM_SKIP_LIST, _SKIP_ATTR)
 
 
 def __simple_modification(
     model_path: str,
     content_type: Literal["Structure model", "EM metadata"],
-    skip_cat: List[str],
+    skip_cat: Set[str],
     skip_attr: Optional[Dict[str, List[str]]],
 ) -> bool:
     """Determines if a modification with the given content time is a simple modification using a list of categories
