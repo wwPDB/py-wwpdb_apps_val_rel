@@ -5,7 +5,7 @@ import shutil
 import sys
 import tempfile
 from datetime import datetime
-from typing import Collection, Dict, List, Optional, Tuple, Union, cast
+from typing import Any, Collection, Dict, List, Optional, Tuple, Union, cast
 
 from wwpdb.apps.validation.src.utils.minimal_map_cif import GenerateMinimalCif
 from wwpdb.utils.config.ConfigInfo import getSiteId
@@ -23,6 +23,9 @@ from wwpdb.apps.val_rel.utils.ValDataStore import ValDataStore
 from wwpdb.apps.val_rel.utils.ValidationRun import ValidationRun
 from wwpdb.apps.val_rel.utils.XmlInfo import XmlInfo
 
+MessageType = Dict[str, Union[Optional[str], bool]]
+
+
 logger = logging.getLogger()
 
 
@@ -31,7 +34,6 @@ class runValidation:
         self.__keepLog: bool = False
         self.__pdbid: Optional[str] = None
         self.__emdbid: Optional[str] = None
-        self.__run_map_only: bool = False
         self.__pdbids: List[str] = []
         self.__pythonSiteID: Optional[str] = None
         self.__siteID: Optional[str] = None
@@ -68,7 +70,7 @@ class runValidation:
         self.__rel_files: getFilesRelease  # Init later in __setupRelFiles() to ensure siteID is set
 
         self.__statefolder: Optional[str] = None
-        self.__sds: Optional[ValDataStore] = None
+        # self.__sds: Optional[ValDataStore] = None
         self.__setupRelFiles(True)
 
     def __setupRelFiles(self, init: bool = False) -> None:
@@ -184,6 +186,7 @@ class runValidation:
         return False
 
     def get_emdb_pdb_string(self) -> str:
+        """Returns a string that can be used to track the combination of what was run"""
         emdb_pdb_string = ""
         if self.__emdbid and self.__pdbid:
             emdb_pdb_string = f"{self.__emdbid}-{self.__pdbid}"
@@ -218,6 +221,7 @@ class runValidation:
             self.__rel_files.set_cache(self.__cachedir)
 
     def process_message(self, message: Dict[str, Union[Optional[str], bool]]) -> None:
+        """Internal method to process a message and run validation.  completed is passed by reference and can be updated"""
         logger.debug("Message received %s", message)
         self.__pdbid = cast("Optional[str]", message.get("pdbID"))
         if self.__pdbid:
@@ -274,6 +278,7 @@ class runValidation:
         logger.debug("EM vol path: %s", self.__volFile.path)
 
     def set_entry_id(self) -> bool:
+        """Sets self.__entry_id to either the PDB or EMDB id.  Returns True if set, False if not"""
         if self.__pdbid:
             self.__entry_id = self.__pdbid
         elif self.__emdbid:
@@ -293,8 +298,8 @@ class runValidation:
         if self.__sessionPath is not None and not self.__keepLog and os.path.exists(self.__sessionPath):
             shutil.rmtree(self.__sessionPath)
 
-    def run_process(self, message: Dict[str, Union[Optional[str], bool]]) -> bool:
-        """Process message and act on it.  This is the main entry point"""
+    def run_process(self, message: MessageType) -> bool:
+        """Process message and act on it.  This is the main entry point."""
 
         self.process_message(message)
         ret = self.set_entry_id()
@@ -314,11 +319,13 @@ class runValidation:
         if self.__statefolder is None:
             emsg = "State folder not set for %s" % self.__entry_id
             raise ValueError(emsg)
-        self.__sds = ValDataStore(cast("str", self.__entry_id), self.__statefolder)
-        if self.__sds.isValidationRunning() is True:
-            logger.info("Skipping run of %s as run in progress", self.__entry_id)
-            self.__cleanup()
-            return True
+
+        # Primary shortcut - removed to allow secondary derived to run
+        # sds = ValDataStore(cast("str", self.__entry_id), self.__statefolder)
+        # if sds.isValidationRunning() is True:
+        #   logger.info("Skipping run of %s as run in progress", self.__entry_id)
+        #   self.__cleanup()
+        #   return True
 
         logger.info("running validation for %s, %s", self.__pdbid, self.__emdbid)
 
@@ -326,35 +333,42 @@ class runValidation:
         run_pdb = []
         run_emdb = []
         run_emdb_and_pdbid = []
-        validation_ran = False
+        # validation_ran = False
 
+        run_map_only = False
         if self.__emdbid:
+            # If emdb id is set in message - need to run the map only
             self.set_emdb_files()
             if self.__volFile.path:
-                self.__run_map_only = True
+                run_map_only = True
 
+        # Run PDB side...
         if self.__pdbid:
             self.set_pdb_files()
 
             cf = mmCIFInfo(cast("str", self.__modelFile.path))
             exp_methods = cf.get_exp_methods()
             if self.exptl_is_em(exp_methods) and not self.__skip_emdb:
+                # Setup to run map side as well
                 if not self.__emdbid:
                     self.__emdbid = cf.get_associated_emdb()
                     run_emdb.append(self.__emdbid)
                     run_emdb_and_pdbid.append(self.get_emdb_pdb_string())
+                    run_map_only = True
 
             run_pdb.append(self.__pdbid)
-            worked, validation_ran = self.run_validation()
+            sds = ValDataStore(cast("str", self.__pdbid), self.__statefolder)
+            if sds.isValidationRunning() is True:
+                logger.info("Skipping run of %s as run in progress", self.__pdbid)
+            else:
+                worked, _validation_ran = self.run_validation(sds)
+                all_worked.append(worked)
             self.__cleanup(onlyRunDir=True, closeConnections=True)
-            all_worked.append(worked)
 
+        # If emdbid is set... Either from message or from above.... check the list of PDB ids - and run if necessary
         if self.__emdbid:
             if self.__emdbid not in run_emdb:
                 if self.__volFile.path and self.__emXmlFile.path:
-                    # da_internal_pdbids = self.da_internal.selectData('PDBIDs_FROM_ASSOC_EMDBID', self.__emdbid)
-                    # logging.info('data from da_internal')
-                    # logger.info(da_internal_pdbids)
                     self.__pdbids = XmlInfo(self.__emXmlFile.path).get_pdbids_from_xml()
                     if self.__pdbids:
                         for self.__pdbid in self.__pdbids:  # noqa: B020
@@ -364,26 +378,36 @@ class runValidation:
                                 self.__modelFile = self.__rel_files.get_model()
                                 if self.__modelFile.path:
                                     # run validation
-                                    worked, validation_ran = self.run_validation()
-                                    all_worked.append(worked)
+                                    sds = ValDataStore(cast("str", self.__pdbid), self.__statefolder)
+                                    if sds.isValidationRunning() is True:
+                                        logger.info("Skipping run of %s as run in progress", self.__pdbid)
+                                    else:
+                                        worked, _validation_ran = self.run_validation(sds)
+                                        all_worked.append(worked)
                                     self.__cleanup(onlyRunDir=True)
                             else:
                                 logger.info("report already run for %s", self.get_emdb_pdb_string())
 
-        if self.__run_map_only:
+        # Map only run....
+        if run_map_only:
             logger.info("%s make map only validation report without models", self.__emdbid)
             self.__pdbid = None
             # run validation - forcing map only if map+model has already been run
-            if validation_ran:
-                self.setAlwaysRecalculate(True)
-            worked, validation_ran = self.run_validation()
-            # Not needed as fallthrough self.__cleanup(onlyRunDir=True)
-            logger.info("map only validation worked: %s", worked)
-            all_worked.append(worked)
+            # if validation_ran:
+            #    self.setAlwaysRecalculate(True)
+            sds = ValDataStore(cast("str", self.__emdbid), self.__statefolder)
+            if sds.isValidationRunning() is True:
+                logger.info("Skipping run of %s as run in progress", self.__emdbid)
+            else:
+                worked, _validation_ran = self.run_validation(sds)
+                # Not needed as fallthrough self.__cleanup(onlyRunDir=True)
+                logger.info("map only validation worked: %s", worked)
+                all_worked.append(worked)
 
         # Cleanup ftp temp
         self.__cleanup(closeConnections=True)
-        if list(set(all_worked)) == [True]:
+
+        if len(all_worked) == 0 or list(set(all_worked)) == [True]:
             return True
 
         logger.error(all_worked)
@@ -464,11 +488,11 @@ class runValidation:
             for f in filelist:
                 copy_file(in_file=f, output_folder=output_folder)
 
-    def run_validation(self) -> Tuple[bool, bool]:
+    def run_validation(self, sds: Optional[ValDataStore] = None) -> Tuple[bool, bool]:
         validation_run = False
 
-        if self.__sds:
-            self.__sds.setValidationRunning(True)
+        if sds:
+            sds.setValidationRunning(True)
         try:
             if self.__emdbid:
                 self.__rel_files.set_emdb_id(self.__emdbid)
@@ -491,8 +515,8 @@ class runValidation:
             is_modified = self.check_modified()
             if not is_modified:
                 logger.info("skipping %s/%s as entry files have not changed", self.__pdbid, self.__emdbid)
-                if self.__sds:
-                    self.__sds.setValidationRunning(False)
+                if sds:
+                    sds.setValidationRunning(False)
                 return True, validation_run
 
             # get EMDB data from FTP to after check for modification
@@ -528,8 +552,8 @@ class runValidation:
                 )
                 if not csPath:
                     logger.error("CS star to cif conversion failed")
-                    if self.__sds:
-                        self.__sds.setValidationRunning(False)
+                    if sds:
+                        sds.setValidationRunning(False)
                     return False, validation_run
                 # If self.__resFile was set, nmr-data - need converted file
                 if self.__resFile.path is not None:
@@ -653,15 +677,39 @@ class runValidation:
                     filelist=output_file_list_to_alternative_location, output_folder=self.__entry_image_output_folder
                 )
 
-            if self.__sds:
-                self.__sds.setValidationRunning(False)
+            if sds:
+                sds.setValidationRunning(False)
             return True, validation_run
 
         except Exception as e:
             logger.exception(e)
-            if self.__sds:
-                self.__sds.setValidationRunning(False)
+            if sds:
+                sds.setValidationRunning(False)
             return False, False
+
+
+def generate_message(args: Dict[str, Any]) -> MessageType:
+    """Builds the message dict passed to runValidation().run_process()/process_message() from parsed cli args"""
+    message: Dict[str, Union[Optional[str], bool]] = {
+        "pdbID": args["pdbid"],
+        "emdbID": args["emdbid"],
+        "outputRoot": args["output_root"],
+        "skipGzip": args["skip_gzip"],
+        "alwaysRecalculate": args["always_recalculate"],
+        "siteID": args["site_id"],
+        "keepLog": args["keep_log"],
+        "removeValFiles": args["remove_files"],
+        "subfolder": args["validation_sub_folder"],
+    }
+
+    # If pass in None - overrides siteid
+    if args.get("python_site_id"):
+        message["python_site_id"] = args["python_site_id"]
+
+    if args.get("nocache"):
+        message["nocache"] = args["nocache"]
+
+    return message
 
 
 def main() -> None:
@@ -692,24 +740,7 @@ def main() -> None:
     args = parser.parse_args()
     logger.setLevel(args.loglevel)
 
-    message = {
-        "pdbID": args.pdbid,
-        "emdbID": args.emdbid,
-        "outputRoot": args.output_root,
-        "skipGzip": args.skip_gzip,
-        "alwaysRecalculate": args.always_recalculate,
-        "siteID": args.site_id,
-        "keepLog": args.keep_log,
-        "removeValFiles": args.remove_files,
-        "subfolder": args.validation_sub_folder,
-    }
-
-    # If pass in None - overrides siteid
-    if args.python_site_id:
-        message["pythonSiteID"] = args.python_site_id
-
-    if args.nocache:
-        message["nocache"] = args.nocache
+    message = generate_message(vars(args))
 
     runValidation().run_process(message=message)
 

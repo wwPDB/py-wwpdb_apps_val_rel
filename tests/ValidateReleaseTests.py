@@ -254,7 +254,8 @@ class RunProcessTests(BaseValidateReleaseTest):
             ret = rv.run_process(self._message(pdbID="1abc"))
         self.assertTrue(ret)
         self.assertEqual(rv.getEMDBId(), "EMD-9999")
-        mock_run_validation.assert_called_once()
+        self.assertEqual(mock_run_validation.call_count, 2)
+
 
     def test_run_process_pdb_skip_emdb_flag_prevents_association(self) -> None:
         rv = runValidation()
@@ -269,13 +270,13 @@ class RunProcessTests(BaseValidateReleaseTest):
 
     def test_run_process_emdb_only_no_volume_no_map_only(self) -> None:
         # Nothing to run (no pdbid, no volume => no map-only pass) means
-        # all_worked stays empty, which run_process treats as overall failure.
+        # all_worked stays empty, which run_process treats as overall success.
         self.mock_gfr.get_emdb_volume.return_value = File()
         self.mock_gfr.get_emdb_xml.return_value = File()
         rv = runValidation()
         with patch.object(rv, "run_validation", return_value=(True, True)) as mock_run_validation:
             ret = rv.run_process(self._message(emdbID="EMD-1234"))
-        self.assertFalse(ret)
+        self.assertTrue(ret)
         mock_run_validation.assert_not_called()
 
     def test_run_process_emdb_with_volume_runs_map_only(self) -> None:
