@@ -17,7 +17,7 @@ from wwpdb.apps.val_rel.utils.CutOffUtils import get_start_end_cut_off, ok_to_co
 from wwpdb.apps.val_rel.utils.fileConversion import convert_cs_file
 from wwpdb.apps.val_rel.utils.Files import copy_file, gzip_file, remove_files
 from wwpdb.apps.val_rel.utils.getFilesRelease import File, FileContext, FileSource, getFilesRelease
-from wwpdb.apps.val_rel.utils.mmCIFInfo import is_simple_modification, mmCIFInfo
+from wwpdb.apps.val_rel.utils.mmCIFInfo import is_simple_emdb_modification, is_simple_modification, mmCIFInfo
 from wwpdb.apps.val_rel.utils.outputFiles import outputFiles
 from wwpdb.apps.val_rel.utils.ValDataStore import ValDataStore
 from wwpdb.apps.val_rel.utils.ValidationRun import ValidationRun
@@ -46,6 +46,7 @@ class runValidation:
         self.__resFile: File = File()
         self.__sfFile: File = File()
         self.__emXmlFile: File = File()
+        self.__emMetadataFile: File = File()
         self.__volFile: File = File()
         self.__fscFile: File = File()
         self.__sessionPath = None
@@ -149,6 +150,8 @@ class runValidation:
     def check_pdb_already_run(self) -> bool:
         if self.__always_recalculate:
             return True
+        if self.__pdb_output_folder is None:
+            return False
         modified = False
         if not already_run(self.__modelFile.path, self.__pdb_output_folder):
             if not is_simple_modification(cast("str", self.__modelFile.path)):
@@ -163,7 +166,8 @@ class runValidation:
                     modified = True
         return modified
 
-    def check_emdb_already_run(self) -> bool:
+    def check_emdb_already_run(self, usePdbOutput: bool = False) -> bool:
+        # Determines if the EMDB meta data is up to date relative to the emdb or PDB output folder
         if self.__always_recalculate:
             return True
         modified = False
@@ -171,15 +175,34 @@ class runValidation:
         #   if the output folder is not the default - i.e. this isn't the weekly release
         #   or
         #   if the EMDB XML is present in the for_release/emd folder - i.e. the XML is modified
-        if self.__alternativeOutputFolder or (self.__rel_files and self.__rel_files.is_em_xml_current()):
-            if not already_run(self.__emXmlFile.path, self.__emdb_output_folder):
+        if usePdbOutput:
+            outdir = self.__pdb_output_folder
+        else:
+            outdir = self.__emdb_output_folder
+        # For EM check the contents of the metadata file,  If it does not exist - then go off timestamp.
+        if self.__alternativeOutputFolder:
+            if not already_run(self.__emXmlFile.path, outdir):
+                modified = True
+
+        if self.__rel_files and self.__emMetadataFile.path:
+            if self.__rel_files.is_em_meta_current():
+                # Local file
+                if not already_run(self.__emMetadataFile.path, outdir):
+                    # If did not run yet - check
+                    if not is_simple_emdb_modification(self.__emMetadataFile.path):
+                        modified = True
+        elif self.__rel_files and self.__rel_files.is_em_xml_current():
+            # Fallback on Xml timestamp if metadata file not present
+            if not already_run(self.__emXmlFile.path, outdir):
                 modified = True
         return modified
 
     def check_modified(self) -> bool:
         self.set_output_dir_and_files()
         pdb_modified = self.check_pdb_already_run()
-        emdb_modified = self.check_emdb_already_run()
+        # If this is destined for PDB side - check the PDB output
+        outPdbFlag = bool(self.__pdbid)
+        emdb_modified = self.check_emdb_already_run(usePdbOutput=outPdbFlag)
 
         if pdb_modified or emdb_modified:
             return True
@@ -274,8 +297,10 @@ class runValidation:
         self.__rel_files.set_emdb_id(cast("str", self.__emdbid))
         self.set_xml_file()
         self.__volFile = self.__rel_files.get_emdb_volume()
+        self.__emMetadataFile = self.__rel_files.get_emdb_metadata()
         logger.debug("xml path: %s", self.__emXmlFile.path)
         logger.debug("EM vol path: %s", self.__volFile.path)
+        logger.debug("EM metadata path: %s", self.__emMetadataFile.path)
 
     def set_entry_id(self) -> bool:
         """Sets self.__entry_id to either the PDB or EMDB id.  Returns True if set, False if not"""
@@ -337,7 +362,7 @@ class runValidation:
 
         run_map_only = False
         if self.__emdbid:
-            # If emdb id is set in message - need to run the map only
+            # If emdb id is sent in message - need to run the map only portion
             self.set_emdb_files()
             if self.__volFile.path:
                 run_map_only = True
@@ -357,7 +382,7 @@ class runValidation:
                     run_map_only = True
 
             run_pdb.append(self.__pdbid)
-            sds = ValDataStore(cast("str", self.__pdbid), self.__statefolder)
+            sds = ValDataStore(self.__pdbid, self.__statefolder)
             if sds.isValidationRunning() is True:
                 logger.info("Skipping run of %s as run in progress", self.__pdbid)
             else:
@@ -378,7 +403,7 @@ class runValidation:
                                 self.__modelFile = self.__rel_files.get_model()
                                 if self.__modelFile.path:
                                     # run validation
-                                    sds = ValDataStore(cast("str", self.__pdbid), self.__statefolder)
+                                    sds = ValDataStore(self.__pdbid, self.__statefolder)
                                     if sds.isValidationRunning() is True:
                                         logger.info("Skipping run of %s as run in progress", self.__pdbid)
                                     else:
@@ -498,6 +523,8 @@ class runValidation:
                 self.__rel_files.set_emdb_id(self.__emdbid)
                 if not self.__emXmlFile.path:
                     self.__emXmlFile = self.__rel_files.get_emdb_xml()
+                if not self.__emMetadataFile.path:
+                    self.__emMetadataFile = self.__rel_files.get_emdb_metadata()
             if self.__pdbid:
                 self.__rel_files.set_pdb_id(self.__pdbid)
                 self.__sfFile = self.__rel_files.get_sf()
@@ -561,7 +588,7 @@ class runValidation:
 
             logger.info("Entry output folder: %s", self.__entry_output_folder)
 
-            # clearing existing reports before making new ones
+            # clearing existing reports before making new ones -- this has to happen after the check if modified as this will modify the directory!
             self.remove_existing_files()
 
             run_dir = tempfile.mkdtemp(dir=self.__sessionPath, prefix="%s_validation_release_rundir_" % self.__entry_id)

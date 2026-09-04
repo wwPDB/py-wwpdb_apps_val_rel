@@ -41,6 +41,7 @@ class GetFilesReleaseTests(unittest.TestCase):
         self.mock_onedep.get_emdb_xml.return_value = (None, False)
         self.mock_onedep.get_emdb_volume.return_value = (None, False)
         self.mock_onedep.get_emdb_fsc.return_value = (None, False)
+        self.mock_onedep.get_emdb_metadata.return_value = (None, False)
         self.mock_onedep_class.return_value = self.mock_onedep
 
         self.mock_http_pdb = MagicMock()
@@ -366,6 +367,7 @@ class GetFilesReleaseTests(unittest.TestCase):
         self.assertEqual(meta.path, "onedep_metadata.cif.gz")
         self.assertEqual(meta.context, FileContext.EMDB_METADATA)
         self.assertEqual(meta.loc, FileSource.ONEDEP_REL)
+        self.assertTrue(gfr.is_em_meta_current())
         self.mock_http_emdb.get_emdb_metadata.assert_not_called()
 
     def test_get_emdb_metadata_uses_onedep_prev(self) -> None:
@@ -375,6 +377,7 @@ class GetFilesReleaseTests(unittest.TestCase):
         self.assertEqual(meta.path, "onedep_metadata.cif.gz")
         self.assertEqual(meta.context, FileContext.EMDB_METADATA)
         self.assertEqual(meta.loc, FileSource.ONEDEP_PREV)
+        self.assertFalse(gfr.is_em_meta_current())
         self.mock_http_emdb.get_emdb_metadata.assert_not_called()
 
     def test_get_emdb_metadata_falls_back_to_remote(self) -> None:
@@ -385,6 +388,7 @@ class GetFilesReleaseTests(unittest.TestCase):
         self.assertEqual(meta.path, "remote_metadata.cif.gz")
         self.assertEqual(meta.context, FileContext.EMDB_METADATA)
         self.assertEqual(meta.loc, FileSource.REMOTE)
+        self.assertFalse(gfr.is_em_meta_current())
 
     # -- current flags default before any get_* call --------------------------
 
@@ -393,6 +397,7 @@ class GetFilesReleaseTests(unittest.TestCase):
         self.assertFalse(gfr.is_sf_current())
         self.assertFalse(gfr.is_cs_current())
         self.assertFalse(gfr.is_em_xml_current())
+        self.assertFalse(gfr.is_em_meta_current())
 
 
 if __name__ == "__main__":  # pragma: no cover

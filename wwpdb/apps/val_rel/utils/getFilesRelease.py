@@ -78,6 +78,7 @@ class getFilesRelease:
         self.__sf_current = False
         self.__cs_current = False
         self.__em_xml_current = False
+        self.__em_meta_current = False
 
         # Determine which routing
         config = ValConfig(site_id=siteID)
@@ -243,13 +244,13 @@ class getFilesRelease:
 
     def get_emdb_metadata(self) -> File:
         loc = FileSource.NONE
-        file_name, cur = self.__release_file_from_onedep.get_emdb_metadata()
+        file_name, self.__em_meta_current = self.__release_file_from_onedep.get_emdb_metadata()
         if not file_name:
             file_name = self.__release_file_from_remote_emdb.get_emdb_metadata()
             if file_name:
                 loc = FileSource.REMOTE
         else:
-            loc = FileSource.ONEDEP_REL if cur else FileSource.ONEDEP_PREV
+            loc = FileSource.ONEDEP_REL if self.__em_meta_current else FileSource.ONEDEP_PREV
         return File(file_name, FileContext.EMDB_METADATA, loc)
 
     def get_emdb_fsc(self) -> File:
@@ -272,6 +273,9 @@ class getFilesRelease:
 
     def is_em_xml_current(self) -> bool:
         return self.__em_xml_current
+
+    def is_em_meta_current(self) -> bool:
+        return self.__em_meta_current
 
     def set_cache(self, fpath: Optional[str]) -> None:
         self.__cache = fpath

@@ -256,7 +256,6 @@ class RunProcessTests(BaseValidateReleaseTest):
         self.assertEqual(rv.getEMDBId(), "EMD-9999")
         self.assertEqual(mock_run_validation.call_count, 2)
 
-
     def test_run_process_pdb_skip_emdb_flag_prevents_association(self) -> None:
         rv = runValidation()
         with patch.object(rv, "run_validation", return_value=(True, True)), patch(
