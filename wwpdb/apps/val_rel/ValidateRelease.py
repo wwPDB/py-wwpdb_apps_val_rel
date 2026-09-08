@@ -140,6 +140,12 @@ class runValidation:
             self.set_xml_file()
         return self.__emXmlFile.path
 
+    def getEMMetadataPath(self) -> Optional[str]:
+        """Returns EM metadata path.  Used by check_results.py as well"""
+        if not self.__emMetadataFile.path:
+            self.set_em_metadata_file()
+        return self.__emMetadataFile.path
+
     @staticmethod
     def exptl_is_em(exp_methods: List[str]) -> bool:
         if "ELECTRON MICROSCOPY" in exp_methods or "ELECTRON CRYSTALLOGRAPHY" in exp_methods:
@@ -292,6 +298,10 @@ class runValidation:
     def set_xml_file(self) -> None:
         self.__rel_files.set_emdb_id(cast("str", self.__emdbid))
         self.__emXmlFile = self.__rel_files.get_emdb_xml()
+
+    def set_em_metadata_file(self) -> None:
+        self.__rel_files.set_emdb_id(cast("str", self.__emdbid))
+        self.__emMetadataFile = self.__rel_files.get_emdb_metadata()
 
     def set_emdb_files(self) -> None:
         self.__rel_files.set_emdb_id(cast("str", self.__emdbid))

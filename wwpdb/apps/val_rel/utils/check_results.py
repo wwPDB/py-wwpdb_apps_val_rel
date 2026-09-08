@@ -11,7 +11,7 @@ from wwpdb.io.locator.ReleasePathInfo import ReleasePathInfo
 
 from wwpdb.apps.val_rel.utils.Files import get_gzip_name
 from wwpdb.apps.val_rel.utils.FindEntries import FindEntries
-from wwpdb.apps.val_rel.utils.mmCIFInfo import is_simple_modification
+from wwpdb.apps.val_rel.utils.mmCIFInfo import is_simple_modification, is_simple_emdb_modification, mmCIFInfo
 from wwpdb.apps.val_rel.ValidateRelease import runValidation
 
 # We replace with root if main
@@ -54,25 +54,52 @@ class CheckResult:
                 return False
         return True
 
+
     def check_entry(self) -> None:
-        self.rv = runValidation()  # pylint: disable=attribute-defined-outside-init
-        self.rv.process_message(self.__message)
-        self.rv.set_entry_id()
-        self.rv.set_output_dir_and_files()
+        rv = runValidation()  # pylint: disable=attribute-defined-outside-init
+        rv.process_message(self.__message)
+        rv.set_entry_id()
+        rv.set_output_dir_and_files()
 
         model_file = None
         if self.__pdbid:
-            model_file = self.rv.getModelPath()
-        em_xml_file = None
+            model_file = rv.getModelPath()
+            # Check if EMDB is a dependency
+            cf = mmCIFInfo(cast("str", model_file))
+            exp_methods = cf.get_exp_methods()
+            # Eventually check experimental files
+            #if rv.exptl_is_em(exp_methods):
+            #    if not self.__emdbid:
+            #        emdbid = cf.get_associated_emdb()
+            #        if emdbid:
+            #            self.__emdbid = emdbid.upper()
+            #            rv.setEmdbId(self.__emdbid)
+
+        # XX cleanup needed?
+
+        # em_xml_file = None
+        # if self.__emdbid:
+        #    em_xml_file = rv.getEMXMLPath()
+
+        em_meta_file = None
         if self.__emdbid:
-            em_xml_file = self.rv.getEMXMLPath()
+            em_meta_file = rv.getEMMetadataPath()
 
         simple_modification = False
-        if model_file and not em_xml_file:
+
+        # PDB checking - :
+        if self.__pdbid and model_file:
             simple_modification = is_simple_modification(model_path=model_file)
-        self.__validation_xml = get_gzip_name(self.rv.getValidationXml())
+            # More complex checks like sf....
+
+            
+        # EMDB id check
+        if self.__pdbid is None and self.__emdbid and em_meta_file:
+            simple_modification = is_simple_emdb_modification(em_meta_file)
+            
+        self.__validation_xml = get_gzip_name(rv.getValidationXml())
         logger.debug("validation xml: %s", self.__validation_xml)
-        output_files = self.rv.getCoreOutputFileDict()
+        output_files = rv.getCoreOutputFileDict()
         logger.debug("output_file_dict")
         logger.debug(self.__expected_files)
 
@@ -84,7 +111,7 @@ class CheckResult:
                     self.__expected_files[output_file_type] = gzipped_output_file
                     if not os.path.exists(gzipped_output_file):
                         self.__missing_files.setdefault(output_file_type, []).append(
-                            {cast("str", self.rv.getEntryId()): gzipped_output_file}
+                            {cast("str", rv.getEntryId()): gzipped_output_file}
                         )
 
             self.check_failed_programs()
