@@ -11,7 +11,7 @@ from wwpdb.io.locator.ReleasePathInfo import ReleasePathInfo
 
 from wwpdb.apps.val_rel.utils.Files import get_gzip_name
 from wwpdb.apps.val_rel.utils.FindEntries import FindEntries
-from wwpdb.apps.val_rel.utils.mmCIFInfo import is_simple_modification, is_simple_emdb_modification, mmCIFInfo
+from wwpdb.apps.val_rel.utils.mmCIFInfo import is_simple_emdb_modification, is_simple_modification
 from wwpdb.apps.val_rel.ValidateRelease import runValidation
 
 # We replace with root if main
@@ -54,7 +54,6 @@ class CheckResult:
                 return False
         return True
 
-
     def check_entry(self) -> None:
         rv = runValidation()  # pylint: disable=attribute-defined-outside-init
         rv.process_message(self.__message)
@@ -64,22 +63,16 @@ class CheckResult:
         model_file = None
         if self.__pdbid:
             model_file = rv.getModelPath()
-            # Check if EMDB is a dependency
-            cf = mmCIFInfo(cast("str", model_file))
-            exp_methods = cf.get_exp_methods()
+            # Check if EMDB is a dependency for experimental files
+            # cf = mmCIFInfo(cast("str", model_file))
+            # exp_methods = cf.get_exp_methods()
             # Eventually check experimental files
-            #if rv.exptl_is_em(exp_methods):
+            # if rv.exptl_is_em(exp_methods):
             #    if not self.__emdbid:
             #        emdbid = cf.get_associated_emdb()
             #        if emdbid:
             #            self.__emdbid = emdbid.upper()
             #            rv.setEmdbId(self.__emdbid)
-
-        # XX cleanup needed?
-
-        # em_xml_file = None
-        # if self.__emdbid:
-        #    em_xml_file = rv.getEMXMLPath()
 
         em_meta_file = None
         if self.__emdbid:
@@ -92,11 +85,10 @@ class CheckResult:
             simple_modification = is_simple_modification(model_path=model_file)
             # More complex checks like sf....
 
-            
-        # EMDB id check
+        # EMDB id check - for map only check...
         if self.__pdbid is None and self.__emdbid and em_meta_file:
             simple_modification = is_simple_emdb_modification(em_meta_file)
-            
+
         self.__validation_xml = get_gzip_name(rv.getValidationXml())
         logger.debug("validation xml: %s", self.__validation_xml)
         output_files = rv.getCoreOutputFileDict()

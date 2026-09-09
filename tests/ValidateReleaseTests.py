@@ -195,6 +195,23 @@ class LazyLoadTests(BaseValidateReleaseTest):
         self.assertEqual(rv.getEMXMLPath(), "cached.xml")
         self.mock_gfr.get_emdb_xml.assert_not_called()
 
+    def test_get_em_metadata_path_lazily_sets_via_rel_files(self) -> None:
+        self.mock_gfr.get_emdb_metadata.return_value = File("emd_metadata.xml")
+        rv = runValidation()
+        rv.setEmdbId("EMD-1234")
+        self.assertEqual(rv.getEMMetadataPath(), "emd_metadata.xml")
+        self.mock_gfr.set_emdb_id.assert_called_once_with("EMD-1234")
+
+    def test_get_em_metadata_path_uses_cached_value(self) -> None:
+        self.mock_gfr.get_emdb_metadata.return_value = File("emd_metadata.xml")
+        rv = runValidation()
+        rv.setEmdbId("EMD-1234")
+        self.assertEqual(rv.getEMMetadataPath(), "emd_metadata.xml")
+        self.mock_gfr.get_emdb_metadata.assert_called_once()
+        # Second call should use the cached path, not call set_em_metadata_file again
+        self.assertEqual(rv.getEMMetadataPath(), "emd_metadata.xml")
+        self.mock_gfr.get_emdb_metadata.assert_called_once()
+
 
 class RunProcessTests(BaseValidateReleaseTest):
     def _message(self, **overrides: Any) -> Dict[str, Any]:
