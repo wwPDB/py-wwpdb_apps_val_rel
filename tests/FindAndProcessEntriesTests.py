@@ -6,6 +6,7 @@ from typing import Any, Dict, Optional
 from unittest.mock import MagicMock, patch
 
 from wwpdb.apps.val_rel.utils.FindAndProcessEntries import FindAndProcessEntries
+from wwpdb.apps.val_rel.utils.getFilesRelease import File, FileContext
 
 SITE_ID = "WWPDB_DEPLOY_TEST"
 MODULE = "wwpdb.apps.val_rel.utils.FindAndProcessEntries"
@@ -190,9 +191,9 @@ class FindAndProcessEntriesTests(unittest.TestCase):
         model: Optional[str] = "1abc.cif",
     ) -> MagicMock:
         mock_gfr = MagicMock()
-        mock_gfr.get_emdb_xml.return_value = emdb_xml
-        mock_gfr.get_emdb_volume.return_value = emdb_volume
-        mock_gfr.get_model.return_value = model
+        mock_gfr.get_emdb_xml.return_value = File(emdb_xml, FileContext.EMDB_XML)
+        mock_gfr.get_emdb_volume.return_value = File(emdb_volume, FileContext.EMDB_VOL)
+        mock_gfr.get_model.return_value = File(model, FileContext.MODEL)
         self.mock_gfr_class.return_value = mock_gfr
         return mock_gfr
 
@@ -234,7 +235,7 @@ class FindAndProcessEntriesTests(unittest.TestCase):
         self.assertEqual(fape.get_found_entries(), [])
         self.assertEqual(fape.get_added_entries(), [])
 
-    def test_process_emdb_entries_removes_matching_pdb_from_queue(self) -> None:
+    def test_process_emdb_entries_leaves_matching_pdb_from_queue(self) -> None:
         self._mock_gfr()
         self.mock_xmlinfo_class.return_value.get_pdbids_from_xml.return_value = ["1ABC"]
         self.mock_mmcifinfo_class.return_value.get_associated_emdb.return_value = "EMD-1234"
@@ -242,7 +243,7 @@ class FindAndProcessEntriesTests(unittest.TestCase):
         fape.process_entry_string()
         fape.categorise_entries()
         fape.process_emdb_entries()
-        self.assertNotIn("1abc", fape.get_pdb_entries())
+        self.assertIn("1abc", fape.get_pdb_entries())
 
     def test_process_emdb_entries_adds_new_matching_pdb_to_all_entries(self) -> None:
         self._mock_gfr()

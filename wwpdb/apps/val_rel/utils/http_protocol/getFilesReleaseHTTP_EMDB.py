@@ -10,7 +10,7 @@ from wwpdb.io.locator.ReleaseFileNames import ReleaseFileNames
 from wwpdb.utils.config.ConfigInfo import getSiteId
 
 from wwpdb.apps.val_rel.config.ValConfig import ValConfig
-from wwpdb.apps.val_rel.utils.getFilesReleaseBase import GetFilesReleaseBaseEMDB
+from wwpdb.apps.val_rel.utils.getFilesReleaseBase import GetFilesReleaseBaseEMDB, raise_no_emdb
 from wwpdb.apps.val_rel.utils.http_protocol.getRemoteFilesHTTP import (
     GetRemoteFilesHttp,
     remove_local_temp_http,
@@ -58,6 +58,9 @@ class getFilesReleaseHttpEMDB(GetFilesReleaseBaseEMDB):
     def get_emdb_xml(self) -> Optional[str]:
         logger.info("EM XML")
         logger.info("trying remote HTTP")
+        if self.__emdb_id is None:
+            raise_no_emdb()
+
         self.__setup_local_temp_http()
         xml_file_name = self.__rf.get_emdb_xml(self.__emdb_id)
         url = os.path.join(self.__url_prefix, self.__emdb_xml_folder(), xml_file_name)
@@ -72,6 +75,8 @@ class getFilesReleaseHttpEMDB(GetFilesReleaseBaseEMDB):
 
     def get_emdb_fsc(self) -> Optional[str]:
         logger.debug("FSC")
+        if self.__emdb_id is None:
+            raise_no_emdb()
         self.__setup_local_temp_http()
         logger.debug("trying remote HTTP")
         fsc_file_name = self.__rf.get_emdb_fsc(self.__emdb_id)
@@ -83,8 +88,24 @@ class getFilesReleaseHttpEMDB(GetFilesReleaseBaseEMDB):
         logger.debug("returning: %s", temp_file_path)
         return temp_file_path
 
+    def get_emdb_metadata(self) -> Optional[str]:
+        logger.debug("retrieving metadata")
+        if self.__emdb_id is None:
+            raise_no_emdb()
+        meta_file_name = self.__rf.get_emdb_metadata(self.__emdb_id)
+        if self.__grf is None:
+            self.__grf = GetRemoteFilesHttp(server=self.__server, cache=self.__cache, site_id=self.__site_id)
+        url = os.path.join(self.__url_prefix, self.__emdb_metadata_folder(), meta_file_name)
+        temp_file_path = None
+        if self.__grf.is_file(url):
+            temp_file_path = self.__get_file_from_remote_http(url=url, subfolder=self.__emdb_metadata_folder())
+        return temp_file_path
+
     def get_emdb_volume(self) -> Optional[str]:
         logger.debug("em volume")
+
+        if self.__emdb_id is None:
+            raise_no_emdb()
 
         # In FTP access model -- this is supposed to pull in whole directory tree
         self.__setup_local_temp_http()
@@ -105,6 +126,8 @@ class getFilesReleaseHttpEMDB(GetFilesReleaseBaseEMDB):
     # Protected for testing
     def _get_emdb_half_maps(self) -> Tuple[Optional[str], Optional[str]]:
         logger.debug("retrieving half maps")
+        if self.__emdb_id is None:
+            raise_no_emdb()
         vol_file_name = self.__rf.get_emdb_map(self.__emdb_id)
         vol_file_name = vol_file_name.replace(".gz", "")
         half_map_name = vol_file_name.replace(".map", "_half_map.map")
@@ -128,6 +151,8 @@ class getFilesReleaseHttpEMDB(GetFilesReleaseBaseEMDB):
 
     def _get_emdb_masks(self) -> List[str]:
         logger.debug("retrieving masks")
+        if self.__emdb_id is None:
+            raise_no_emdb()
         vol_file_name = self.__rf.get_emdb_map(self.__emdb_id)
         vol_file_name = vol_file_name.replace(".gz", "")
         mask_name = vol_file_name.replace(".map", "_msk.map")
@@ -182,7 +207,10 @@ class getFilesReleaseHttpEMDB(GetFilesReleaseBaseEMDB):
     def __emdb_mask_folder(self) -> str:
         return self.__get_emdb_subfolder(sub_folder="masks")
 
-    def __get_emdb_subfolder(self, sub_folder: Literal["header", "map", "fsc", "other", "masks"]) -> str:
+    def __emdb_metadata_folder(self) -> str:
+        return self.__get_emdb_subfolder(sub_folder="metadata")
+
+    def __get_emdb_subfolder(self, sub_folder: Literal["header", "map", "fsc", "other", "masks", "metadata"]) -> str:
         """Generic returns sub_folder in public archive layout"""
         if not self.__emdb_id:
             emsg = "EMDB ID must be specified"

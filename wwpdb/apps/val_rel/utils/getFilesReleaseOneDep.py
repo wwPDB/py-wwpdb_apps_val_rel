@@ -1,10 +1,12 @@
 import logging
 import os
-from typing import List, Optional, Tuple
+from typing import List, Literal, Optional, Tuple
 
 from wwpdb.io.locator.ReleaseFileNames import ReleaseFileNames
 from wwpdb.io.locator.ReleasePathInfo import ReleasePathInfo
 from wwpdb.utils.config.ConfigInfo import getSiteId
+
+from wwpdb.apps.val_rel.utils.getFilesReleaseBase import raise_no_emdb, raise_no_pdb
 
 logger = logging.getLogger(__name__)
 
@@ -95,13 +97,19 @@ class getFilesReleaseOneDep:
             return file_path, False
         return None, False
 
-    def check_emdb_current_then_previous(self, filename: str, subfolder: str) -> Tuple[Optional[str], bool]:
+    def check_emdb_current_then_previous(
+        self,
+        filename: str,
+        subfolder: Literal["header", "map", "fsc", "images", "masks", "metadata", "other", "validation"],
+    ) -> Tuple[Optional[str], bool]:
         """Looks for filename in for_release/emd/emdb_id/subfolder/filename
         and if not found for_release/previous/....
 
         Returns (file_path, cur_week) where file_path is the path or None
         and cur_week is a boolean indicating if it is current_week release.
         """
+        if self.__emdb_id is None:
+            raise_no_emdb()
         for_release_current_path = self.__rp.get_emd_subfolder_path(accession=self.__emdb_id, subfolder=subfolder)
         file_path = os.path.join(for_release_current_path, filename)
         if os.path.exists(file_path):
@@ -115,29 +123,51 @@ class getFilesReleaseOneDep:
         return None, False
 
     def get_model(self) -> Tuple[Optional[str], bool]:
+        if self.__pdb_id is None:
+            raise_no_pdb()
         filename = self.__rf.get_model(self.__pdb_id, for_release=True)
         return self.check_pdb_current_then_previous(filename=filename)
 
     def get_sf(self) -> Tuple[Optional[str], bool]:
+        if self.__pdb_id is None:
+            raise_no_pdb()
         filename = self.__rf.get_structure_factor(self.__pdb_id, for_release=True)
         return self.check_pdb_current_then_previous(filename=filename)
 
     def get_cs(self) -> Tuple[Optional[str], bool]:
+        if self.__pdb_id is None:
+            raise_no_pdb()
         filename = self.__rf.get_chemical_shifts(self.__pdb_id, for_release=True)
         return self.check_pdb_current_then_previous(filename=filename)
 
     def get_nmr_data(self) -> Tuple[Optional[str], bool]:
+        if self.__pdb_id is None:
+            raise_no_pdb()
         filename = self.__rf.get_nmr_data(self.__pdb_id, for_release=True)
         return self.check_pdb_current_then_previous(filename=filename)
 
     def get_emdb_xml(self) -> Tuple[Optional[str], bool]:
+        if self.__emdb_id is None:
+            raise_no_emdb()
         return self.check_emdb_current_then_previous(
             filename=self.__rf.get_emdb_xml(self.__emdb_id, for_release=True),
             subfolder="header",
         )
 
     def get_emdb_volume(self) -> Tuple[Optional[str], bool]:
+        if self.__emdb_id is None:
+            raise_no_emdb()
         return self.check_emdb_current_then_previous(filename=self.__rf.get_emdb_map(self.__emdb_id), subfolder="map")
 
     def get_emdb_fsc(self) -> Tuple[Optional[str], bool]:
+        if self.__emdb_id is None:
+            raise_no_emdb()
         return self.check_emdb_current_then_previous(filename=self.__rf.get_emdb_fsc(self.__emdb_id), subfolder="fsc")
+
+    def get_emdb_metadata(self) -> Tuple[Optional[str], bool]:
+        if self.__emdb_id is None:
+            raise_no_emdb()
+
+        return self.check_emdb_current_then_previous(
+            filename=self.__rf.get_emdb_metadata(self.__emdb_id), subfolder="metadata"
+        )

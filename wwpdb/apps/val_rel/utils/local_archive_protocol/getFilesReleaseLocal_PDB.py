@@ -1,11 +1,11 @@
 import logging
 import os
-from typing import Optional, cast
+from typing import Optional
 
 from wwpdb.io.locator.localFTPPathInfo import LocalFTPPathInfo
 from wwpdb.utils.config.ConfigInfo import getSiteId
 
-from wwpdb.apps.val_rel.utils.getFilesReleaseBase import GetFilesReleaseBasePDB
+from wwpdb.apps.val_rel.utils.getFilesReleaseBase import GetFilesReleaseBasePDB, raise_no_pdb
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +37,9 @@ class getFilesReleaseLocal_PDB(GetFilesReleaseBasePDB):
         :param pdbid: PDB ID
         :return: file name if present or None
         """
+        if self.__pdb_id is None:
+            raise_no_pdb()
+
         file_path = self.__local_ftp.get_model_fname(accession=self.__pdb_id)
         logger.debug("checking local model filepath: %s", file_path)
         file_name = self.__check_filename(file_path)
@@ -49,6 +52,8 @@ class getFilesReleaseLocal_PDB(GetFilesReleaseBasePDB):
         :param pdbid: PDB ID
         :return: file name if present or None
         """
+        if self.__pdb_id is None:
+            raise_no_pdb()
 
         file_path = self.__local_ftp.get_structure_factors_fname(accession=self.__pdb_id)
         logger.debug("checking local structure factor filepath: %s", file_path)
@@ -63,6 +68,9 @@ class getFilesReleaseLocal_PDB(GetFilesReleaseBasePDB):
         :param pdbid: PDB ID
         :return: file name if present or None
         """
+        if self.__pdb_id is None:
+            raise_no_pdb()
+
         file_path = self.__local_ftp.get_chemical_shifts_fname(accession=self.__pdb_id)
         logger.debug("checking local chemical shift filepath: %s", file_path)
         file_name = self.__check_filename(file_path)
@@ -77,7 +85,9 @@ class getFilesReleaseLocal_PDB(GetFilesReleaseBasePDB):
         """
         file_path: Optional[str] = None
 
-        file_path = cast("str", self.__local_ftp.get_nmr_data_fname(accession=self.__pdb_id))
+        if self.__pdb_id is None:
+            raise_no_pdb()
+        file_path = self.__local_ftp.get_nmr_data_fname(accession=self.__pdb_id)
         logger.debug("checking local NMR data filepath: %s", file_path)
         file_name = self.__check_filename(file_path)
 

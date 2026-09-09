@@ -8,7 +8,8 @@ oslo_concurrency
 requests
 urllib3
 # wwpdb.apps.validation ~= 2.49
-wwpdb.io >=0.15, < 2.0
+wwpdb.io >=1.2, < 2.0
+# wwpdb.io @ git+https://github.com/wwPDB/py-wwpdb_io.git@val_rel
 wwpdb.utils.config >= 0.24
 wwpdb.utils.detach
 wwpdb.utils.dp

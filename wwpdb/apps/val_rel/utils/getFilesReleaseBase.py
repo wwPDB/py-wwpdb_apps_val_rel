@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import NoReturn, Optional
 
 
 class GetFilesReleaseBasePDB(ABC):
@@ -101,7 +101,7 @@ class GetFilesReleaseBaseEMDB(ABC):
 
     @abstractmethod
     def get_emdb_fsc(self) -> Optional[str]:
-        """Get the EMDB FSD file.
+        """Get the EMDB FSC file.
 
         Returns:
             File name if filename present or None
@@ -114,3 +114,21 @@ class GetFilesReleaseBaseEMDB(ABC):
         Returns:
             File name or path containing files
         """
+
+    @abstractmethod
+    def get_emdb_metadata(self) -> Optional[str]:
+        """Returs path to EMDB metadata file if present
+
+        Returns:
+            File name if present or none.
+        """
+
+
+def raise_no_emdb() -> NoReturn:
+    msg = "EMDB id not set"
+    raise ValueError(msg)
+
+
+def raise_no_pdb() -> NoReturn:
+    msg = "PDB id not set"
+    raise ValueError(msg)

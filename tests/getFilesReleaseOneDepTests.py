@@ -43,6 +43,7 @@ class GetFilesReleaseOneDepTests(unittest.TestCase):
         self.mock_rf.get_emdb_xml.return_value = "emd-1234_v3.xml"
         self.mock_rf.get_emdb_map.return_value = "emd_1234.map"
         self.mock_rf.get_emdb_fsc.return_value = "emd_1234_fsc.xml"
+        self.mock_rf.get_emdb_metadata.return_value = "emd-1234.cif.gz"
 
     def tearDown(self) -> None:
         shutil.rmtree(self.test_dir, ignore_errors=True)
@@ -173,6 +174,12 @@ class GetFilesReleaseOneDepTests(unittest.TestCase):
         gf = getFilesReleaseOneDep(pdb_id=None, emdb_id="EMD-1234", siteID=SITE_ID)
         expected = self._make_file(self.emd_current_path, "emd_1234_fsc.xml")
         ret = gf.get_emdb_fsc()
+        self.assertEqual(ret, (expected, True))
+
+    def test_get_emdb_metadata(self) -> None:
+        gf = getFilesReleaseOneDep(pdb_id=None, emdb_id="EMD-1234", siteID=SITE_ID)
+        expected = self._make_file(self.emd_current_path, "emd-1234.cif.gz")
+        ret = gf.get_emdb_metadata()
         self.assertEqual(ret, (expected, True))
 
 

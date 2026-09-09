@@ -44,6 +44,9 @@ class ConcreteGetFilesReleaseBaseEMDB(GetFilesReleaseBaseEMDB):
     def get_emdb_volume(self) -> Optional[str]:
         return None
 
+    def get_emdb_metadata(self) -> Optional[str]:
+        return None
+
 
 class GetFilesReleaseBasePDBTests(unittest.TestCase):
     def test_cannot_instantiate_abstract_class(self) -> None:

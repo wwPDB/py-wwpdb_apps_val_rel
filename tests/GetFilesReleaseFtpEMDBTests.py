@@ -1,6 +1,8 @@
+import os
 import shutil
 import tempfile
 import unittest
+from typing import cast
 from unittest.mock import patch
 
 if __package__ is None or __package__ == "":
@@ -94,9 +96,23 @@ class TestsGettingEMDBData(unittest.TestCase):
         self.assertIsNone(ret)
 
     def test_get_fsc_existing_emdb(self) -> None:
+        # Tests missing fsc data
         gfrf = getFilesReleaseFtpEMDB(emdbid="EMD-10316", local_ftp_emdb_path="")
         # gfrf.setup_local_temp_ftp(session_path=self.temp_folder)
         ret = gfrf.get_emdb_fsc()
+        self.assertIsNone(ret)
+
+    def test_get_metadata_existing_emdb(self) -> None:
+        gfrf = getFilesReleaseFtpEMDB(emdbid="EMD-0070")
+        gfrf.set_local_ftp_path("")
+        ret = gfrf.get_emdb_metadata()
+        self.assertIsNotNone(ret)
+        self.assertTrue(os.path.exists(cast("str", ret)), "Could not find metadata file")
+
+    def test_get_metadata_missing_existing_emdb(self) -> None:
+        gfrf = getFilesReleaseFtpEMDB(emdbid="EMD-0007")
+        gfrf.set_local_ftp_path("")
+        ret = gfrf.get_emdb_metadata()
         self.assertIsNone(ret)
 
 

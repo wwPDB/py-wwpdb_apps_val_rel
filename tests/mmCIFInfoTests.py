@@ -1,9 +1,15 @@
+import datetime
 import os
 import shutil
 import tempfile
 import unittest
 
-from wwpdb.apps.val_rel.utils.mmCIFInfo import is_simple_modification, mmCIFInfo
+from wwpdb.apps.val_rel.utils.mmCIFInfo import (
+    _parsedate,
+    is_simple_emdb_modification,
+    is_simple_modification,
+    mmCIFInfo,
+)
 
 
 class mmCIFInfoTests(unittest.TestCase):
@@ -104,7 +110,7 @@ loop_
 """
         self.write_mmcif()
         mf = mmCIFInfo(mmCIF_file=self.mmCIF_file)
-        cats, ordinal = mf.get_latest_modified_categories()
+        cats, ordinal = mf.get_latest_modified_categories()  # pylint: disable=unbalanced-tuple-unpacking
         self.assertTrue(cats == ["citation_author", "citation"])
         self.assertEqual(ordinal, "2")
 
@@ -117,14 +123,19 @@ loop_
     def test_get_latest_modified_categories_missing_returns_empty(self) -> None:
         self.write_mmcif()
         mf = mmCIFInfo(mmCIF_file=self.mmCIF_file)
-        cats, ordinal = mf.get_latest_modified_categories()
+        cats, ordinal = mf.get_latest_modified_categories()  # pylint: disable=unbalanced-tuple-unpacking
         self.assertTrue(cats == [])
         self.assertTrue(ordinal is None)
 
     def test_parse_mmcif_missing_file_returns_none(self) -> None:
         mf = mmCIFInfo(mmCIF_file=os.path.join(self.test_dir, "does_not_exist.cif"))
-        ret = mf.parse_mmcif()
-        self.assertTrue(ret is None)
+        with self.assertLogs("wwpdb.apps.val_rel.utils.mmCIFInfo", level="ERROR") as log, self.assertLogs(
+            "mmcif.io.IoAdapterBase", level="ERROR"
+        ) as log2:
+            ret = mf.parse_mmcif()
+            self.assertIsNone(ret)
+            self.assertIn("failed to parse", log.output[0])
+            self.assertIn("Missing file", log2.output[0])
 
     def test_get_modified_items(self) -> None:
         self.additional_content = """
@@ -243,6 +254,79 @@ loop_
 """
         self.write_mmcif()
         self.assertFalse(is_simple_modification(self.mmCIF_file))
+
+    def test_is_simple_modification_true_for_pdb_and_emdb_revisioncategory(self) -> None:
+        self.additional_content = """
+loop_
+    _pdbx_audit_revision_history.ordinal
+    _pdbx_audit_revision_history.data_content_type
+    _pdbx_audit_revision_history.major_revision
+    _pdbx_audit_revision_history.minor_revision
+    _pdbx_audit_revision_history.revision_date
+    1 'Structure model' 1 0 2017-03-01
+    2 'EM metadata'     1 0 2017-03-01
+#
+loop_
+    _pdbx_audit_revision_category.ordinal
+    _pdbx_audit_revision_category.revision_ordinal
+    _pdbx_audit_revision_category.data_content_type
+    _pdbx_audit_revision_category.category
+    1 1 'Structure Model' 'citation'
+#
+"""
+        self.write_mmcif()
+        self.assertTrue(is_simple_modification(self.mmCIF_file))
+
+    def test_is_simple_modification_true_for_emdb_revision_category(self) -> None:
+        self.additional_content = """
+loop_
+    _pdbx_audit_revision_history.ordinal
+    _pdbx_audit_revision_history.data_content_type
+    _pdbx_audit_revision_history.major_revision
+    _pdbx_audit_revision_history.minor_revision
+    _pdbx_audit_revision_history.revision_date
+    1 'Structure model' 1 0 2017-03-01
+    2 'EM metadata'     1 0 2017-03-01
+#
+loop_
+    _pdbx_audit_revision_category.ordinal
+    _pdbx_audit_revision_category.revision_ordinal
+    _pdbx_audit_revision_category.data_content_type
+    _pdbx_audit_revision_category.category
+    1 2 'EM metadata' 'citation'
+#
+"""
+        self.write_mmcif()
+        self.assertTrue(is_simple_emdb_modification(self.mmCIF_file))
+
+    def test_is_simple_modification_false_for_emdb_revision_category(self) -> None:
+        self.additional_content = """
+loop_
+    _pdbx_audit_revision_history.ordinal
+    _pdbx_audit_revision_history.data_content_type
+    _pdbx_audit_revision_history.major_revision
+    _pdbx_audit_revision_history.minor_revision
+    _pdbx_audit_revision_history.revision_date
+    1 'Structure model' 1 0 2017-03-01
+    2 'EM metadata'     1 0 2017-03-01
+#
+loop_
+    _pdbx_audit_revision_category.ordinal
+    _pdbx_audit_revision_category.revision_ordinal
+    _pdbx_audit_revision_category.data_content_type
+    _pdbx_audit_revision_category.category
+    1 2 'EM metadata' 'em_map'
+#
+"""
+        self.write_mmcif()
+        self.assertFalse(is_simple_emdb_modification(self.mmCIF_file))
+
+    def test_parsedate_valid_date(self) -> None:
+        date_str = "2023-06-15"
+        parsed_date = _parsedate(date_str)
+        self.assertEqual(parsed_date, datetime.date(2023, 6, 15))
+        parsed_date = _parsedate(".")
+        self.assertIsNone(parsed_date)
 
 
 if __name__ == "__main__":  # pragma: no cover

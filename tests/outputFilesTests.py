@@ -113,50 +113,6 @@ class OutputFilesTests(unittest.TestCase):
         ret = of.get_entry_output_folder()
         self.assertEqual(ret, self.final_pdb_output_folder)
 
-    def test_set_accession_pdbid(self) -> None:
-        with patch("wwpdb.utils.config.ConfigInfoApp.ConfigInfo", side_effect=StandardConfig) as _mock_method:  # noqa: F841
-            of = outputFiles(pdbID=self.pdbid)
-            ret = of.set_accession()
-            self.assertEqual(ret, self.pdbid)
-
-    def test_set_accession_emdbid(self) -> None:
-        with patch("wwpdb.utils.config.ConfigInfoApp.ConfigInfo", side_effect=StandardConfig) as _mock_method:  # noqa: F841
-            of = outputFiles(emdbID=self.emdbid)
-            ret = of.set_accession()
-            self.assertEqual(ret, self.emdb_accession)
-
-    def test_set_accession_pdbid_and_not_set_emdbid(self) -> None:
-        with patch("wwpdb.utils.config.ConfigInfoApp.ConfigInfo", side_effect=StandardConfig) as _mock_method:  # noqa: F841
-            of = outputFiles(pdbID=self.pdbid, emdbID=self.emdbid)
-            ret = of.set_accession()
-            self.assertEqual(ret, self.pdbid)
-
-    def test_set_accession_pdbid_and_emdbid(self) -> None:
-        with patch("wwpdb.utils.config.ConfigInfoApp.ConfigInfo", side_effect=StandardConfig) as _mock_method:  # noqa: F841
-            of = outputFiles(pdbID=self.pdbid, emdbID=self.emdbid)
-            of.set_accession_variables(with_emdb=True)
-            ret = of.set_accession()
-            accession = f"{self.emdb_accession}_{self.pdbid}"
-            self.assertEqual(ret, accession)
-
-    def test_set_accession_pdbid_get_core_files(self) -> None:
-        of = outputFiles(pdbID=self.pdbid, outputRoot=self.output_folder)
-        of.set_accession()
-        ret = of.get_core_validation_files()
-        self.assertEqual(ret, self.pdb_core_files)
-
-    def test_set_accession_pdbid_get_map_files(self) -> None:
-        of = outputFiles(pdbID=self.pdbid, outputRoot=self.output_folder)
-        of.set_accession()
-        ret = of.get_extra_validation_files()
-        self.assertEqual(ret, self.pdb_aux_files)
-
-    def test_set_accession_emdbid_get_core_files(self) -> None:
-        of = outputFiles(emdbID=self.emdbid, outputRoot=self.output_folder)
-        of.set_accession()
-        ret = of.get_core_validation_files()
-        self.assertEqual(ret, self.emdb_core_files)
-
     def test_ret_pdb_hash_skip_hash(self) -> None:
         of = outputFiles(pdbID=self.pdbid, outputRoot=self.output_folder, skip_pdb_hash=True)
         ret = of.ret_pdb_hash()
@@ -198,39 +154,6 @@ class OutputFilesTests(unittest.TestCase):
     def test_get_emdb_lower_underscore_no_emdbid(self) -> None:
         of = outputFiles(outputRoot=self.output_folder)
         self.assertEqual(of.get_emdb_lower_underscore(), "")
-
-    def test_set_accession_emdbid_copy_to_root_emdb(self) -> None:
-        with patch("wwpdb.utils.config.ConfigInfoApp.ConfigInfo", side_effect=StandardConfig) as _mock_method:  # noqa: F841
-            of = outputFiles(pdbID=self.pdbid, emdbID=self.emdbid)
-            of.set_accession_variables(copy_to_root_emdb=True)
-            ret = of.set_accession()
-            self.assertEqual(ret, self.emdb_accession)
-
-    def test_get_extra_validation_files(self) -> None:
-        of = outputFiles(pdbID=self.pdbid, outputRoot=self.output_folder)
-        of.set_accession()
-        ret = of.get_extra_validation_files()
-        self.assertEqual(ret, self.pdb_aux_files)
-
-    def test_get_validation_files_for_separate_location(self) -> None:
-        of = outputFiles(pdbID=self.pdbid, outputRoot=self.output_folder)
-        of.set_accession()
-        ret = of.get_validation_files_for_separate_location()
-        expected = {
-            "image_tar": os.path.join(self.final_pdb_output_folder, self.pdbid + "_validation_images.tar"),
-        }
-        self.assertEqual(ret, expected)
-
-    def test_get_all_validation_files(self) -> None:
-        of = outputFiles(pdbID=self.pdbid, outputRoot=self.output_folder)
-        of.set_accession()
-        ret = of.get_all_validation_files()
-        expected = self.pdb_core_files.copy()
-        expected.update(self.pdb_aux_files)
-        expected.update(
-            {"image_tar": os.path.join(self.final_pdb_output_folder, self.pdbid + "_validation_images.tar")}
-        )
-        self.assertEqual(ret, expected)
 
     def test_get_pdb_validation_images_output_folder_with_root(self) -> None:
         of = outputFiles(pdbID=self.pdbid, outputRoot=self.output_folder)

@@ -63,9 +63,11 @@ class CheckResultTests(unittest.TestCase):
         validation_xml: Any = None,
         output_files: Any = None,
         entry_id: str = "1abc",
+        em_meta_path: Any = None,
     ) -> None:
         self.mock_rv.getModelPath.return_value = model_path
         self.mock_rv.getEMXMLPath.return_value = em_xml_path
+        self.mock_rv.getEMMetadataPath.return_value = em_meta_path
         self.mock_rv.getValidationXml.return_value = validation_xml
         self.mock_rv.getCoreOutputFileDict.return_value = output_files or {}
         self.mock_rv.getEntryId.return_value = entry_id
@@ -126,11 +128,11 @@ class CheckResultTests(unittest.TestCase):
         self.mock_rv.getModelPath.assert_called_once()
         self.mock_rv.getEMXMLPath.assert_not_called()
 
-    def test_check_entry_gets_em_xml_path_only_for_emdb(self) -> None:
-        self._configure_rv(model_path=None, em_xml_path="emd.xml", output_files={})
+    def test_check_entry_gets_em_meta_path_only_for_emdb(self) -> None:
+        self._configure_rv(model_path=None, em_meta_path="emd_metadata.cif", output_files={})
         cr = CheckResult(pdbid=None, emdbid="EMD-1234")
         cr.check_entry()
-        self.mock_rv.getEMXMLPath.assert_called_once()
+        self.mock_rv.getEMMetadataPath.assert_called_once()
         self.mock_rv.getModelPath.assert_not_called()
 
     def test_check_entry_simple_modification_skips_file_checks(self) -> None:
@@ -142,12 +144,12 @@ class CheckResultTests(unittest.TestCase):
         self.assertEqual(cr.get_missing_files(), {})
         self.mock_xml_reader_class.assert_not_called()
 
-    def test_check_entry_not_simple_modification_when_em_xml_present(self) -> None:
+    def test_check_entry_simple_modification_when_em_metadata_present(self) -> None:
         # simple_modification is only computed when model_file is truthy and em_xml_file is falsy
-        self._configure_rv(model_path="model.cif", em_xml_path="emd.xml", output_files={})
+        self._configure_rv(model_path="model.cif", em_meta_path="emd_metadata.cif", output_files={})
         cr = CheckResult(pdbid="1abc", emdbid="EMD-1234")
         cr.check_entry()
-        self.mock_is_simple_modification.assert_not_called()
+        self.mock_is_simple_modification.assert_called()
 
     # -- check_entry: expected/missing file bookkeeping ------------------------
 

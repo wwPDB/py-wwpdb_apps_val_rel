@@ -12,7 +12,7 @@ from wwpdb.apps.val_rel.utils.ftp_protocol.getRemoteFilesFTP import (
     remove_local_temp_ftp,
     setup_local_temp_ftp,
 )
-from wwpdb.apps.val_rel.utils.getFilesReleaseBase import GetFilesReleaseBasePDB
+from wwpdb.apps.val_rel.utils.getFilesReleaseBase import GetFilesReleaseBasePDB, raise_no_pdb
 
 logger = logging.getLogger(__name__)
 
@@ -113,6 +113,9 @@ class getFilesReleaseFtpPDB(GetFilesReleaseBasePDB):
         :param pdbid: PDB ID
         :return: file name if present or None
         """
+        if self.__pdb_id is None:
+            raise_no_pdb()
+
         fpart = self.__rf.get_model(accession=self.__pdb_id, for_release=False)
         file_name = self.get_remote_ftp_file(file_path=self.__remote_ftp.get_model_path(), filename=fpart)
         logger.debug("final model filepath: %s", file_name)
@@ -124,6 +127,9 @@ class getFilesReleaseFtpPDB(GetFilesReleaseBasePDB):
         :param pdbid: PDB ID
         :return: file name if present or None
         """
+        if self.__pdb_id is None:
+            raise_no_pdb()
+
         fpart = self.__rf.get_structure_factor(accession=self.__pdb_id, for_release=False)
         file_name = self.get_remote_ftp_file(file_path=self.__remote_ftp.get_sf_path(), filename=fpart)
         logger.debug("final structure factor filepath: %s", file_name)
@@ -135,7 +141,9 @@ class getFilesReleaseFtpPDB(GetFilesReleaseBasePDB):
         :param pdbid: PDB ID
         :return: file name if present or None
         """
-        # file_path = os.path.join(self.get_temp_local_ftp_path(), fpart)
+        if self.__pdb_id is None:
+            raise_no_pdb()
+
         fpart = self.__rf.get_chemical_shifts(accession=self.__pdb_id, for_release=False)
         file_name = self.get_remote_ftp_file(file_path=self.__remote_ftp.get_cs_path(), filename=fpart)
         logger.debug("final chemical shift filepath: %s", file_name)
@@ -147,6 +155,9 @@ class getFilesReleaseFtpPDB(GetFilesReleaseBasePDB):
         :param pdbid: PDB ID
         :return: file name if present or None
         """
+        if self.__pdb_id is None:
+            raise_no_pdb()
+
         fpart = self.__rf.get_nmr_data(accession=self.__pdb_id, for_release=False)
         file_name = self.get_remote_ftp_file(file_path=self.__remote_ftp.get_nmr_data_path(), filename=fpart)
 
