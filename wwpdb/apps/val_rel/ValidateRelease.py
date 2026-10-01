@@ -75,8 +75,8 @@ class runValidation:
         self.__setupRelFiles(True)
 
     def __setupRelFiles(self, init: bool = False) -> None:
-        if not init and self.__rel_files:
-            self.__rel_files.close_connections()
+        if not init and self.__rel_files:  # pylint: disable=access-member-before-definition  # This is false as init will be True on firsst use
+            self.__rel_files.close_connections()  # pylint: disable=access-member-before-definition  
         self.__rel_files = getFilesRelease(siteID=self.__siteID, cache=self.__cachedir)
 
     def setOutputRoot(self, outdir: str) -> None:
