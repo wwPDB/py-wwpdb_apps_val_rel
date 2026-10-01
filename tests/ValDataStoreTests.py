@@ -3,10 +3,13 @@ import os
 import shutil
 import tempfile
 import unittest
+from unittest.mock import MagicMock, call, patch
 
 from wwpdb.apps.val_rel.utils.ValDataStore import ValDataStore
 
 logger = logging.getLogger()
+
+MODULE = "wwpdb.apps.val_rel.utils.ValDataStore"
 
 
 class ValDataStoreTests(unittest.TestCase):
@@ -51,6 +54,47 @@ class ValDataStoreTests(unittest.TestCase):
 
         self.assertTrue(v1.setValidationRunning(True))
         self.assertFalse(v2.isValidationRunning())
+
+    def testEnsureSessionDirCreatesMissingDir(self) -> None:
+        v = ValDataStore(self.entry, self.sessiondir)
+        shutil.rmtree(self.sessiondir)
+        ensure = v._ensureSessionDir  # noqa: SLF001  pylint: disable=protected-access
+        with patch.object(v, "_ensureSessionDir", wraps=ensure) as mockEnsure, patch(
+            MODULE + ".os.makedirs", wraps=os.makedirs
+        ) as mockMakedirs:
+            self.assertTrue(v.setValidationRunning(True))
+        mockEnsure.assert_called_once_with()
+        # oslo_concurrency file locking in ServiceDataStore may also call os.makedirs for its lock directory
+        self.assertEqual(mockMakedirs.call_args_list.count(call(self.sessiondir, exist_ok=True)), 1)
+        self.assertTrue(os.path.isdir(self.sessiondir))
+
+    def testEnsureSessionDirSkipsExistingDir(self) -> None:
+        v = ValDataStore(self.entry, self.sessiondir)
+        ensure = v._ensureSessionDir  # noqa: SLF001  pylint: disable=protected-access
+        with patch.object(v, "_ensureSessionDir", wraps=ensure) as mockEnsure, patch(
+            MODULE + ".os.makedirs", wraps=os.makedirs
+        ) as mockMakedirs:
+            self.assertFalse(v.isValidationRunning())
+        mockEnsure.assert_called_once_with()
+        # oslo_concurrency file locking in ServiceDataStore may also call os.makedirs for its lock directory
+        self.assertNotIn(self.sessiondir, [c.args[0] for c in mockMakedirs.call_args_list])
+
+    def testStatusMethodsEnsureSessionDir(self) -> None:
+        v = ValDataStore(self.entry, self.sessiondir)
+        mockEnsure = MagicMock()
+        with patch.object(v, "_ensureSessionDir", mockEnsure):
+            v.isValidationRunning()
+            self.assertEqual(mockEnsure.call_count, 1)
+            v.setValidationRunning(True)
+            self.assertEqual(mockEnsure.call_count, 2)
+
+    def testSessionDirRecreatedAfterRemoval(self) -> None:
+        v = ValDataStore(self.entry, self.sessiondir)
+        shutil.rmtree(self.sessiondir)
+        self.assertFalse(os.path.isdir(self.sessiondir))
+        self.assertTrue(v.setValidationRunning(True))
+        self.assertTrue(os.path.isdir(self.sessiondir))
+        self.assertTrue(v.isValidationRunning())
 
 
 if __name__ == "__main__":  # pragma: no cover

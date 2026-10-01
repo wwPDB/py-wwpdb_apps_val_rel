@@ -12,7 +12,7 @@ logger = logging.getLogger()
 
 
 class ValDataStore:
-    def __init__(self, entryid: str, sessiondir: str):
+    def __init__(self, entryid: str, sessiondir: str) -> None:
         self.__sessiondir = sessiondir
         self.__sds = ServiceDataStore(self.__sessiondir, entryid)
         # Create empty state if does not exist
@@ -24,8 +24,14 @@ class ValDataStore:
     def getDictionary(self) -> Dict[str, str]:
         return cast("Dict[str, str]", self.__sds.getDictionary())
 
+    def _ensureSessionDir(self) -> None:
+        """Creates the session directory if it does not exist"""
+        if not os.path.isdir(self.__sessiondir):
+            os.makedirs(self.__sessiondir, exist_ok=True)
+
     def isValidationRunning(self) -> bool:
         """Returns True is a validation report generation is running"""
+        self._ensureSessionDir()
         val = self.__sds.get("status")
         if val == "running":
             return True
@@ -33,6 +39,7 @@ class ValDataStore:
 
     def setValidationRunning(self, state: bool) -> bool:
         """Sets the status of if a validation run is in action"""
+        self._ensureSessionDir()
         if state:
             val = "running"
         else:
