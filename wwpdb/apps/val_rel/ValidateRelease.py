@@ -49,7 +49,7 @@ class runValidation:
         self.__emMetadataFile: File = File()
         self.__volFile: File = File()
         self.__fscFile: File = File()
-        self.__sessionPath = None
+        self.__sessionPath: Optional[str] = None
         # self.contour_level = None # not needed as its in the xml
         self.__entry_output_folder: Optional[str] = None
         self.__temp_output_dir: Optional[str] = None

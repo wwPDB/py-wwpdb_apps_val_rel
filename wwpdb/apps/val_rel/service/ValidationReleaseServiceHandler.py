@@ -153,7 +153,7 @@ class MessageSubscriberWorker:
         self.__subscriber.stop()
 
 
-class MyDetachedProcess(DetachedProcessBase):  # type: ignore[misc]
+class MyDetachedProcess(DetachedProcessBase):
     """This class implements the run() method of the DetachedProcessBase() utility class.
 
     Illustrates the use of python logging and various I/O channels in detached process.
@@ -193,12 +193,13 @@ class MyDetachedProcess(DetachedProcessBase):  # type: ignore[misc]
         logger.info("STARTING detached run method")
         self.__mcw.run()
 
-    def suspend(self) -> None:
+    def suspend(self) -> bool:
         logger.info("SUSPENDING detached process")
         try:
             self.__mcw.suspend()
         except Exception as e:  # noqa: BLE001
             logger.error("SUSPENDING failed %r", str(e))
+        return True
 
 
 def main() -> None:
