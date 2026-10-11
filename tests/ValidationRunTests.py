@@ -3,15 +3,13 @@ import shutil
 import sys
 import tempfile
 import unittest
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, cast
 from unittest.mock import MagicMock, call, patch
 
-from wwpdb.apps.val_rel.utils.ValidationRun import ValidationRun
+from wwpdb.apps.val_rel.utils.ValidationRun import ValidationRun, ValidationRunData
 
 SITE_ID = "WWPDB_DEPLOY_TEST"
 MODULE = "wwpdb.apps.val_rel.utils.ValidationRun"
-
-DDType = Dict[str, Union[Optional[str], Dict[str, str], bool]]
 
 
 class ValidationRunTests(unittest.TestCase):
@@ -48,8 +46,8 @@ class ValidationRunTests(unittest.TestCase):
             fout.write("data")
         return path
 
-    def _make_dD(self, **overrides: Any) -> DDType:
-        dD: DDType = {
+    def _make_dD(self, **overrides: Any) -> ValidationRunData:
+        dD: ValidationRunData = {
             "model": "model.cif",
             "sf": None,
             "cs": None,
@@ -67,8 +65,7 @@ class ValidationRunTests(unittest.TestCase):
             "outfiledict": {},
             "entry_output_folder": self.test_dir,
         }
-        dD.update(overrides)
-        return dD
+        return cast("ValidationRunData", {**dD, **overrides})
 
     def _addinput_calls(self) -> List[Dict[str, Any]]:
         return [c.kwargs for c in self.mock_vw.addInput.call_args_list]
@@ -78,6 +75,14 @@ class ValidationRunTests(unittest.TestCase):
     def test_constructor_reads_val_config(self) -> None:
         ValidationRun(siteId=SITE_ID)
         self.mock_vc_class.assert_called_once_with(SITE_ID)
+
+    def test_constructor_none_site_id_uses_default(self) -> None:
+        with patch(f"{MODULE}.getSiteId", return_value="DEFAULT_SITE") as mock_get:
+            vr = ValidationRun(siteId=None)
+        mock_get.assert_called_once_with()
+        self.mock_vc_class.assert_called_once_with("DEFAULT_SITE")
+        vr.run(self._make_dD())
+        self.assertEqual(self.mock_vw_class.call_args.kwargs["siteId"], "DEFAULT_SITE")
 
     # -- ValidationWrapper construction ------------------------------------
 

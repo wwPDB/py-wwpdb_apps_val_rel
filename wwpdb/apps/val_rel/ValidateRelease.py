@@ -20,7 +20,7 @@ from wwpdb.apps.val_rel.utils.getFilesRelease import File, FileContext, FileSour
 from wwpdb.apps.val_rel.utils.mmCIFInfo import is_simple_emdb_modification, is_simple_modification, mmCIFInfo
 from wwpdb.apps.val_rel.utils.outputFiles import outputFiles
 from wwpdb.apps.val_rel.utils.ValDataStore import ValDataStore
-from wwpdb.apps.val_rel.utils.ValidationRun import ValidationRun
+from wwpdb.apps.val_rel.utils.ValidationRun import ValidationRun, ValidationRunData
 from wwpdb.apps.val_rel.utils.XmlInfo import XmlInfo
 
 MessageType = Dict[str, Union[Optional[str], bool]]
@@ -628,7 +628,7 @@ class runValidation:
             logger.info("pdb_id: %s", self.__pdbid)
             logger.info("emdb_id: %s", self.__emdbid)
 
-            data_dict = {
+            data_dict: ValidationRunData = {
                 "model": self.__modelFile.path,
                 "sf": self.__sfFile.path,
                 "cs": csPath,

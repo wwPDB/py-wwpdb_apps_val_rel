@@ -54,7 +54,7 @@ class PersistFileCache:
         cache_path = os.path.normpath(os.path.join(cd, bname))
         return cache_path
 
-    @lockutils.synchronized("sessiondatastore.lock", external=True)  # type: ignore[untyped-decorator,unused-ignore]
+    @lockutils.synchronized("sessiondatastore.lock", external=True)  # type: ignore[untyped-decorator,misc,unused-ignore]
     def add_file(self, realfpath: str, fpath: str) -> bool:
         """Adds the contents of realfpath to the cache as fpath.
         Overwrites if present.
@@ -76,7 +76,7 @@ class PersistFileCache:
 
         return True
 
-    @lockutils.synchronized("sessiondatastore.lock", external=True)  # type: ignore[untyped-decorator,unused-ignore]
+    @lockutils.synchronized("sessiondatastore.lock", external=True)  # type: ignore[untyped-decorator,misc,unused-ignore]
     def get_file(self, fpath: str, realfpath: str, symlink: bool = False) -> bool:
         """Retrieves fpath from the cache and copies it to realfpath
         If fpath is not in cache, returns False, else True.
@@ -101,7 +101,7 @@ class PersistFileCache:
             df.copy(dstPath=realfpath)
         return True
 
-    @lockutils.synchronized("sessiondatastore.lock", external=True)  # type: ignore[untyped-decorator,unused-ignore]
+    @lockutils.synchronized("sessiondatastore.lock", external=True)  # type: ignore[untyped-decorator,misc,unused-ignore]
     def exists(self, fpath: str) -> bool:
         """Returns True if fpath in cache, else False"""
         cache_file = self.__getcachefile(fpath)
@@ -135,7 +135,7 @@ class PersistFileCache:
             json.dump(mlist, fout)
         return True
 
-    @lockutils.synchronized("sessiondatastore.lock", external=True)  # type: ignore[untyped-decorator,unused-ignore]
+    @lockutils.synchronized("sessiondatastore.lock", external=True)  # type: ignore[untyped-decorator,misc,unused-ignore]
     def add_negative_cache(self, fpath: str) -> bool:
         cache_dir = self.__getcachedir(fpath)
 
@@ -156,7 +156,7 @@ class PersistFileCache:
 
         return ret
 
-    @lockutils.synchronized("sessiondatastore.lock", external=True)  # type: ignore[untyped-decorator,unused-ignore]
+    @lockutils.synchronized("sessiondatastore.lock", external=True)  # type: ignore[untyped-decorator,misc,unused-ignore]
     def is_negative_cache(self, fpath: str) -> bool:
         mlist = self.__getmissinglist(fpath)
 
@@ -165,7 +165,7 @@ class PersistFileCache:
             return True
         return False
 
-    @lockutils.synchronized("sessiondatastore.lock", external=True)  # type: ignore[untyped-decorator,unused-ignore]
+    @lockutils.synchronized("sessiondatastore.lock", external=True)  # type: ignore[untyped-decorator,misc,unused-ignore]
     def cache_file_status(self, fpath: str) -> Optional[bool]:
         """Returns one of three statuses for fpath
         True if have a file

@@ -1,8 +1,9 @@
 import logging
 import os
 import sys
-from typing import Dict, List, Optional, TextIO, Union, cast
+from typing import Dict, List, Optional, TextIO, TypedDict, cast
 
+from wwpdb.utils.config.ConfigInfo import getSiteId
 from wwpdb.utils.dp.ValidationWrapper import ValidationWrapper
 
 from wwpdb.apps.val_rel.config.ValConfig import ValConfig
@@ -10,31 +11,54 @@ from wwpdb.apps.val_rel.config.ValConfig import ValConfig
 logger = logging.getLogger(__name__)
 
 
+class ValidationRunData(TypedDict):
+    """Input data for ValidationRun.run()"""
+
+    model: Optional[str]
+    sf: Optional[str]
+    cs: Optional[str]
+    res: Optional[str]
+    emvol: Optional[str]
+    emxml: Optional[str]
+    pdb_id: Optional[str]
+    emdb_id: Optional[str]
+    tempDir: Optional[str]
+    entry_id: Optional[str]
+    rundir: Optional[str]
+    fsc: Optional[str]
+    keeplog: bool
+    logpath: Optional[str]
+    outfiledict: Dict[str, str]
+    entry_output_folder: Optional[str]
+
+
 class ValidationRun:
     def __init__(self, siteId: Optional[str], verbose: bool = False, log: TextIO = sys.stderr) -> None:  # noqa: ARG002 pylint: disable=unused-argument
-        self.__siteid = siteId
+        if siteId is None:
+            siteId = getSiteId()
+        self.__siteid: str = siteId
         # self.__verbose = verbose
         vc = ValConfig(self.__siteid)
         self.__disablemulti = vc.val_disable_multithread
 
-    def run(self, dD: Dict[str, Union[Optional[str], Dict[str, str], bool]]) -> List[Optional[str]]:
+    def run(self, dD: ValidationRunData) -> List[Optional[str]]:
         """Produces a validation report based on data in the dD dictionry"""
 
-        model = cast("Optional[str]", dD.get("model"))
-        sfPath = cast("Optional[str]", dD.get("sf"))
-        csPath = cast("Optional[str]", dD.get("cs"))
-        resPath = cast("Optional[str]", dD.get("res"))
-        volPath = cast("Optional[str]", dD.get("emvol"))
-        emXmlPath = cast("Optional[str]", dD.get("emxml"))
-        pdbid = cast("Optional[str]", dD.get("pdb_id"))
-        emdbid = cast("Optional[str]", dD.get("emdb_id"))
-        tempDir = dD.get("tempDir")
-        entry_id = dD.get("entry_id")
-        run_dir = dD.get("rundir")
-        fscPath = cast("Optional[str]", dD.get("fsc"))
-        keepLog = dD.get("keeplog")
-        logPath = dD.get("logpath")
-        output_file_dict = cast("Dict[str, str]", dD["outfiledict"])
+        model = dD["model"]
+        sfPath = dD["sf"]
+        csPath = dD["cs"]
+        resPath = dD["res"]
+        volPath = dD["emvol"]
+        emXmlPath = dD["emxml"]
+        pdbid = dD["pdb_id"]
+        emdbid = dD["emdb_id"]
+        tempDir = dD["tempDir"]
+        entry_id = dD["entry_id"]
+        run_dir = dD["rundir"]
+        fscPath = dD["fsc"]
+        keepLog = dD["keeplog"]
+        logPath = dD["logpath"]
+        output_file_dict = dD["outfiledict"]
         entry_output_folder = dD["entry_output_folder"]
 
         logger.info("input files")
@@ -100,7 +124,7 @@ class ValidationRun:
         logger.info(output_file_list)
         logger.info(output_file_dict)
 
-        ok = vw.expList(dstPathList=output_file_list)
+        ok = vw.expList(dstPathList=cast(List[str], output_file_list))
         if not ok:
             logger.error("failed to copy files from %s to %s", run_dir, entry_output_folder)
 
