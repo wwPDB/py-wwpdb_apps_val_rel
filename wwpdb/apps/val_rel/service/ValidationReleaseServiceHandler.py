@@ -41,11 +41,11 @@ logging.basicConfig(
 logging.getLogger("pika").setLevel(logging.INFO)
 
 
-class MessageConsumer(MessageConsumerBase):  # type: ignore[misc]
+class MessageConsumer(MessageConsumerBase):
     def __init__(self, amqpUrl: str, priority: bool) -> None:
         super(MessageConsumer, self).__init__(amqpUrl, priority)
 
-    def workerMethod(self, msgBody: str, deliveryTag: Optional[str] = None) -> bool:  # noqa: ARG002
+    def workerMethod(self, msgBody: bytes, deliveryTag: Optional[int] = None) -> bool:  # noqa: ARG002
         try:
             logger.debug("Message body %r", msgBody)
             pD = json.loads(msgBody)
@@ -62,11 +62,11 @@ class MessageConsumer(MessageConsumerBase):  # type: ignore[misc]
         return successFlag
 
 
-class MessageSubscriber(MessageSubscriberBase):  # type: ignore[misc]
+class MessageSubscriber(MessageSubscriberBase):
     def __init__(self, amqpUrl: str) -> None:
         super(MessageSubscriber, self).__init__(amqpUrl)
 
-    def workerMethod(self, msgBody: str, deliveryTag: Optional[str] = None) -> bool:  # noqa: ARG002
+    def workerMethod(self, msgBody: bytes, deliveryTag: Optional[int] = None) -> bool:  # noqa: ARG002
         try:
             logger.debug("Message body %r", msgBody)
             pD = json.loads(msgBody)
@@ -92,6 +92,9 @@ class MessageConsumerWorker:
     def __setup(self) -> None:
         mqc = MessageQueueConnection()
         url = mqc._getDefaultConnectionUrl()  # noqa: SLF001  pylint: disable=protected-access
+        if url is None:
+            emsg = "Message queue connection URL is not configured"
+            raise RuntimeError(emsg)
         self.__mc = MessageConsumer(amqpUrl=url, priority=self.__priority)
         vc = ValConfig(self.__siteID)
         self.__mc.setQueue(queueName=vc.queue_name, routingKey=vc.routing_key)
@@ -128,6 +131,9 @@ class MessageSubscriberWorker:
         # No siteID available in the API
         mqc = MessageQueueConnection()
         url = mqc._getDefaultConnectionUrl()  # noqa: SLF001 pylint: disable=protected-access
+        if url is None:
+            emsg = "Message queue connection URL is not configured"
+            raise RuntimeError(emsg)
         self.__subscriber = MessageSubscriber(amqpUrl=url)
         self.__subscriber.add_exchange(self.__exchange_name)
 

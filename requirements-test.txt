@@ -13,7 +13,7 @@ wwpdb.io >=1.2, < 2.0
 wwpdb.utils.config >= 0.24
 wwpdb.utils.detach
 wwpdb.utils.dp
-wwpdb.utils.message_queue ~= 0.6
+wwpdb.utils.message_queue ~= 0.8
 wwpdb.utils.nmr
 wwpdb.utils.session
 wwpdb.utils.ws_utils

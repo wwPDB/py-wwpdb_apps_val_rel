@@ -124,7 +124,7 @@ class ValidationRun:
         logger.info(output_file_list)
         logger.info(output_file_dict)
 
-        ok = vw.expList(dstPathList=cast(List[str], output_file_list))
+        ok = vw.expList(dstPathList=cast("List[str]", output_file_list))
         if not ok:
             logger.error("failed to copy files from %s to %s", run_dir, entry_output_folder)
 

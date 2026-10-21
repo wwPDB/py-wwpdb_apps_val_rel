@@ -44,4 +44,5 @@ class ValDataStore:
             val = "running"
         else:
             val = "idle"
-        return cast("bool", self.__sds.set("status", val, overWrite=True))
+        ret: bool = self.__sds.set("status", val, overWrite=True)  # converts Any to bool
+        return ret

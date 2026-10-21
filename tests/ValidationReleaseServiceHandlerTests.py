@@ -30,18 +30,18 @@ class MessageConsumerWorkerMethodTests(unittest.TestCase):
         self.consumer = MessageConsumer(amqpUrl="amqp://unused", priority=False)
 
     def test_invalid_json_returns_false(self) -> None:
-        ret = self.consumer.workerMethod("not json")
+        ret = self.consumer.workerMethod(b"not json")
         self.assertFalse(ret)
         self.mock_rv_class.assert_not_called()
 
     def test_valid_json_runs_validation_and_returns_true(self) -> None:
-        ret = self.consumer.workerMethod('{"pdbID": "1abc"}')
+        ret = self.consumer.workerMethod(b'{"pdbID": "1abc"}')
         self.assertTrue(ret)
         self.mock_rv.run_process.assert_called_once_with({"pdbID": "1abc"})
 
     def test_run_process_exception_is_caught_and_still_returns_true(self) -> None:
         self.mock_rv.run_process.side_effect = RuntimeError("boom")
-        ret = self.consumer.workerMethod('{"pdbID": "1abc"}')
+        ret = self.consumer.workerMethod(b'{"pdbID": "1abc"}')
         self.assertTrue(ret)
 
 
@@ -69,18 +69,18 @@ class MessageSubscriberWorkerMethodTests(unittest.TestCase):
         self.subscriber = MessageSubscriber(amqpUrl="amqp://unused")
 
     def test_invalid_json_returns_false(self) -> None:
-        ret = self.subscriber.workerMethod("not json")
+        ret = self.subscriber.workerMethod(b"not json")
         self.assertFalse(ret)
         self.mock_rv_class.assert_not_called()
 
     def test_valid_json_runs_validation_and_returns_true(self) -> None:
-        ret = self.subscriber.workerMethod('{"emdbID": "EMD-1234"}')
+        ret = self.subscriber.workerMethod(b'{"emdbID": "EMD-1234"}')
         self.assertTrue(ret)
         self.mock_rv.run_process.assert_called_once_with({"emdbID": "EMD-1234"})
 
     def test_run_process_exception_is_caught_and_still_returns_true(self) -> None:
         self.mock_rv.run_process.side_effect = RuntimeError("boom")
-        ret = self.subscriber.workerMethod('{"emdbID": "EMD-1234"}')
+        ret = self.subscriber.workerMethod(b'{"emdbID": "EMD-1234"}')
         self.assertTrue(ret)
 
 
@@ -116,6 +116,12 @@ class MessageConsumerWorkerTests(unittest.TestCase):
     def test_setup_builds_consumer_with_resolved_url_and_priority(self) -> None:
         MessageConsumerWorker(siteID=SITE_ID, priority=True)
         self.mock_mc_class.assert_called_once_with(amqpUrl="amqp://resolved", priority=True)
+
+    def test_setup_raises_when_no_connection_url(self) -> None:
+        self.mock_mqc._getDefaultConnectionUrl.return_value = None  # noqa: SLF001 pylint: disable=protected-access
+        with self.assertRaises(RuntimeError):
+            MessageConsumerWorker(siteID=SITE_ID)
+        self.mock_mc_class.assert_not_called()
 
     def test_setup_configures_queue_and_exchange_from_val_config(self) -> None:
         MessageConsumerWorker(siteID=SITE_ID)
@@ -163,6 +169,12 @@ class MessageSubscriberWorkerTests(unittest.TestCase):
         MessageSubscriberWorker(siteID=SITE_ID, exchange_name="some_exchange")
         self.mock_ms_class.assert_called_once_with(amqpUrl="amqp://resolved")
         self.mock_ms.add_exchange.assert_called_once_with("some_exchange")
+
+    def test_setup_raises_when_no_connection_url(self) -> None:
+        self.mock_mqc._getDefaultConnectionUrl.return_value = None  # noqa: SLF001 pylint: disable=protected-access
+        with self.assertRaises(RuntimeError):
+            MessageSubscriberWorker(siteID=SITE_ID, exchange_name="some_exchange")
+        self.mock_ms_class.assert_not_called()
 
     def test_run_calls_subscriber_run(self) -> None:
         worker = MessageSubscriberWorker(siteID=SITE_ID, exchange_name="some_exchange")
