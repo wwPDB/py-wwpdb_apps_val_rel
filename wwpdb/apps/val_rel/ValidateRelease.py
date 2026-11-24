@@ -383,13 +383,15 @@ class runValidation:
 
             cf = mmCIFInfo(cast("str", self.__modelFile.path))
             exp_methods = cf.get_exp_methods()
-            if self.exptl_is_em(exp_methods) and not self.__skip_emdb:
-                # Setup to run map side as well
+            if self.exptl_is_em(exp_methods):
+                # Setup to run map side at well
                 if not self.__emdbid:
                     self.__emdbid = cf.get_associated_emdb()
                     run_emdb.append(self.__emdbid)
                     run_emdb_and_pdbid.append(self.get_emdb_pdb_string())
-                    run_map_only = True
+                    if not self.__skip_emdb:
+                        # Skip triggered EM map only calculation.
+                        run_map_only = True
 
             run_pdb.append(self.__pdbid)
             sds = ValDataStore(self.__pdbid, self.__statefolder)
@@ -746,6 +748,9 @@ def generate_message(args: Dict[str, Any]) -> MessageType:
     if args.get("nocache"):
         message["nocache"] = args["nocache"]
 
+    if args.get("skip_emdb"):
+        message["skip_emdb"] = args["skip_emdb"]
+
     return message
 
 
@@ -772,6 +777,9 @@ def main() -> None:
     parser.add_argument("--always_recalculate", help="always recalculate", action="store_true")
     parser.add_argument("--keep_log", help="keep the log file from validation", action="store_true")
     parser.add_argument("--nocache", help="Do not use the FTP cache", action="store_true")
+    parser.add_argument(
+        "--skip_emdb", help="Prevent PDB validation from triggering map only report", action="store_true"
+    )
     parser.add_argument("--remove_files", help="clear out the existing files for a validation run", action="store_true")
     parser.add_argument("--validation_sub_folder", help="validation subfolder", type=str, default="current")
     args = parser.parse_args()

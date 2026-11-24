@@ -273,16 +273,18 @@ class RunProcessTests(BaseValidateReleaseTest):
         self.assertEqual(rv.getEMDBId(), "EMD-9999")
         self.assertEqual(mock_run_validation.call_count, 2)
 
-    def test_run_process_pdb_skip_emdb_flag_prevents_association(self) -> None:
+    def test_run_process_pdb_skip_emdb_flag_skips_map_only(self) -> None:
+        # skip_emdb still associates the EMDB id, but suppresses the triggered map-only run
         rv = runValidation()
-        with patch.object(rv, "run_validation", return_value=(True, True)), patch(
+        with patch.object(rv, "run_validation", return_value=(True, True)) as mock_run_validation, patch(
             f"{MODULE}.mmCIFInfo"
         ) as mock_mmcifinfo_class:
             mock_mmcifinfo_class.return_value.get_exp_methods.return_value = ["ELECTRON MICROSCOPY"]
             mock_mmcifinfo_class.return_value.get_associated_emdb.return_value = "EMD-9999"
             ret = rv.run_process(self._message(pdbID="1abc", skip_emdb=True))
         self.assertTrue(ret)
-        self.assertIsNone(rv.getEMDBId())
+        self.assertEqual(rv.getEMDBId(), "EMD-9999")
+        self.assertEqual(mock_run_validation.call_count, 1)
 
     def test_run_process_emdb_only_no_volume_no_map_only(self) -> None:
         # Nothing to run (no pdbid, no volume => no map-only pass) means
